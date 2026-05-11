@@ -1,0 +1,48 @@
+---
+import Base from '../../layouts/Base.astro';
+import StoryCard from '../../components/StoryCard.astro';
+import { getStoryArchive } from '../../lib/content.js';
+
+const { stories, groups } = getStoryArchive();
+const sectionCounts = stories.reduce((counts, story) => {
+  counts[story.sectionTitle] = (counts[story.sectionTitle] || 0) + 1;
+  return counts;
+}, {});
+---
+<Base title="News archive" description="Every parsed Factory Signal briefing story, grouped by date and listed newest first." pathname="/news/">
+  <main>
+    <section class="hero archive-hero">
+      <div>
+        <p class="meta">Story archive</p>
+        <h1>All Factory Signal news and briefing stories.</h1>
+        <p class="lede">Browse the complete backlog of parsed story items from daily briefings, grouped by publication date and sorted newest first.</p>
+        <div class="signal-strip" aria-label="Archive summary">
+          <span>{stories.length} stories</span>
+          <span>{groups.length} briefings</span>
+          {Object.entries(sectionCounts).map(([label, count]) => <span>{count} {label}</span>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band archive-toolbar" aria-label="Archive filters">
+      <p class="meta">Newest first · grouped by briefing date · external story links open at the original source</p>
+    </section>
+
+    <div class="archive-list story-archive">
+      {groups.map((group) => (
+        <section class="briefing-summary" id={group.date}>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="meta">{group.dateLabel}</p>
+              <h2>{group.stories.length} stories</h2>
+            </div>
+            <a href={`/briefings/${group.briefingSlug}/`}>Full briefing</a>
+          </div>
+          <div class="story-grid archive-story-grid">
+            {group.stories.map((item) => <StoryCard item={item} compact />)}
+          </div>
+        </section>
+      ))}
+    </div>
+  </main>
+</Base>

@@ -75,7 +75,7 @@ const cardBody = truncateExcerpt(item.body);
     )}
   </a>
   <div>
-    <p class="meta">{item.source}{item.topic ? ` · ${item.topic}` : ''}{item.score ? ` · ${item.score}/5` : ''}</p>
+    <p class="meta">{item.dateLabel ? `${item.dateLabel} · ` : ''}{item.source}{item.topic ? ` · ${item.topic}` : ''}{item.sectionTitle ? ` · ${item.sectionTitle}` : ''}{item.score ? ` · ${item.score}/5` : ''}</p>
     <h3><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a></h3>
     {stats && <p class="stats">{stats}</p>}
     {cardBody && <p>{cardBody}</p>}

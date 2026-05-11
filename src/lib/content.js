@@ -53,6 +53,34 @@ export function getArticles() {
     .sort((a, b) => String(b.pubDate).localeCompare(String(a.pubDate)) || a.title.localeCompare(b.title));
 }
 
+export function getAllStories() {
+  return getBriefings()
+    .flatMap((briefing) => briefing.sections.flatMap((section) => section.items.map((item, index) => ({
+      ...item,
+      date: briefing.date,
+      dateLabel: formatDate(briefing.date),
+      briefingSlug: briefing.slug,
+      briefingTitle: briefing.title,
+      sectionTitle: item.sectionTitle || section.title,
+      archiveKey: `${briefing.slug}-${section.title}-${index}`,
+    }))))
+    .sort((a, b) => b.date.localeCompare(a.date) || (Number.parseFloat(b.score || '0') || 0) - (Number.parseFloat(a.score || '0') || 0));
+}
+
+export function getStoryArchive() {
+  const stories = getAllStories();
+  const groups = [];
+  for (const story of stories) {
+    let group = groups[groups.length - 1];
+    if (!group || group.date !== story.date) {
+      group = { date: story.date, dateLabel: story.dateLabel, briefingSlug: story.briefingSlug, stories: [] };
+      groups.push(group);
+    }
+    group.stories.push(story);
+  }
+  return { stories, groups };
+}
+
 export function parseBriefing(filename, content) {
   const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
   const date = dateMatch ? dateMatch[1] : filename.replace('.md', '');

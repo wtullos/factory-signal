@@ -10,7 +10,7 @@ Positioning: Daily intelligence for the future of manufacturing.
 - Daily briefing archive generated from Markdown in `content/briefings/`.
 - Deterministic generated story-card artwork when a briefing item has no image; external story images are preserved when present.
 - Original article support in `content/articles/`.
-- Homepage, briefing archive, individual briefing pages, article archive, individual article pages, About, Privacy, Disclosure, RSS, robots.txt, sitemap, and disabled-by-default ads.txt.
+- Homepage, briefing archive, individual briefing pages, story/news archive, article archive, individual article pages, About, Privacy, Disclosure, RSS endpoint, robots.txt, sitemap, and disabled-by-default ads.txt.
 - Existing `server.js` is preserved for reference/local legacy preview, but production should use Astro.
 
 ## Local development

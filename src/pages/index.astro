@@ -2,9 +2,11 @@
 import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
 import BriefingSummary from '../components/BriefingSummary.astro';
-import { getBriefings, getArticles, SITE_NAME, TAGLINE } from '../lib/content.js';
+import StoryCard from '../components/StoryCard.astro';
+import { getBriefings, getArticles, getAllStories, SITE_NAME, TAGLINE } from '../lib/content.js';
 const briefings = getBriefings();
 const articles = getArticles();
+const stories = getAllStories();
 const latest = briefings[0];
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/">
@@ -22,7 +24,7 @@ const latest = briefings[0];
         </div>
         <div class="button-row">
           <a class="button" href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Read latest briefing</a>
-          <a class="button secondary" href="/articles/">Original articles</a>
+          <a class="button secondary" href="/news/">Browse news archive</a>
         </div>
       </div>
       <aside class="panel">
@@ -37,6 +39,13 @@ const latest = briefings[0];
       </aside>
     </section>
     <AdSlot slot="leaderboard" />
+    <section class="section-band">
+      <div class="section-heading"><h2>News archive</h2><a href="/news/">All {stories.length} stories</a></div>
+      <p class="lede">The briefing backlog is now browsable as individual news and story cards, newest first.</p>
+      <div class="story-grid featured-story-grid">
+        {stories.slice(0, 12).map((item) => <StoryCard item={item} compact />)}
+      </div>
+    </section>
     {latest && <section class="section-band"><div class="section-heading"><h2>Latest briefing</h2><a href="/briefings/">Archive</a></div><BriefingSummary briefing={latest} /></section>}
     <section class="section-band">
       <div class="section-heading"><h2>Original articles</h2><a href="/articles/">All articles</a></div>
