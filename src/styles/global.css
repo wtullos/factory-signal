@@ -49,18 +49,18 @@ img { max-width: 100%; }
 .header-grid { display: grid; gap: 10px; }
 .brand-lockup {
   display: grid;
-  grid-template-columns: clamp(84px, 11vw, 132px) minmax(0, 1fr);
+  grid-template-columns: clamp(56px, 6vw, 72px) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(14px, 2.8vw, 26px);
+  gap: clamp(12px, 2vw, 18px);
   color: var(--ink);
   text-decoration: none;
 }
 .brand-logo {
   display: block;
   justify-self: start;
-  width: min(100%, 132px);
-  max-width: 132px;
-  max-height: 132px;
+  width: min(100%, 72px);
+  max-width: 72px;
+  max-height: 72px;
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
@@ -262,8 +262,8 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 
 @media (max-width: 760px) {
   .site-header { padding-top: 10px; }
-  .brand-lockup { grid-template-columns: 74px minmax(0, 1fr); gap: 12px; }
-  .brand-logo { width: 74px; max-width: 74px; }
+  .brand-lockup { grid-template-columns: 56px minmax(0, 1fr); gap: 12px; }
+  .brand-logo { width: 56px; max-width: 56px; max-height: 56px; }
   .brand { font-size: clamp(1.9rem, 11vw, 3rem); }
   nav { justify-content: flex-start; }
   .hero { grid-template-columns: 1fr; }
@@ -272,6 +272,6 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 
 @media (max-width: 520px) {
   .shell { padding: 0 14px; }
-  .brand-lockup { grid-template-columns: 1fr; }
-  .brand-logo { width: 92px; max-width: 92px; }
+  .brand-lockup { grid-template-columns: 52px minmax(0, 1fr); }
+  .brand-logo { width: 52px; max-width: 52px; max-height: 52px; }
 }
