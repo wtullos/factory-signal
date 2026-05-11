@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import BriefingSummary from '../../components/BriefingSummary.astro';
+import { getBriefings } from '../../lib/content.js';
+const briefings = getBriefings();
+---
+<Base title="Briefing archive" description="Daily Factory Signal briefing archive for manufacturing, CNC, robotics, 3D printing, and industrial AI." pathname="/briefings/">
+  <main>
+    <div class="section-heading"><h1>Briefing archive</h1></div>
+    <div class="archive-list">
+      {briefings.map((briefing) => <BriefingSummary briefing={briefing} />)}
+    </div>
+  </main>
+</Base>

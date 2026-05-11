@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import BriefingSummary from '../components/BriefingSummary.astro';
+import { getBriefings, getArticles, SITE_NAME, TAGLINE } from '../lib/content.js';
+const briefings = getBriefings();
+const articles = getArticles();
+const latest = briefings[0];
+---
+<Base title={SITE_NAME} description={TAGLINE} pathname="/">
+  <main>
+    <section class="hero">
+      <div>
+        <p class="meta">Daily industrial intelligence</p>
+        <h1>Signal over noise for the future of manufacturing.</h1>
+        <p class="lede">Factory Signal tracks advanced manufacturing, CNC, robotics, 3D printing, AI vision, and shop-floor automation so builders can scan what matters quickly.</p>
+        <div class="button-row">
+          <a class="button" href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Read latest briefing</a>
+          <a class="button secondary" href="/articles/">Original articles</a>
+        </div>
+      </div>
+      <aside class="panel">
+        <p class="meta">Positioning</p>
+        <h2>Daily intelligence for the future of manufacturing.</h2>
+        <p>Automated briefings today; original analysis, buyer guides, interviews, and monetizable editorial tomorrow.</p>
+      </aside>
+    </section>
+    <AdSlot slot="leaderboard" />
+    {latest && <section class="section-band"><div class="section-heading"><h2>Latest briefing</h2><a href="/briefings/">Archive</a></div><BriefingSummary briefing={latest} /></section>}
+    <section class="section-band">
+      <div class="section-heading"><h2>Original articles</h2><a href="/articles/">All articles</a></div>
+      <div class="article-list">
+        {articles.slice(0, 3).map((article) => <article class="panel"><p class="meta">{article.pubDate}</p><h3><a href={`/articles/${article.slug}/`}>{article.title}</a></h3><p>{article.description}</p></article>)}
+      </div>
+    </section>
+  </main>
+</Base>

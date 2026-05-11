@@ -1,0 +1,506 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 8888;
+const BRIEFINGS_DIR = '/home/wtullos/.openclaw/workspace/memory/briefings';
+
+const STYLES = `
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cheltenham+Bold&display=swap');
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Libre Baskerville', 'Times New Roman', Georgia, serif;
+    background: #fff;
+    color: #121212;
+    line-height: 1.5;
+  }
+  
+  a { color: #121212; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  
+  /* ===== NYT MASTHEAD ===== */
+  .masthead {
+    border-bottom: 1px solid #e2e2e2;
+    position: relative;
+  }
+  
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e2e2e2;
+  }
+  
+  .masthead-date {
+    font-size: 11px;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Libre Baskerville', serif;
+  }
+  
+  .masthead-links {
+    display: flex;
+    gap: 18px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  
+  .masthead-links a {
+    color: #333;
+    font-family: 'Libre Baskerville', serif;
+  }
+  
+  .masthead-main {
+    padding: 20px 20px 16px;
+    text-align: center;
+    border-bottom: 3px solid #121212;
+  }
+  
+  .masthead-logo {
+    font-family: 'Cheltenham Bold', 'Times New Roman', Georgia, serif;
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: #121212;
+    margin-bottom: 2px;
+  }
+  
+  .masthead-tagline {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-top: 0;
+    font-family: 'Libre Baskerville', serif;
+    letter-spacing: 0.3px;
+  }
+  
+  .masthead-bottom {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid #e2e2e2;
+    overflow-x: auto;
+  }
+  
+  .date-nav {
+    display: flex;
+    gap: 0;
+    padding: 8px 0;
+  }
+  
+  .date-btn {
+    padding: 5px 14px;
+    font-size: 11px;
+    font-family: 'Libre Baskerville', serif;
+    background: none;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    color: #333;
+    margin-right: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  
+  .date-btn:hover { background: #f5f5f5; }
+  
+  .date-btn.active {
+    background: #121212;
+    color: #fff;
+    border-color: #121212;
+  }
+  
+  /* ===== MAIN CONTENT ===== */
+  .content {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 30px 20px 50px;
+  }
+  
+  .briefing-headline {
+    font-family: 'Cheltenham Bold', 'Times New Roman', Georgia, serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    color: #121212;
+  }
+  
+  .briefing-meta {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e2e2;
+  }
+  
+  /* ===== SECTION ===== */
+  .section {
+    margin-bottom: 40px;
+  }
+  
+  .section-header {
+    border-bottom: 2px solid #121212;
+    padding-bottom: 8px;
+    margin-bottom: 22px;
+  }
+  
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: #121212;
+    font-family: 'Libre Baskerville', serif;
+  }
+  
+  /* ===== ARTICLE ===== */
+  .article {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e2e2e2;
+  }
+  
+  .article:last-child {
+    border-bottom: none;
+  }
+  
+  .article-headline {
+    font-family: 'Cheltenham Bold', 'Times New Roman', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 5px;
+  }
+  
+  .article-headline a {
+    color: #121212;
+  }
+  
+  .article-meta {
+    font-size: 11px;
+    color: #777;
+    font-family: 'Libre Baskerville', serif;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .article-source {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #333;
+    font-size: 10px;
+  }
+  
+  .article-topic {
+    color: #999;
+  }
+  
+  .article-rating {
+    color: #2d7d46;
+    font-weight: 600;
+    margin-left: auto;
+  }
+  
+  .article-stats {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  
+  .article-summary {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  
+  .article-quote {
+    font-size: 14px;
+    font-style: italic;
+    color: #555;
+    background: #f7f7f7;
+    border-left: 3px solid #121212;
+    padding: 10px 16px;
+    margin-top: 8px;
+    line-height: 1.7;
+  }
+  
+  /* ===== FOOTER ===== */
+  .footer {
+    border-top: 3px double #e2e2e2;
+    padding: 20px;
+    text-align: center;
+    font-size: 11px;
+    color: #aaa;
+    font-family: 'Libre Baskerville', serif;
+  }
+  
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    font-size: 18px;
+    color: #999;
+    font-style: italic;
+  }
+  
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .masthead-logo { font-size: 48px; }
+    .masthead-links { display: none; }
+    .article-headline { font-size: 20px; }
+    .briefing-headline { font-size: 24px; }
+  }
+</style>
+`;
+
+const HTML = (briefings, selected) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Briefing</title>
+  ${STYLES}
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-top">
+    <span class="masthead-date" id="dateLine"></span>
+    <nav class="masthead-links">
+      <a href="#">World</a>
+      <a href="#">Politics</a>
+      <a href="#">Business</a>
+      <a href="#">Tech</a>
+      <a href="#">Science</a>
+    </nav>
+  </div>
+  
+  <div class="masthead-main">
+    <h1 class="masthead-logo">The Daily Briefing</h1>
+    <p class="masthead-tagline">Manufacturing · 3D Printing · CNC · Robotics · AI Vision</p>
+  </div>
+  
+  <div class="masthead-bottom">
+    <div class="date-nav" id="dateNav">
+      ${briefings.map(b => {
+        const [y, m, d] = b.date.split('-');
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const fd = months[parseInt(m)-1] + ' ' + parseInt(d);
+        return '<button class="date-btn ' + (selected === b.filename ? 'active' : '') + '" onclick="show(\'' + b.filename + '\')">' + fd + '</button>';
+      }).join('')}
+    </div>
+  </div>
+</header>
+
+<!-- CONTENT -->
+<main class="content" id="content">
+  ${briefings.length > 0 ? renderBriefing(briefings.find(b => b.filename === selected) || briefings[0]) : '<div class="empty">No briefings found.</div>'}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Generated automatically by Dock's News Briefing System</p>
+</footer>
+
+<script>
+  // Set date line
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('dateLine').textContent = dateStr.toUpperCase();
+  
+  // Show briefing
+  function show(filename) {
+    const b = briefings.find(b => b.filename === filename);
+    if (!b) return;
+    
+    document.getElementById('content').innerHTML = renderBriefing(b);
+    
+    // Update active button
+    document.querySelectorAll('.date-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.trim() === filename.split('-').slice(1).join('/').replace('04','Apr').replace('20','20'));
+    });
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    history.replaceState({}, '', '?date=' + filename);
+  }
+  
+  // Check URL for date
+  const params = new URLSearchParams(window.location.search);
+  const dateParam = params.get('date');
+  if (dateParam) show(dateParam);
+</script>
+
+</body>
+</html>
+`;
+
+function renderBriefing(b) {
+  if (!b || !b.sections || b.sections.length === 0) {
+    return '<div class="empty">No content in this briefing.</div>';
+  }
+  
+  const d = new Date(b.date);
+  const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  
+  let html = `
+    <h2 class="briefing-headline">${b.title}</h2>
+    <p class="briefing-meta">${dateStr}</p>
+  `;
+  
+  for (const section of b.sections) {
+    const cleanTitle = section.title
+      .replace('📺 ', '')
+      .replace('💬 ', '')
+      .replace('📰 ', '')
+      .replace(' Worth Watching','')
+      .replace(' Highlights','')
+      .replace(' & Articles','');
+    
+    html += `
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">${cleanTitle}</h3>
+      </div>
+    `;
+    
+    for (const item of section.items) {
+      html += `
+      <article class="article">
+        <h4 class="article-headline">
+          <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+        </h4>
+        <div class="article-meta">
+          <span class="article-source">${escapeHtml(item.source)}</span>
+          ${item.topic ? '<span class="article-topic">· ' + escapeHtml(item.topic) + '</span>' : ''}
+          ${item.rating ? '<span class="article-rating">' + item.rating + ' ' + item.score + '/5</span>' : ''}
+        </div>
+        ${(item.views || item.duration) ? '<div class="article-stats">' + [item.views, item.duration].filter(Boolean).join(' · ') + '</div>' : ''}
+        ${item.transcript_preview ? '<p class="article-quote">"' + escapeHtml(item.transcript_preview) + '..."</p>' : ''}
+        ${item.body ? '<p class="article-summary">' + escapeHtml(item.body) + '...</p>' : ''}
+      </article>
+      `;
+    }
+    
+    html += '</section>';
+  }
+  
+  return html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function parseBriefing(filename, content) {
+  const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
+  const date = dateMatch ? dateMatch[1] : filename.replace('.md', '');
+  
+  const titleMatch = content.match(/^# (.+)$/m);
+  const title = titleMatch ? titleMatch[1] : 'Briefing - ' + date;
+  
+  const sections = [];
+  
+  const patterns = [
+    { title: 'YouTube', pattern: /## 📺 YouTube Worth Watching\n\n([\s\S]*?)(?=\n---\n\n##|$)/ },
+    { title: 'Reddit', pattern: /## 💬 Reddit Highlights\n\n([\s\S]*?)(?=\n---\n\n##|$)/ },
+    { title: 'News', pattern: /## 📰 News & Articles\n\n([\s\S]*?)(?=\n---\n\n##|$)/ },
+  ];
+  
+  for (const sp of patterns) {
+    const match = content.match(sp.pattern);
+    if (match) {
+      const items = parseItems(match[1], sp.title === 'YouTube');
+      if (items.length > 0) {
+        sections.push({ title: sp.title, items });
+      }
+    }
+  }
+  
+  return { date, filename, title, sections };
+}
+
+function parseItems(text, isYouTube) {
+  const items = [];
+  const blocks = text.split(/^---$/m).filter(Boolean);
+  
+  for (const block of blocks) {
+    const titleMatch = block.match(/### \[(.+?)\]\((.+?)\)/);
+    const channelMatch = block.match(/\*\*Channel:\*\* (.+?) \|/);
+    const sourceMatch = block.match(/\*\*Source:\*\* (.+?) \|/);
+    const topicMatch = block.match(/\*\*Topic:\*\* (.+?)  \*\*/);
+    const viewsMatch = block.match(/\*\*Views:\*\* (.+?) \|/);
+    const durationMatch = block.match(/\*\*Duration:\*\* (.+?)\n/);
+    const transcriptMatch = block.match(/📝 \*\*Transcript Preview:\*\* "(.+)"/);
+    const bodyMatch = block.match(/> (.{10,200})\.\.\./);
+    const ratingMatch = block.match(/\*\*Rating:\*\* ([⭐★☆]+) ([\d.]+)\/5\.0/);
+    
+    if (titleMatch) {
+      const item = {
+        title: titleMatch[1],
+        url: titleMatch[2],
+        source: isYouTube ? (channelMatch && channelMatch[1]) || 'YouTube' : (sourceMatch && sourceMatch[1]) || 'Unknown',
+      };
+      
+      if (topicMatch) item.topic = topicMatch[1].trim();
+      if (viewsMatch) item.views = viewsMatch[1].trim();
+      if (durationMatch) item.duration = durationMatch[1].trim();
+      if (transcriptMatch) item.transcript_preview = transcriptMatch[1];
+      if (bodyMatch) item.body = bodyMatch[1];
+      if (ratingMatch) { item.rating = ratingMatch[1]; item.score = ratingMatch[2]; }
+      
+      items.push(item);
+    }
+  }
+  
+  return items;
+}
+
+function loadBriefings() {
+  try {
+    const files = fs.readdirSync(BRIEFINGS_DIR).filter(f => f.endsWith('.md') && f !== 'INDEX.md');
+    const briefings = files
+      .map(filename => {
+        const filepath = path.join(BRIEFINGS_DIR, filename);
+        const content = fs.readFileSync(filepath, 'utf-8');
+        return parseBriefing(filename, content);
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    return briefings;
+  } catch (e) {
+    console.error('Error loading briefings:', e);
+    return [];
+  }
+}
+
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, 'http://localhost');
+  const dateParam = url.searchParams.get('date');
+  
+  const briefings = loadBriefings();
+  const defaultFile = briefings.length > 0 && briefings[0] ? briefings[0].filename : null;
+  const selected = dateParam || defaultFile;
+  
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(HTML(briefings, selected));
+});
+
+server.listen(PORT, () => {
+  console.log('Briefings app running at http://localhost:' + PORT);
+});

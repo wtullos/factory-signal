@@ -1,0 +1,64 @@
+---
+const { item, compact = false } = Astro.props;
+const stats = [item.views, item.duration, item.scoreCount ? `Score ${item.scoreCount}` : null, item.comments ? `${item.comments} comments` : null].filter(Boolean).join(' · ');
+
+const placeholderSeed = [item.topic, item.source, item.title].filter(Boolean).join('|') || 'Factory Signal';
+const palette = [
+  ['#102a43', '#f59e0b', '#fef3c7'],
+  ['#1e293b', '#38bdf8', '#e0f2fe'],
+  ['#312e81', '#a78bfa', '#ede9fe'],
+  ['#134e4a', '#2dd4bf', '#ccfbf1'],
+  ['#3b1d0f', '#f97316', '#ffedd5'],
+  ['#431407', '#ef4444', '#fee2e2'],
+];
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function labelFrom(item) {
+  const label = item.topic || item.source || 'Factory Signal';
+  return label
+    .replace(/[^a-z0-9&/ ]/gi, ' ')
+    .split(/[\s/&]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('') || 'FS';
+}
+
+const placeholderHash = hashString(placeholderSeed);
+const placeholderPalette = palette[placeholderHash % palette.length];
+const placeholderStyle = [
+  `--placeholder-bg: ${placeholderPalette[0]}`,
+  `--placeholder-accent: ${placeholderPalette[1]}`,
+  `--placeholder-soft: ${placeholderPalette[2]}`,
+  `--placeholder-tilt: ${(placeholderHash % 24) - 12}deg`,
+  `--placeholder-shift: ${placeholderHash % 48}px`,
+].join('; ');
+const placeholderLabel = labelFrom(item);
+---
+<article class:list={["story-card", compact && "compact"]}>
+  <a class:list={["image", !item.image && "placeholder-art"]} href={item.url} target="_blank" rel="noopener noreferrer" style={!item.image ? placeholderStyle : undefined} aria-label={item.image ? undefined : `Open story: ${item.title}`}>
+    {item.image ? (
+      <img src={item.image} alt="" loading="lazy" />
+    ) : (
+      <span class="placeholder-inner" aria-hidden="true">
+        <span class="placeholder-kicker">Factory Signal</span>
+        <span class="placeholder-mark">{placeholderLabel}</span>
+        <span class="placeholder-topic">{item.topic || item.source || 'Manufacturing intelligence'}</span>
+      </span>
+    )}
+  </a>
+  <div>
+    <p class="meta">{item.source}{item.topic ? ` · ${item.topic}` : ''}{item.score ? ` · ${item.score}/5` : ''}</p>
+    <h3><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a></h3>
+    {stats && <p class="stats">{stats}</p>}
+    {item.body && <p>{item.body}</p>}
+  </div>
+</article>

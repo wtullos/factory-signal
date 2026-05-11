@@ -1,0 +1,14 @@
+---
+import StoryCard from './StoryCard.astro';
+const { briefing } = Astro.props;
+---
+<div class="briefing-detail">
+  {briefing.sections.map((section) => (
+    <section class="section-band" id={section.title.toLowerCase()}>
+      <h2>{section.title}</h2>
+      <div class="story-grid">
+        {section.items.map((item) => <StoryCard item={item} />)}
+      </div>
+    </section>
+  ))}
+</div>

@@ -1,0 +1,13 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getArticles } from '../../lib/content.js';
+const articles = getArticles();
+---
+<Base title="Original articles" description="Factory Signal original articles on manufacturing technology, automation, and industrial AI." pathname="/articles/">
+  <main>
+    <div class="section-heading"><h1>Original articles</h1></div>
+    <div class="article-list">
+      {articles.map((article) => <article class="panel"><p class="meta">{article.pubDate} · {article.author}</p><h2><a href={`/articles/${article.slug}/`}>{article.title}</a></h2><p>{article.description}</p></article>)}
+    </div>
+  </main>
+</Base>

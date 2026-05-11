@@ -1,0 +1,17 @@
+---
+import { ADSENSE_ENABLED } from '../lib/content.js';
+const { slot = 'leaderboard' } = Astro.props;
+const slotIds = {
+  leaderboard: process.env.ADSENSE_SLOT_LEADERBOARD || '',
+  inarticle: process.env.ADSENSE_SLOT_INARTICLE || '',
+  footer: process.env.ADSENSE_SLOT_FOOTER || '',
+};
+const adSlot = slotIds[slot] || '';
+---
+{ADSENSE_ENABLED && adSlot ? (
+  <div class="ad-wrapper">
+    <div class="ad-label">Advertisement</div>
+    <ins class="adsbygoogle" style="display:block" data-ad-slot={adSlot} data-ad-format="auto" data-full-width-responsive="true"></ins>
+    <script is:inline>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+) : null}

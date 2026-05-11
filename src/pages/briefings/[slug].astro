@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import BriefingDetail from '../../components/BriefingDetail.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getBriefings, formatDate } from '../../lib/content.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return getBriefings().map((briefing) => ({ params: { slug: briefing.slug }, props: { briefing } }));
+}
+const { briefing } = Astro.props;
+const title = briefing.title.replace(/^Tech Briefing/, 'Factory Signal Briefing');
+---
+<Base title={title} description={`${formatDate(briefing.date)} briefing for advanced manufacturing, CNC, robotics, 3D printing, and AI vision.`} pathname={`/briefings/${briefing.slug}/`} type="article">
+  <main>
+    <article>
+      <p class="meta">{formatDate(briefing.date)}</p>
+      <h1>{title}</h1>
+      <p class="lede">{briefing.deck}</p>
+      <AdSlot slot="inarticle" />
+      <BriefingDetail briefing={briefing} />
+    </article>
+  </main>
+</Base>

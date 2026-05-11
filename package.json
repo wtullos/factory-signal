@@ -1,0 +1,19 @@
+{
+  "name": "factory-signal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Factory Signal static publication for manufacturing intelligence.",
+  "scripts": {
+    "dev": "astro dev --host 0.0.0.0 --port 8888",
+    "preview": "astro preview --host 0.0.0.0 --port 8888",
+    "build": "astro build",
+    "sync:briefings": "node scripts/sync-briefings.mjs"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.3.1",
+    "marked": "^16.4.1"
+  }
+}

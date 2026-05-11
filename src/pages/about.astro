@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL } from '../lib/content.js';
+---
+<Base title="About" description="About Factory Signal and its manufacturing intelligence briefings." pathname="/about/">
+  <main><article class="article-body">
+    <h1>About Factory Signal</h1>
+    <p>Factory Signal is a publication for people tracking the future of manufacturing: advanced manufacturing, additive, CNC, robotics, AI vision, automation, and the software that connects it all.</p>
+    <p>The daily briefing is currently automated from public sources and links back to original creators and publishers. Original articles are intended for analysis, explainers, buyer guides, interviews, and clearly labeled sponsored content as the publication matures.</p>
+    <p>Questions, corrections, or business inquiries: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+  </article></main>
+</Base>

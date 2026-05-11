@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL } from '../lib/content.js';
+---
+<Base title="Privacy policy" description="Factory Signal privacy policy." pathname="/privacy/">
+  <main><article class="article-body">
+    <h1>Privacy policy</h1>
+    <p>Factory Signal does not currently provide accounts, comments, or forms. Hosting providers may collect standard request logs such as IP address, browser, referring page, and requested URL for security and operations.</p>
+    <p>If advertising or analytics are enabled later, third-party services may use cookies or similar technologies subject to their own policies. Advertising code is disabled unless the relevant environment variables are configured.</p>
+    <p>Outbound links go to third-party websites, social platforms, videos, and publishers. Their policies apply after you leave Factory Signal.</p>
+    <p>Privacy questions can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p>Last updated: May 10, 2026.</p>
+  </article></main>
+</Base>

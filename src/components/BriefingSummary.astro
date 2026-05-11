@@ -1,0 +1,12 @@
+---
+import StoryCard from './StoryCard.astro';
+import { formatDate, topItems } from '../lib/content.js';
+const { briefing, full = false } = Astro.props;
+const items = full ? [] : topItems(briefing, 6);
+---
+<article class="briefing-summary">
+  <p class="meta">{formatDate(briefing.date)}</p>
+  <h2><a href={`/briefings/${briefing.slug}/`}>{briefing.title.replace(/^Tech Briefing/, 'Factory Signal Briefing')}</a></h2>
+  <p>{briefing.deck}</p>
+  {!full && items.length > 0 && <div class="story-grid">{items.map((item) => <StoryCard item={item} compact />)}</div>}
+</article>
