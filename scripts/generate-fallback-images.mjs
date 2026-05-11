@@ -6,7 +6,10 @@ import path from 'node:path';
 const root = process.cwd();
 const briefingsDir = path.join(root, 'content', 'briefings');
 const outputDir = path.join(root, 'public', 'generated-images');
+const cachePath = path.join(root, 'content', 'image-cache.json');
 const publicPrefix = '/generated-images';
+const scrapeTimeoutMs = Number.parseInt(process.env.IMAGE_SCRAPE_TIMEOUT_MS || '2500', 10);
+const userAgent = 'FactorySignalBot/1.0 (+https://thefactorysignal.com)';
 const model = process.env.OPENAI_IMAGE_FALLBACK_MODEL || 'gpt-5.5';
 const apiKey = process.env.OPENAI_API_KEY || '';
 
@@ -36,43 +39,67 @@ async function main() {
   let reused = 0;
   let apiGenerated = 0;
   let fallbackGenerated = 0;
+  let scraped = 0;
+  let replaced = 0;
+  let scrapeFailures = 0;
+  const imageCache = await readImageCache();
 
   for (const file of files) {
     const fullPath = path.join(briefingsDir, file);
     const original = await fs.readFile(fullPath, 'utf8');
-    const { content, stats } = await processBriefing(file, original);
+    const { content, stats } = await processBriefing(file, original, imageCache);
     generated += stats.generated;
     reused += stats.reused;
     apiGenerated += stats.apiGenerated;
     fallbackGenerated += stats.fallbackGenerated;
+    scraped += stats.scraped;
+    replaced += stats.replaced;
+    scrapeFailures += stats.scrapeFailures;
     if (content !== original) {
       await fs.writeFile(fullPath, content);
       changedFiles += 1;
-      console.log(`updated ${path.relative(root, fullPath)} (${stats.inserted} image refs)`);
+      console.log(`updated ${path.relative(root, fullPath)} (${stats.inserted} inserted, ${stats.replaced} replaced image refs)`);
     }
+    if (stats.cacheTouched) await writeImageCache(imageCache);
   }
 
-  console.log(`fallback image prep complete: ${generated} generated/updated, ${reused} reused, ${apiGenerated} OpenAI, ${fallbackGenerated} local fallback, ${changedFiles} markdown files changed`);
+  await writeImageCache(imageCache);
+  console.log(`fallback image prep complete: ${scraped} scraped article photos, ${replaced} generated refs replaced, ${scrapeFailures} scrape misses/failures, ${generated} generated/updated, ${reused} reused, ${apiGenerated} OpenAI, ${fallbackGenerated} local fallback, ${changedFiles} markdown files changed`);
 }
 
-async function processBriefing(filename, content) {
-  const stats = { generated: 0, reused: 0, inserted: 0, apiGenerated: 0, fallbackGenerated: 0 };
+async function processBriefing(filename, content, imageCache) {
+  const stats = { generated: 0, reused: 0, inserted: 0, replaced: 0, scraped: 0, scrapeFailures: 0, apiGenerated: 0, fallbackGenerated: 0, cacheTouched: false };
   const blocks = storyBlocks(content);
   let nextContent = content;
   let offset = 0;
 
   for (const block of blocks) {
-    const story = parseStory(block.text, filename);
+    const story = { ...parseStory(block.text, filename), sectionTitle: block.sectionTitle };
     if (!story.title || !story.url) continue;
 
     const existingImage = story.image;
     const hasExternalImage = existingImage && !existingImage.startsWith(`${publicPrefix}/`);
     if (hasExternalImage) continue;
 
+    if (!isRedditStory(story)) {
+      const scrapedImage = await findArticleImage(story.url, imageCache, stats);
+      if (scrapedImage) {
+        const updatedBlock = upsertImageLine(block.text, scrapedImage);
+        const start = block.start + offset;
+        const end = block.end + offset;
+        nextContent = `${nextContent.slice(0, start)}${updatedBlock}${nextContent.slice(end)}`;
+        offset += updatedBlock.length - block.text.length;
+        stats.scraped += 1;
+        if (existingImage?.startsWith(`${publicPrefix}/`)) stats.replaced += 1;
+        else stats.inserted += 1;
+        continue;
+      }
+    }
+
     const slug = stableSlug(filename, story);
     const publicPath = `${publicPrefix}/${slug}.svg`;
     const outputPath = path.join(outputDir, `${slug}.svg`);
-    const hash = contentHash({ ...story, image: undefined });
+    const hash = contentHash({ ...story, sectionTitle: undefined, image: undefined });
     const currentHash = await readGeneratedHash(outputPath);
 
     if (currentHash === hash) {
@@ -110,7 +137,7 @@ function storyBlocks(content) {
     let end = nextStart;
     const separator = content.slice(start, nextStart).match(/\n---\s*(?=\n(?:### |## |$))/);
     if (separator?.index !== undefined) end = start + separator.index + separator[0].length;
-    blocks.push({ start, end, text: content.slice(start, end) });
+    blocks.push({ start, end, text: content.slice(start, end), sectionTitle: nearestSectionTitle(content, start) });
   }
   return blocks;
 }
@@ -137,6 +164,159 @@ function insertImageLine(block, imagePath) {
   while (insertAt + 1 < lines.length && lines[insertAt + 1].trim() === '') insertAt += 1;
   lines.splice(insertAt + 1, 0, `**Image:** ${imagePath}`, '');
   return lines.join('\n');
+}
+
+function upsertImageLine(block, imagePath) {
+  if (/^\*\*Image:\*\*\s*\S+\s*$/m.test(block)) {
+    return block.replace(/^\*\*Image:\*\*\s*\S+\s*$/m, `**Image:** ${imagePath}`);
+  }
+  return insertImageLine(block, imagePath);
+}
+
+function nearestSectionTitle(content, start) {
+  const before = content.slice(0, start);
+  const sections = [...before.matchAll(/^##\s+(.+)$/gm)];
+  const title = sections.at(-1)?.[1] || '';
+  if (/Reddit/i.test(title)) return 'Reddit';
+  if (/YouTube/i.test(title)) return 'YouTube';
+  if (/News|Articles/i.test(title)) return 'News';
+  return title.replace(/^[^\w]+\s*/, '').trim();
+}
+
+function isRedditStory(story) {
+  return story.sectionTitle === 'Reddit' || /(^|\.)reddit\.com$/i.test(hostnameFromUrl(story.url)) || /(^|\.)redd\.it$/i.test(hostnameFromUrl(story.url));
+}
+
+async function findArticleImage(url, cache, stats) {
+  const key = normalizeUrl(url);
+  if (!key) return '';
+  if (Object.hasOwn(cache, key)) return cache[key]?.image || '';
+
+  try {
+    const image = await scrapeArticleImage(key);
+    cache[key] = { image: image || null, checkedAt: new Date().toISOString() };
+    stats.cacheTouched = true;
+    if (!image) stats.scrapeFailures += 1;
+    return image;
+  } catch (error) {
+    cache[key] = { image: null, checkedAt: new Date().toISOString(), error: error.message.slice(0, 160) };
+    stats.cacheTouched = true;
+    stats.scrapeFailures += 1;
+    return '';
+  }
+}
+
+async function scrapeArticleImage(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), scrapeTimeoutMs);
+  try {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: { 'user-agent': userAgent, accept: 'text/html,application/xhtml+xml' },
+    });
+    if (!response.ok) return '';
+    const contentType = response.headers.get('content-type') || '';
+    if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) return '';
+    const html = (await response.text()).slice(0, 600000);
+    return extractBestImage(html, response.url || url);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractBestImage(html, baseUrl) {
+  const candidates = [];
+  const metaPatterns = [
+    /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["'][^>]*>/gi,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url)?["'][^>]*>/gi,
+    /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["'][^>]*>/gi,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image(?::src)?["'][^>]*>/gi,
+    /<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["'][^>]*>/gi,
+    /<link[^>]+href=["']([^"']+)["'][^>]+rel=["']image_src["'][^>]*>/gi,
+  ];
+  for (const pattern of metaPatterns) {
+    for (const match of html.matchAll(pattern)) candidates.push({ url: decodeHtml(match[1]), score: 100 });
+  }
+
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = match[0];
+    const src = attr(tag, 'src') || attr(tag, 'data-src') || attr(tag, 'data-original') || attr(tag, 'data-lazy-src');
+    if (!src) continue;
+    const width = Number.parseInt(attr(tag, 'width') || '0', 10);
+    const height = Number.parseInt(attr(tag, 'height') || '0', 10);
+    const alt = attr(tag, 'alt');
+    const area = width * height;
+    const score = (area >= 90000 ? 70 : 35) + (alt ? 8 : 0) + Math.min(area / 10000, 30);
+    candidates.push({ url: decodeHtml(src), score });
+  }
+
+  return candidates
+    .map((candidate) => ({ ...candidate, url: absolutize(candidate.url, baseUrl) }))
+    .filter((candidate) => isUsableImageUrl(candidate.url))
+    .sort((a, b) => b.score - a.score)[0]?.url || '';
+}
+
+function attr(tag, name) {
+  return tag.match(new RegExp(`${name}=["']([^"']+)["']`, 'i'))?.[1]?.trim() || '';
+}
+
+function absolutize(value, baseUrl) {
+  try {
+    return new URL(value, baseUrl).href;
+  } catch {
+    return '';
+  }
+}
+
+function isUsableImageUrl(value) {
+  if (!/^https?:\/\//i.test(value)) return false;
+  if (/\.(svg|gif)(?:[?#]|$)/i.test(value)) return false;
+  if (/logo|icon|avatar|sprite|placeholder|tracking/i.test(value)) return false;
+  return true;
+}
+
+function normalizeUrl(value) {
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    return url.href;
+  } catch {
+    return '';
+  }
+}
+
+function hostnameFromUrl(value) {
+  try {
+    return new URL(value).hostname.replace(/^www\./i, '');
+  } catch {
+    return '';
+  }
+}
+
+function decodeHtml(value) {
+  return String(value)
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+}
+
+async function readImageCache() {
+  try {
+    return JSON.parse(await fs.readFile(cachePath, 'utf8'));
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    console.warn(`Could not read image cache: ${error.message}`);
+    return {};
+  }
+}
+
+async function writeImageCache(cache) {
+  await fs.mkdir(path.dirname(cachePath), { recursive: true });
+  await fs.writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`);
 }
 
 async function createSvg(story, hash) {

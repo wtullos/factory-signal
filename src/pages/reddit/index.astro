@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import StoryCard from '../../components/StoryCard.astro';
+import { getRedditStories, getStoryArchive } from '../../lib/content.js';
+
+const stories = getRedditStories();
+const { groups } = getStoryArchive(stories);
+const latestGroup = groups[0];
+const latestCount = latestGroup?.stories.length || 0;
+const totalComments = stories.reduce((sum, story) => sum + (Number.parseInt(String(story.comments || '0').replace(/[^0-9]/g, ''), 10) || 0), 0);
+---
+<Base title="Reddit trends" description="What is trending in manufacturing communities across Reddit, separated from the main news archive." pathname="/reddit/">
+  <main>
+    <section class="hero archive-hero reddit-hero">
+      <div>
+        <p class="meta">Reddit trending</p>
+        <h1>What’s trending in manufacturing communities.</h1>
+        <p class="lede">Reddit posts are split out from the normal news feed so community chatter is easier to scan without crowding reported articles and videos.</p>
+        <div class="signal-strip" aria-label="Reddit archive summary">
+          <span>{stories.length} Reddit posts tracked</span>
+          <span>{groups.length} briefing days</span>
+          <span>{latestCount} in latest briefing</span>
+          {totalComments > 0 && <span>{totalComments} comments captured</span>}
+        </div>
+        <div class="button-row">
+          <a class="button" href="/news/">Read manufacturing news</a>
+          <a class="button secondary" href="/briefings/">Full daily briefings</a>
+        </div>
+      </div>
+    </section>
+
+    {latestGroup && (
+      <section class="section-band">
+        <div class="section-heading"><h2>Trending now</h2><a href={`#${latestGroup.date}`}>{latestGroup.dateLabel}</a></div>
+        <div class="reddit-mosaic">
+          {latestGroup.stories.slice(0, 6).map((item, index) => <StoryCard item={item} compact={index > 0} variant={index === 0 ? 'lead-card reddit-lead' : 'secondary-card'} />)}
+        </div>
+      </section>
+    )}
+
+    <div class="archive-list story-archive">
+      {groups.map((group) => (
+        <section class="briefing-summary reddit-edition" id={group.date}>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="meta">{group.dateLabel}</p>
+              <h2>{group.stories.length} community posts</h2>
+            </div>
+            <a href={`/briefings/${group.briefingSlug}/`}>Full briefing</a>
+          </div>
+          <div class="news-river reddit-river">
+            {group.stories.map((item) => <StoryCard item={item} compact variant="river-card reddit-row" />)}
+          </div>
+        </section>
+      ))}
+    </div>
+  </main>
+</Base>

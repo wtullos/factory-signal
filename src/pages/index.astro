@@ -3,10 +3,11 @@ import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
 import BriefingSummary from '../components/BriefingSummary.astro';
 import StoryCard from '../components/StoryCard.astro';
-import { getBriefings, getArticles, getAllStories, SITE_NAME, TAGLINE } from '../lib/content.js';
+import { getBriefings, getArticles, getNewsStories, getRedditStories, SITE_NAME, TAGLINE } from '../lib/content.js';
 const briefings = getBriefings();
 const articles = getArticles();
-const stories = getAllStories();
+const stories = getNewsStories();
+const redditStories = getRedditStories();
 const latest = briefings[0];
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/">
@@ -40,10 +41,23 @@ const latest = briefings[0];
     </section>
     <AdSlot slot="leaderboard" />
     <section class="section-band">
-      <div class="section-heading"><h2>News archive</h2><a href="/news/">All {stories.length} stories</a></div>
-      <p class="lede">The briefing backlog is now browsable as individual news and story cards, newest first.</p>
-      <div class="story-grid featured-story-grid">
-        {stories.slice(0, 12).map((item) => <StoryCard item={item} compact />)}
+      <div class="section-heading"><h2>Manufacturing news</h2><a href="/news/">All {stories.length} non-Reddit stories</a></div>
+      <p class="lede">The briefing backlog is now browsable as a newspaper-style feed of articles and videos, newest first. Community posts have moved to Reddit trends.</p>
+      <div class="home-news-layout featured-story-grid">
+        {stories[0] && <StoryCard item={stories[0]} variant="lead-card" />}
+        <div class="feature-grid">
+          {stories.slice(1, 5).map((item) => <StoryCard item={item} compact variant="secondary-card" />)}
+        </div>
+        <div class="news-river">
+          {stories.slice(5, 11).map((item) => <StoryCard item={item} compact variant="river-card" />)}
+        </div>
+      </div>
+    </section>
+    <section class="section-band reddit-band">
+      <div class="section-heading"><h2>Reddit trending</h2><a href="/reddit/">All {redditStories.length} posts</a></div>
+      <p class="lede">What manufacturing communities are talking about, kept separate from the normal news archive.</p>
+      <div class="reddit-mosaic compact-mosaic">
+        {redditStories.slice(0, 4).map((item, index) => <StoryCard item={item} compact variant={index === 0 ? 'secondary-card reddit-lead' : 'river-card reddit-row'} />)}
       </div>
     </section>
     {latest && <section class="section-band"><div class="section-heading"><h2>Latest briefing</h2><a href="/briefings/">Archive</a></div><BriefingSummary briefing={latest} /></section>}

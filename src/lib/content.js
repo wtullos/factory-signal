@@ -67,8 +67,19 @@ export function getAllStories() {
     .sort((a, b) => b.date.localeCompare(a.date) || (Number.parseFloat(b.score || '0') || 0) - (Number.parseFloat(a.score || '0') || 0));
 }
 
-export function getStoryArchive() {
-  const stories = getAllStories();
+export function getStoriesBySection(sectionTitle) {
+  return getAllStories().filter((story) => story.sectionTitle === sectionTitle);
+}
+
+export function getNewsStories() {
+  return getAllStories().filter((story) => story.sectionTitle !== 'Reddit');
+}
+
+export function getRedditStories() {
+  return getStoriesBySection('Reddit');
+}
+
+export function getStoryArchive(stories = getAllStories()) {
   const groups = [];
   for (const story of stories) {
     let group = groups[groups.length - 1];

@@ -220,6 +220,27 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .compact-heading { align-items: center; margin-bottom: 18px; }
 .compact-heading h2 { margin-bottom: 0; }
 .archive-story-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.edition-layout,
+.home-news-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+  gap: 20px;
+  align-items: start;
+}
+.feature-grid { display: grid; gap: 18px; }
+.news-river {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+}
+.reddit-mosaic {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(220px, .7fr));
+  gap: 18px;
+  align-items: stretch;
+}
+.compact-mosaic { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.reddit-river { grid-column: auto; }
 .story-card {
   display: grid;
   gap: 12px;
@@ -229,6 +250,27 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   background: var(--paper);
 }
 .story-card.compact h3 { font-size: 1rem; line-height: 1.24; }
+.story-card.lead-card {
+  min-height: 100%;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.story-card.lead-card h3 { font-size: clamp(1.45rem, 3vw, 2.28rem); letter-spacing: -.035em; }
+.story-card.lead-card .image { aspect-ratio: 16/9; }
+.story-card.secondary-card .image { aspect-ratio: 4/3; }
+.story-card.river-card {
+  grid-template-columns: minmax(120px, 210px) minmax(0, 1fr);
+  align-items: start;
+  padding: 12px;
+  background: rgba(255,255,255,.86);
+}
+.story-card.river-card .image { aspect-ratio: 5/4; border-bottom: 0; border-right: 3px solid var(--accent); }
+.story-card.river-card p:not(.meta):not(.stats) { display: none; }
+.story-card.reddit-row .image,
+.story-card.reddit-lead .image { filter: saturate(.9) contrast(.96); }
+.reddit-band,
+.reddit-edition,
+.reddit-hero > div { background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(232,246,230,.7)); }
 .story-card p { margin: 0 0 8px; color: #303844; }
 .story-card .image {
   display: block;
@@ -276,6 +318,11 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   nav { justify-content: flex-start; }
   .hero { grid-template-columns: 1fr; }
   .section-heading { align-items: flex-start; flex-direction: column; }
+  .edition-layout,
+  .home-news-layout,
+  .reddit-mosaic { grid-template-columns: 1fr; }
+  .story-card.river-card { grid-template-columns: 1fr; }
+  .story-card.river-card .image { border-right: 0; border-bottom: 3px solid var(--accent); }
 }
 
 @media (max-width: 520px) {

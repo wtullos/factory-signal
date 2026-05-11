@@ -1,5 +1,5 @@
 ---
-const { item, compact = false } = Astro.props;
+const { item, compact = false, variant = '' } = Astro.props;
 const stats = [item.views, item.duration, item.scoreCount ? `Score ${item.scoreCount}` : null, item.comments ? `${item.comments} comments` : null].filter(Boolean).join(' · ');
 
 const placeholderSeed = [item.topic, item.source, item.title].filter(Boolean).join('|') || 'Factory Signal';
@@ -32,8 +32,8 @@ function labelFrom(item) {
     .join('') || 'FS';
 }
 
-function isLocalImage(image) {
-  return typeof image === 'string' && image.startsWith('/') && !image.startsWith('//');
+function isDisplayImage(image) {
+  return typeof image === 'string' && (/^https?:\/\//i.test(image) || (image.startsWith('/') && !image.startsWith('//')));
 }
 
 function truncateExcerpt(value, maxLength = compact ? 150 : 190) {
@@ -59,10 +59,10 @@ const placeholderStyle = [
   `--placeholder-shift: ${placeholderHash % 48}px`,
 ].join('; ');
 const placeholderLabel = labelFrom(item);
-const hasDisplayImage = isLocalImage(item.image);
+const hasDisplayImage = isDisplayImage(item.image);
 const cardBody = truncateExcerpt(item.body);
 ---
-<article class:list={["story-card", compact && "compact"]}>
+<article class:list={["story-card", compact && "compact", variant]}>
   <a class:list={["image", !hasDisplayImage && "placeholder-art"]} href={item.url} target="_blank" rel="noopener noreferrer" style={!hasDisplayImage ? placeholderStyle : undefined} aria-label={hasDisplayImage ? undefined : `Open story: ${item.title}`}>
     {hasDisplayImage ? (
       <img src={item.image} alt="" loading="lazy" />
