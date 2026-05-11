@@ -32,6 +32,23 @@ function labelFrom(item) {
     .join('') || 'FS';
 }
 
+function isLocalImage(image) {
+  return typeof image === 'string' && image.startsWith('/') && !image.startsWith('//');
+}
+
+function truncateExcerpt(value, maxLength = compact ? 150 : 190) {
+  if (typeof value !== 'string') return '';
+
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+
+  const trimmed = normalized.slice(0, maxLength + 1);
+  const boundary = trimmed.search(/\s+\S*$/);
+  const excerpt = (boundary > maxLength * 0.6 ? trimmed.slice(0, boundary) : normalized.slice(0, maxLength)).trim();
+
+  return `${excerpt.replace(/[\s.,;:!?-]+$/, '')}…`;
+}
+
 const placeholderHash = hashString(placeholderSeed);
 const placeholderPalette = palette[placeholderHash % palette.length];
 const placeholderStyle = [
@@ -42,10 +59,12 @@ const placeholderStyle = [
   `--placeholder-shift: ${placeholderHash % 48}px`,
 ].join('; ');
 const placeholderLabel = labelFrom(item);
+const hasDisplayImage = isLocalImage(item.image);
+const cardBody = truncateExcerpt(item.body);
 ---
 <article class:list={["story-card", compact && "compact"]}>
-  <a class:list={["image", !item.image && "placeholder-art"]} href={item.url} target="_blank" rel="noopener noreferrer" style={!item.image ? placeholderStyle : undefined} aria-label={item.image ? undefined : `Open story: ${item.title}`}>
-    {item.image ? (
+  <a class:list={["image", !hasDisplayImage && "placeholder-art"]} href={item.url} target="_blank" rel="noopener noreferrer" style={!hasDisplayImage ? placeholderStyle : undefined} aria-label={hasDisplayImage ? undefined : `Open story: ${item.title}`}>
+    {hasDisplayImage ? (
       <img src={item.image} alt="" loading="lazy" />
     ) : (
       <span class="placeholder-inner" aria-hidden="true">
@@ -59,6 +78,6 @@ const placeholderLabel = labelFrom(item);
     <p class="meta">{item.source}{item.topic ? ` · ${item.topic}` : ''}{item.score ? ` · ${item.score}/5` : ''}</p>
     <h3><a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a></h3>
     {stats && <p class="stats">{stats}</p>}
-    {item.body && <p>{item.body}</p>}
+    {cardBody && <p>{cardBody}</p>}
   </div>
 </article>
