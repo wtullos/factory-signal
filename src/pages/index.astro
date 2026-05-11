@@ -14,6 +14,12 @@ const latest = briefings[0];
         <p class="meta">Daily industrial intelligence</p>
         <h1>Signal over noise for the future of manufacturing.</h1>
         <p class="lede">Factory Signal tracks advanced manufacturing, CNC, robotics, 3D printing, AI vision, and shop-floor automation so builders can scan what matters quickly.</p>
+        <div class="signal-strip" aria-label="Coverage areas">
+          <span>CNC</span>
+          <span>Robotics</span>
+          <span>Vision AI</span>
+          <span>Additive</span>
+        </div>
         <div class="button-row">
           <a class="button" href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Read latest briefing</a>
           <a class="button secondary" href="/articles/">Original articles</a>
@@ -23,6 +29,11 @@ const latest = briefings[0];
         <p class="meta">Positioning</p>
         <h2>Daily intelligence for the future of manufacturing.</h2>
         <p>Automated briefings today; original analysis, buyer guides, interviews, and monetizable editorial tomorrow.</p>
+        <ul class="feature-list">
+          <li>Shop-floor automation trends</li>
+          <li>Machine-tool and additive signals</li>
+          <li>Industrial AI and robotics coverage</li>
+        </ul>
       </aside>
     </section>
     <AdSlot slot="leaderboard" />
