@@ -33,6 +33,18 @@ npm run build
 npm run preview
 ```
 
+## AI/generated fallback story images
+
+Briefing story cards preserve any existing `**Image:**` URL. When a story block has no image, the build runs:
+
+```sh
+npm run generate:fallback-images
+```
+
+The script scans `content/briefings/*.md`, creates a stable SVG under `public/generated-images/`, and inserts `**Image:** /generated-images/<stable-slug>.svg` into the relevant story block. If `OPENAI_API_KEY` is set, it asks OpenAI for a safe Factory Signal editorial/manufacturing SVG using `OPENAI_IMAGE_FALLBACK_MODEL` or `gpt-5.5` by default. If the API, key, or model fails, it writes a deterministic local branded SVG instead so builds do not break. Generated SVGs include a content hash and are only overwritten when the story content changes.
+
+The existing card placeholder remains in place for any item that still has no image.
+
 ## Sync briefings from the current generator output
 
 The production site reads repo-local Markdown from `content/briefings/`. To refresh from the current workspace memory directory without copying logs or junk:

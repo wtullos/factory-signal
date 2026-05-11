@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 8888",
     "preview": "astro preview --host 0.0.0.0 --port 8888",
-    "build": "astro build",
+    "generate:fallback-images": "node scripts/generate-fallback-images.mjs",
+    "build": "npm run generate:fallback-images && astro build",
     "sync:briefings": "node scripts/sync-briefings.mjs"
   },
   "dependencies": {

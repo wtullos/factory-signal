@@ -1,0 +1,38 @@
+<!-- factory-signal-generated hash:3eac91760801172dd40414b867c38aa6ce3a93933a441c3422949a33a73258bc source:local -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Factory Signal illustration for Image AI models now drive app growth, beating chatbot upgrades</title>
+  <desc id="desc">Branded editorial vector artwork for a manufacturing story about AI/ML.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset="1" stop-color="#020617"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#22c55e"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/></filter>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <path d="M0 520 C220 440 340 595 560 520 S920 405 1200 500 V675 H0Z" fill="#ede9fe" opacity="0.12"/>
+  <g opacity="0.18" stroke="#ede9fe" stroke-width="2"><path d="M85 95H1115M85 205H1115M85 315H1115M85 425H1115M85 535H1115"/><path d="M170 60V600M340 60V600M510 60V600M680 60V600M850 60V600M1020 60V600"/></g>
+  <g transform="translate(153 120)" filter="url(#shadow)">
+    <rect x="0" y="260" width="720" height="190" rx="28" fill="#0b1220" stroke="#a78bfa" stroke-width="6"/>
+    <rect x="52" y="305" width="165" height="90" rx="14" fill="#ede9fe" opacity="0.16"/>
+    <rect x="252" y="305" width="165" height="90" rx="14" fill="#ede9fe" opacity="0.16"/>
+    <rect x="452" y="305" width="165" height="90" rx="14" fill="#ede9fe" opacity="0.16"/>
+    <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#22c55e" stroke-width="5"/>
+    <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#a78bfa" stroke-width="16" stroke-linejoin="round"/>
+    <circle cx="815" cy="352" r="71" fill="url(#accent)" opacity="0.95"/>
+    <circle cx="815" cy="352" r="34" fill="#0f172a"/>
+    <g stroke="#ede9fe" stroke-width="16" stroke-linecap="round"><path d="M815 245v34M815 459v-34M708 352h34M922 352h-34"/><path d="M763.88 300.88l25 25M866.12 300.88l-25 25M763.88 403.12l25-25M866.12 403.12l-25-25"/></g>
+    <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#a78bfa" stroke-width="30" stroke-linecap="round"/>
+    <path d="M1030 330 l168 58" stroke="#22c55e" stroke-width="34" stroke-linecap="round"/>
+    <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#ede9fe" stroke-width="12"/>
+    <path d="M1198 388 l54 -35M1198 388 l46 45" stroke="#a78bfa" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(76 70)">
+    <text x="0" y="0" fill="#a78bfa" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
+    <rect x="0" y="30" width="150" height="8" rx="4" fill="#a78bfa"/>
+  </g>
+  <g transform="translate(76 535)">
+    <rect x="0" y="-66" width="170" height="96" rx="22" fill="#a78bfa"/>
+    <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">AM</text>
+    <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">AI/ML</text>
+    <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
+</svg>
