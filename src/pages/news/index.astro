@@ -5,30 +5,9 @@ import { getNewsStories, getStoryArchive } from '../../lib/content.js';
 
 const stories = getNewsStories();
 const { groups } = getStoryArchive(stories);
-const sectionCounts = stories.reduce((counts, story) => {
-  counts[story.sectionTitle] = (counts[story.sectionTitle] || 0) + 1;
-  return counts;
-}, {});
 ---
 <Base title="Manufacturing news archive" description="Manufacturing news and video items from Factory Signal briefings, with Reddit discussion split into its own trending page." pathname="/news/">
   <main>
-    <section class="hero archive-hero">
-      <div>
-        <p class="meta">Manufacturing news archive</p>
-        <h1>Real news, reporting, and videos from the Factory Signal briefing desk.</h1>
-        <p class="lede">Browse the complete backlog of parsed news and YouTube items from daily briefings. Reddit community discussion now lives in the dedicated trending tab.</p>
-        <div class="signal-strip" aria-label="Archive summary">
-          <span>{stories.length} non-Reddit stories</span>
-          <span>{groups.length} briefings</span>
-          {Object.entries(sectionCounts).map(([label, count]) => <span>{count} {label}</span>)}
-        </div>
-        <div class="button-row">
-          <a class="button" href="/reddit/">See Reddit trends</a>
-          <a class="button secondary" href="/briefings/">Full daily briefings</a>
-        </div>
-      </div>
-    </section>
-
     <section class="section-band archive-toolbar" aria-label="Archive filters">
       <p class="meta">Newest first · Reddit excluded · external story links open at the original source</p>
     </section>
