@@ -8,6 +8,7 @@
     "dev": "astro dev --host 0.0.0.0 --port 8888",
     "preview": "astro preview --host 0.0.0.0 --port 8888",
     "generate:fallback-images": "node scripts/generate-fallback-images.mjs",
+    "generate:daily-briefing": "node scripts/generate-daily-briefing.mjs",
     "build": "npm run generate:fallback-images && astro build",
     "sync:briefings": "node scripts/sync-briefings.mjs"
   },
