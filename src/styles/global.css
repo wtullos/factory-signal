@@ -252,11 +252,19 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .story-card.compact h3 { font-size: 1rem; line-height: 1.24; }
 .story-card.lead-card {
   min-height: 100%;
-  padding: 16px;
+  padding: clamp(16px, 2vw, 22px);
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,252,247,.96));
   box-shadow: var(--shadow);
 }
 .story-card.lead-card h3 { font-size: clamp(1.45rem, 3vw, 2.28rem); letter-spacing: -.035em; }
+.story-card.lead-card p:not(.meta):not(.stats) { font-size: 1.02rem; }
 .story-card.lead-card .image { aspect-ratio: 16/9; }
+.story-card.secondary-card {
+  border-left: 4px solid var(--accent);
+  background: linear-gradient(135deg, #fff, rgba(232,246,230,.42));
+}
 .story-card.secondary-card .image { aspect-ratio: 4/3; }
 .story-card.river-card {
   grid-template-columns: minmax(120px, 210px) minmax(0, 1fr);
@@ -264,8 +272,21 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   padding: 12px;
   background: rgba(255,255,255,.86);
 }
+.story-card.river-card h3 { font-size: clamp(.98rem, 1.35vw, 1.12rem); }
 .story-card.river-card .image { aspect-ratio: 5/4; border-bottom: 0; border-right: 3px solid var(--accent); }
 .story-card.river-card p:not(.meta):not(.stats) { display: none; }
+.reddit-date-layout { grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr); }
+.reddit-feature-grid { align-self: stretch; }
+.story-card.reddit-lead {
+  border-color: rgba(57,169,53,.55);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(57,169,53,.12), transparent 34%),
+    linear-gradient(180deg, #fff, rgba(232,246,230,.78));
+}
+.story-card.reddit-secondary { border-left-color: #ff4500; }
+.story-card.reddit-secondary .meta::before,
+.story-card.reddit-row .meta::before,
+.story-card.reddit-lead .meta::before { content: "r/ signal · "; color: #ff4500; }
 .story-card.reddit-row .image,
 .story-card.reddit-lead .image { filter: saturate(.9) contrast(.96); }
 .reddit-band,

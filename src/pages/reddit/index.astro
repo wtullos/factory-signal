@@ -13,9 +13,9 @@ const totalComments = stories.reduce((sum, story) => sum + (Number.parseInt(Stri
   <main>
     <section class="hero archive-hero reddit-hero">
       <div>
-        <p class="meta">Reddit trending</p>
-        <h1>What’s trending in manufacturing communities.</h1>
-        <p class="lede">Reddit posts are split out from the normal news feed so community chatter is easier to scan without crowding reported articles and videos.</p>
+        <p class="meta">Community signal, not reported news</p>
+        <h1>Reddit: what’s trending in manufacturing communities.</h1>
+        <p class="lede">A dedicated Reddit tab for shop-floor questions, maker debates, tooling threads, and operator chatter that is moving through manufacturing communities right now.</p>
         <div class="signal-strip" aria-label="Reddit archive summary">
           <span>{stories.length} Reddit posts tracked</span>
           <span>{groups.length} briefing days</span>
@@ -39,20 +39,35 @@ const totalComments = stories.reduce((sum, story) => sum + (Number.parseInt(Stri
     )}
 
     <div class="archive-list story-archive">
-      {groups.map((group) => (
-        <section class="briefing-summary reddit-edition" id={group.date}>
-          <div class="section-heading compact-heading">
-            <div>
-              <p class="meta">{group.dateLabel}</p>
-              <h2>{group.stories.length} community posts</h2>
+      {groups.map((group) => {
+        const [lead, ...rest] = group.stories;
+        const features = rest.slice(0, 2);
+        const river = rest.slice(2);
+        return (
+          <section class="briefing-summary reddit-edition" id={group.date}>
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="meta">{group.dateLabel}</p>
+                <h2>{group.stories.length} community posts</h2>
+              </div>
+              <a href={`/briefings/${group.briefingSlug}/`}>Full briefing</a>
             </div>
-            <a href={`/briefings/${group.briefingSlug}/`}>Full briefing</a>
-          </div>
-          <div class="news-river reddit-river">
-            {group.stories.map((item) => <StoryCard item={item} compact variant="river-card reddit-row" />)}
-          </div>
-        </section>
-      ))}
+            <div class="edition-layout reddit-date-layout">
+              {lead && <StoryCard item={lead} variant="lead-card reddit-lead" />}
+              {features.length > 0 && (
+                <div class="feature-grid reddit-feature-grid">
+                  {features.map((item) => <StoryCard item={item} compact variant="secondary-card reddit-secondary" />)}
+                </div>
+              )}
+              {river.length > 0 && (
+                <div class="news-river reddit-river">
+                  {river.map((item) => <StoryCard item={item} compact variant="river-card reddit-row" />)}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })}
     </div>
   </main>
 </Base>
