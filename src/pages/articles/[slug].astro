@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import ShareButton from '../../components/ShareButton.astro';
 import { getArticles } from '../../lib/content.js';
 export const prerender = true;
 export function getStaticPaths() {
@@ -12,6 +13,7 @@ const { article } = Astro.props;
     <article class="article-body">
       <p class="meta">{article.pubDate} · {article.author}</p>
       <h1>{article.title}</h1>
+      <ShareButton title={article.title} text={article.description} pathname={`/articles/${article.slug}/`} />
       <div set:html={article.html} />
     </article>
   </main>
