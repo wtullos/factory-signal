@@ -1,4 +1,6 @@
 ---
+import { isAcceptableSourceImage } from '../lib/image-rules.js';
+
 const { item, compact = false, variant = '' } = Astro.props;
 const stats = [item.views, item.duration, item.scoreCount ? `Score ${item.scoreCount}` : null, item.comments ? `${item.comments} comments` : null].filter(Boolean).join(' · ');
 
@@ -32,10 +34,6 @@ function labelFrom(item) {
     .join('') || 'FS';
 }
 
-function isDisplayImage(image) {
-  return typeof image === 'string' && (/^https?:\/\//i.test(image) || (image.startsWith('/') && !image.startsWith('//')));
-}
-
 function truncateExcerpt(value, maxLength = compact ? 150 : 190) {
   if (typeof value !== 'string') return '';
 
@@ -59,7 +57,7 @@ const placeholderStyle = [
   `--placeholder-shift: ${placeholderHash % 48}px`,
 ].join('; ');
 const placeholderLabel = labelFrom(item);
-const hasDisplayImage = isDisplayImage(item.image);
+const hasDisplayImage = isAcceptableSourceImage(item.image);
 const cardBody = truncateExcerpt(item.body);
 ---
 <article class:list={["story-card", compact && "compact", variant]}>

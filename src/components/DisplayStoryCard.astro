@@ -1,0 +1,59 @@
+---
+import { isAcceptableDisplayImage } from '../lib/image-rules.js';
+
+const { item, variant = '' } = Astro.props;
+const isLead = variant === 'lead';
+const label = [item.source, item.topic || item.sectionTitle].filter(Boolean).join(' · ');
+const stats = [item.views, item.duration, item.scoreCount ? `Score ${item.scoreCount}` : null, item.comments ? `${item.comments} comments` : null].filter(Boolean).join(' · ');
+
+function initials(value) {
+  if (typeof value !== 'string') return 'FS';
+  const words = value.replace(/[^a-zA-Z0-9\s]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'FS';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase();
+}
+
+function truncate(value, maxLength = 165) {
+  if (typeof value !== 'string') return '';
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+  const clipped = normalized.slice(0, maxLength + 1);
+  const boundary = clipped.search(/\s+\S*$/);
+  const excerpt = (boundary > maxLength * 0.6 ? clipped.slice(0, boundary) : normalized.slice(0, maxLength)).trim();
+  return `${excerpt.replace(/[\s.,;:!?-]+$/, '')}…`;
+}
+
+const excerpt = isLead ? truncate(item.body, 150) : '';
+const visualLabel = item.topic || item.sectionTitle || item.source || 'Factory Signal';
+const visualInitials = initials(visualLabel);
+const hasDisplayImage = isAcceptableDisplayImage(item.image);
+const imageSrc = hasDisplayImage ? item.image.trim() : '';
+---
+<article class:list={["display-story-card", variant, hasDisplayImage && "has-image"]}>
+  <a class="display-card-link" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`Open story: ${item.title}`}>
+    <div class:list={["display-visual-block", !hasDisplayImage && "display-fallback-art"]} aria-hidden={!hasDisplayImage ? "true" : undefined}>
+      {hasDisplayImage ? (
+        <img
+          src={imageSrc}
+          alt={`${item.title} image`}
+          loading={isLead ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchpriority={isLead ? 'high' : 'auto'}
+        />
+      ) : (
+        <>
+          <span class="display-visual-mark">{visualInitials}</span>
+          <span class="display-visual-topic">{visualLabel}</span>
+          <span class="display-visual-score">{item.score ? `${item.score}/5` : 'FS'}</span>
+        </>
+      )}
+    </div>
+    <div class="display-card-copy">
+      <span class="display-card-kicker">{label || 'Manufacturing signal'}{item.score ? ` · ${item.score}/5` : ''}</span>
+      <h2>{item.title}</h2>
+      {excerpt && <p>{excerpt}</p>}
+      {stats && <span class="display-card-stats">{stats}</span>}
+    </div>
+  </a>
+</article>

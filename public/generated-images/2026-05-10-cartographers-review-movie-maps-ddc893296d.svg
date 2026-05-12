@@ -1,7 +1,8 @@
-<!-- factory-signal-generated hash:d27231c4477a8c2eb33fd50e3898d81ec2ffbc72ae360d81da40e44e949eed27 source:local -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+<!-- factory-signal-generated hash:ad10d0be05d0e6f81cb4fd1d1f6b6bb141a9933ff3215003a4f96c7f8f20f7b7 source:local -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Factory Signal illustration for Cartographers Review Movie Maps</title>
   <desc id="desc">Branded editorial vector artwork for a manufacturing story about Embedded &amp; Automation.</desc>
+  <g transform="scale(1.3333333333333333)">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset="1" stop-color="#020617"/></linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#22c55e"/></linearGradient>
@@ -17,13 +18,13 @@
     <rect x="452" y="305" width="165" height="90" rx="14" fill="#ede9fe" opacity="0.16"/>
     <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#22c55e" stroke-width="5"/>
     <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#a78bfa" stroke-width="16" stroke-linejoin="round"/>
-    <circle cx="815" cy="352" r="82" fill="url(#accent)" opacity="0.95"/>
-    <circle cx="815" cy="352" r="39" fill="#0f172a"/>
-    <g stroke="#ede9fe" stroke-width="16" stroke-linecap="round"><path d="M815 234v34M815 470v-34M697 352h34M933 352h-34"/><path d="M755.96 292.96l25 25M874.04 292.96l-25 25M755.96 411.04l25-25M874.04 411.04l-25-25"/></g>
+    <circle cx="815" cy="352" r="113" fill="url(#accent)" opacity="0.95"/>
+    <circle cx="815" cy="352" r="54" fill="#0f172a"/>
+    <g stroke="#ede9fe" stroke-width="16" stroke-linecap="round"><path d="M815 203v34M815 501v-34M666 352h34M964 352h-34"/><path d="M733.64 270.64l25 25M896.36 270.64l-25 25M733.64 433.36l25-25M896.36 433.36l-25-25"/></g>
     <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#a78bfa" stroke-width="30" stroke-linecap="round"/>
-    <path d="M1030 330 l231 58" stroke="#22c55e" stroke-width="34" stroke-linecap="round"/>
+    <path d="M1030 330 l165 58" stroke="#22c55e" stroke-width="34" stroke-linecap="round"/>
     <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#ede9fe" stroke-width="12"/>
-    <path d="M1261 388 l54 -35M1261 388 l46 45" stroke="#a78bfa" stroke-width="18" stroke-linecap="round"/>
+    <path d="M1195 388 l54 -35M1195 388 l46 45" stroke="#a78bfa" stroke-width="18" stroke-linecap="round"/>
   </g>
   <g transform="translate(76 70)">
     <text x="0" y="0" fill="#a78bfa" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
@@ -34,5 +35,6 @@
     <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">EA</text>
     <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">Embedded &amp; Automation</text>
     <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
   </g>
 </svg>

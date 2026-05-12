@@ -1,7 +1,8 @@
-<!-- factory-signal-generated hash:4117ea4b129b86bd7ecdd09e45aa70bba2ecfc33c4d2148d50017478680c3538 source:local -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+<!-- factory-signal-generated hash:816f4fc9cdd62c149d0b52c4173a50b926c10b5ed42de924de3adc8ad6868eb9 source:local -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Factory Signal illustration for Task Management for Toolrooms</title>
   <desc id="desc">Branded editorial vector artwork for a manufacturing story about Manufacturing.</desc>
+  <g transform="scale(1.3333333333333333)">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#102a43"/><stop offset="1" stop-color="#020617"/></linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#f97316"/></linearGradient>
@@ -17,13 +18,13 @@
     <rect x="452" y="305" width="165" height="90" rx="14" fill="#ccfbf1" opacity="0.16"/>
     <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#f97316" stroke-width="5"/>
     <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#2dd4bf" stroke-width="16" stroke-linejoin="round"/>
-    <circle cx="815" cy="352" r="115" fill="url(#accent)" opacity="0.95"/>
-    <circle cx="815" cy="352" r="55" fill="#0f172a"/>
-    <g stroke="#ccfbf1" stroke-width="16" stroke-linecap="round"><path d="M815 201v34M815 503v-34M664 352h34M966 352h-34"/><path d="M732.2 269.2l25 25M897.8 269.2l-25 25M732.2 434.8l25-25M897.8 434.8l-25-25"/></g>
+    <circle cx="815" cy="352" r="119" fill="url(#accent)" opacity="0.95"/>
+    <circle cx="815" cy="352" r="57" fill="#0f172a"/>
+    <g stroke="#ccfbf1" stroke-width="16" stroke-linecap="round"><path d="M815 197v34M815 507v-34M660 352h34M970 352h-34"/><path d="M729.32 266.32l25 25M900.68 266.32l-25 25M729.32 437.68l25-25M900.68 437.68l-25-25"/></g>
     <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#2dd4bf" stroke-width="30" stroke-linecap="round"/>
-    <path d="M1030 330 l178 58" stroke="#f97316" stroke-width="34" stroke-linecap="round"/>
+    <path d="M1030 330 l245 58" stroke="#f97316" stroke-width="34" stroke-linecap="round"/>
     <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#ccfbf1" stroke-width="12"/>
-    <path d="M1208 388 l54 -35M1208 388 l46 45" stroke="#2dd4bf" stroke-width="18" stroke-linecap="round"/>
+    <path d="M1275 388 l54 -35M1275 388 l46 45" stroke="#2dd4bf" stroke-width="18" stroke-linecap="round"/>
   </g>
   <g transform="translate(76 70)">
     <text x="0" y="0" fill="#2dd4bf" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
@@ -34,5 +35,6 @@
     <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">M</text>
     <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">Manufacturing</text>
     <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
   </g>
 </svg>

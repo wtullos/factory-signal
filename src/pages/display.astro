@@ -23,7 +23,7 @@ const tickerItems = [
 ].filter((item) => item && item.sectionTitle !== 'Reddit').slice(0, 6);
 const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) => [section.title, section.items.length]));
 ---
-<Base title={SITE_NAME} description={TAGLINE} pathname="/" bodyClass="display-page">
+<Base title={SITE_NAME} description={TAGLINE} pathname="/display/" bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
     <section class="display-hero" aria-label="Factory Signal classroom display">
       <div class="display-topline">

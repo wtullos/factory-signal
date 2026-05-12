@@ -36,21 +36,49 @@ export function getArticles() {
   return fs.readdirSync(dir)
     .filter((file) => file.endsWith('.md'))
     .map((filename) => {
-      const raw = fs.readFileSync(path.join(dir, filename), 'utf8');
-      const { data, body } = parseFrontmatter(raw);
-      const slug = filename.replace(/\.md$/, '');
-      return {
-        slug,
-        title: data.title || titleFromMarkdown(body) || slug,
-        description: data.description || excerptFromMarkdown(body),
-        pubDate: data.pubDate || data.date || '',
-        author: data.author || SITE_NAME,
-        tags: Array.isArray(data.tags) ? data.tags : [],
-        body,
-        html: marked.parse(body),
-      };
+      const fullPath = path.join(dir, filename);
+      const raw = fs.readFileSync(fullPath, 'utf8');
+      const stat = fs.statSync(fullPath);
+      return parseArticleMarkdown(filename, raw, { dir: 'content/articles', updatedAt: stat.mtime.toISOString() });
     })
     .sort((a, b) => String(b.pubDate).localeCompare(String(a.pubDate)) || a.title.localeCompare(b.title));
+}
+
+export function getDraftArticles() {
+  const dir = contentPath('drafts');
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir)
+    .filter((file) => file.endsWith('.md'))
+    .map((filename) => {
+      const fullPath = path.join(dir, filename);
+      const raw = fs.readFileSync(fullPath, 'utf8');
+      const stat = fs.statSync(fullPath);
+      return parseArticleMarkdown(filename, raw, { dir: 'content/drafts', updatedAt: stat.mtime.toISOString() });
+    })
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)) || a.title.localeCompare(b.title));
+}
+
+export function parseArticleMarkdown(filename, raw, options = {}) {
+  const { data, body } = parseFrontmatter(raw);
+  const fallbackSlug = filename.replace(/\.md$/, '');
+  const slug = slugify(data.slug || fallbackSlug) || fallbackSlug;
+  const pubDate = data.pubDate || data.date || '';
+  return {
+    slug,
+    title: data.title || titleFromMarkdown(body) || slug,
+    description: data.description || excerptFromMarkdown(body),
+    pubDate,
+    date: data.date || pubDate,
+    author: data.author || SITE_NAME,
+    tags: normalizeList(data.tags),
+    status: data.status || 'draft',
+    sourceUrls: normalizeList(data.sourceUrls || data.sources || data.sourceUrl),
+    body,
+    html: marked.parse(body),
+    filename,
+    path: options.dir ? `${options.dir}/${filename}` : filename,
+    updatedAt: options.updatedAt || '',
+  };
 }
 
 export function getAllStories() {
@@ -167,11 +195,22 @@ function parseFrontmatter(raw) {
   const fm = raw.slice(3, end).trim();
   const body = raw.slice(end + 4).trim();
   const data = {};
-  for (const line of fm.split('\n')) {
+  const lines = fm.split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
     const idx = line.indexOf(':');
     if (idx === -1) continue;
     const key = line.slice(0, idx).trim();
     let value = line.slice(idx + 1).trim().replace(/^['"]|['"]$/g, '');
+    if (!value && lines[i + 1]?.trim().startsWith('- ')) {
+      const list = [];
+      while (lines[i + 1]?.trim().startsWith('- ')) {
+        i += 1;
+        list.push(lines[i].trim().slice(2).trim().replace(/^['"]|['"]$/g, ''));
+      }
+      data[key] = list.filter(Boolean);
+      continue;
+    }
     if (value.startsWith('[') && value.endsWith(']')) {
       value = value.slice(1, -1).split(',').map((v) => v.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
     }
@@ -186,4 +225,18 @@ function titleFromMarkdown(markdown) {
 
 function excerptFromMarkdown(markdown) {
   return markdown.replace(/[#>*_`\[\]()]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160);
+}
+
+function normalizeList(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (!value) return [];
+  return String(value).split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
 }

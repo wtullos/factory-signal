@@ -7,6 +7,8 @@ const {
   description = TAGLINE,
   pathname = Astro.url.pathname,
   type = 'website',
+  noindex = false,
+  bodyClass = '',
 } = Astro.props;
 const pageTitle = title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`;
 const url = canonical(pathname);
@@ -19,6 +21,7 @@ const logoPath = '/assets/factory-signal-logo.jpg';
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={url} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -32,7 +35,7 @@ const logoPath = '/assets/factory-signal-logo.jpg';
     {ADSENSE_ENABLED && <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />}
     {ADSENSE_ENABLED && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`} crossorigin="anonymous"></script>}
   </head>
-  <body>
+  <body class={bodyClass}>
     <div class="shell">
       <header class="site-header">
         <div class="header-grid">

@@ -2,6 +2,14 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import {
+  GENERATED_FALLBACK_HEIGHT,
+  GENERATED_FALLBACK_WIDTH,
+  MIN_DISPLAY_IMAGE_WIDTH,
+  isAcceptableSourceImage,
+  largestSrcsetCandidate,
+  scoreImageCandidate,
+} from '../src/lib/image-rules.js';
 
 const root = process.cwd();
 const briefingsDir = path.join(root, 'content', 'briefings');
@@ -99,7 +107,12 @@ async function processBriefing(filename, content, imageCache) {
     const slug = stableSlug(filename, story);
     const publicPath = `${publicPrefix}/${slug}.svg`;
     const outputPath = path.join(outputDir, `${slug}.svg`);
-    const hash = contentHash({ ...story, sectionTitle: undefined, image: undefined });
+    const hash = contentHash({
+      ...story,
+      sectionTitle: undefined,
+      image: undefined,
+      generatedFallbackSize: `${GENERATED_FALLBACK_WIDTH}x${GENERATED_FALLBACK_HEIGHT}`,
+    });
     const currentHash = await readGeneratedHash(outputPath);
 
     if (currentHash === hash) {
@@ -190,7 +203,10 @@ function isRedditStory(story) {
 async function findArticleImage(url, cache, stats) {
   const key = normalizeUrl(url);
   if (!key) return '';
-  if (Object.hasOwn(cache, key)) return cache[key]?.image || '';
+  if (Object.hasOwn(cache, key)) {
+    const cachedImage = cache[key]?.image || '';
+    return isAcceptableSourceImage(cachedImage) ? cachedImage : '';
+  }
 
   try {
     const image = await scrapeArticleImage(key);
@@ -235,26 +251,46 @@ function extractBestImage(html, baseUrl) {
     /<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["'][^>]*>/gi,
     /<link[^>]+href=["']([^"']+)["'][^>]+rel=["']image_src["'][^>]*>/gi,
   ];
+  const metaWidth = metaDimension(html, /(?:og:image:width|twitter:image:width)/i);
+  const metaHeight = metaDimension(html, /(?:og:image:height|twitter:image:height)/i);
   for (const pattern of metaPatterns) {
-    for (const match of html.matchAll(pattern)) candidates.push({ url: decodeHtml(match[1]), score: 100 });
+    for (const match of html.matchAll(pattern)) {
+      candidates.push({ url: decodeHtml(match[1]), score: 100, width: metaWidth, height: metaHeight, source: 'meta' });
+    }
   }
 
   for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
     const tag = match[0];
-    const src = attr(tag, 'src') || attr(tag, 'data-src') || attr(tag, 'data-original') || attr(tag, 'data-lazy-src');
+    const src = largestSrcsetCandidate(attr(tag, 'srcset') || attr(tag, 'data-srcset'))
+      || attr(tag, 'src')
+      || attr(tag, 'data-src')
+      || attr(tag, 'data-original')
+      || attr(tag, 'data-lazy-src');
     if (!src) continue;
     const width = Number.parseInt(attr(tag, 'width') || '0', 10);
     const height = Number.parseInt(attr(tag, 'height') || '0', 10);
     const alt = attr(tag, 'alt');
     const area = width * height;
-    const score = (area >= 90000 ? 70 : 35) + (alt ? 8 : 0) + Math.min(area / 10000, 30);
-    candidates.push({ url: decodeHtml(src), score });
+    const score = (area >= MIN_DISPLAY_IMAGE_WIDTH * 500 ? 80 : 35) + (alt ? 8 : 0) + Math.min(area / 10000, 30);
+    candidates.push({ url: decodeHtml(src), score, width, height, source: attr(tag, 'srcset') ? 'srcset' : 'img' });
   }
 
   return candidates
     .map((candidate) => ({ ...candidate, url: absolutize(candidate.url, baseUrl) }))
-    .filter((candidate) => isUsableImageUrl(candidate.url))
+    .map((candidate) => ({ ...candidate, score: scoreImageCandidate(candidate) }))
+    .filter((candidate) => Number.isFinite(candidate.score))
     .sort((a, b) => b.score - a.score)[0]?.url || '';
+}
+
+function metaDimension(html, namePattern) {
+  for (const match of html.matchAll(/<meta\b[^>]*>/gi)) {
+    const tag = match[0];
+    const property = attr(tag, 'property') || attr(tag, 'name');
+    if (!namePattern.test(property)) continue;
+    const value = Number.parseInt(attr(tag, 'content') || '0', 10);
+    if (value > 0) return value;
+  }
+  return 0;
 }
 
 function attr(tag, name) {
@@ -270,10 +306,7 @@ function absolutize(value, baseUrl) {
 }
 
 function isUsableImageUrl(value) {
-  if (!/^https?:\/\//i.test(value)) return false;
-  if (/\.(svg|gif)(?:[?#]|$)/i.test(value)) return false;
-  if (/logo|icon|avatar|sprite|placeholder|tracking/i.test(value)) return false;
-  return true;
+  return isAcceptableSourceImage(value);
 }
 
 function normalizeUrl(value) {
@@ -334,7 +367,7 @@ async function createSvg(story, hash) {
 }
 
 async function generateWithOpenAI(story) {
-  const prompt = `Create a safe, original, editorial SVG illustration for a Factory Signal story card.\n\nBrand: Factory Signal, daily intelligence for the future of manufacturing.\nStyle: clean vector, modern manufacturing trade publication, dark navy background with amber/cyan accents, no logos except small text "Factory Signal", no copyrighted characters, no photorealistic faces, no political symbols.\nSubject: ${story.topic || 'advanced manufacturing'}\nTitle: ${story.title}\nSource: ${story.source}\nSummary: ${story.body || 'Manufacturing, automation, robotics, CNC, 3D printing, or industrial AI story.'}\n\nReturn only complete inline SVG markup. Requirements: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675">, no Markdown fences, no scripts, no foreignObject, no external images, no remote links, no event handlers, accessible <title> and <desc>.`;
+  const prompt = `Create a safe, original, editorial SVG illustration for a Factory Signal story card.\n\nBrand: Factory Signal, daily intelligence for the future of manufacturing.\nStyle: clean vector, modern manufacturing trade publication, dark navy background with amber/cyan accents, no logos except small text "Factory Signal", no copyrighted characters, no photorealistic faces, no political symbols.\nSubject: ${story.topic || 'advanced manufacturing'}\nTitle: ${story.title}\nSource: ${story.source}\nSummary: ${story.body || 'Manufacturing, automation, robotics, CNC, 3D printing, or industrial AI story.'}\n\nReturn only complete inline SVG markup. Requirements: <svg xmlns="http://www.w3.org/2000/svg" width="${GENERATED_FALLBACK_WIDTH}" height="${GENERATED_FALLBACK_HEIGHT}" viewBox="0 0 ${GENERATED_FALLBACK_WIDTH} ${GENERATED_FALLBACK_HEIGHT}">, no Markdown fences, no scripts, no foreignObject, no external images, no remote links, no event handlers, accessible <title> and <desc>.`;
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -390,7 +423,9 @@ function sanitizeSvg(raw, hash) {
   }
 
   if (!/<svg\b[^>]*xmlns=/i.test(svg)) svg = svg.replace(/<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
-  if (!/<svg\b[^>]*viewBox=/i.test(svg)) svg = svg.replace(/<svg\b/i, '<svg viewBox="0 0 1200 675"');
+  if (!/<svg\b[^>]*viewBox=/i.test(svg)) svg = svg.replace(/<svg\b/i, `<svg viewBox="0 0 ${GENERATED_FALLBACK_WIDTH} ${GENERATED_FALLBACK_HEIGHT}"`);
+  if (!/<svg\b[^>]*\swidth=/i.test(svg)) svg = svg.replace(/<svg\b/i, `<svg width="${GENERATED_FALLBACK_WIDTH}"`);
+  if (!/<svg\b[^>]*\sheight=/i.test(svg)) svg = svg.replace(/<svg\b/i, `<svg height="${GENERATED_FALLBACK_HEIGHT}"`);
   if (!/<title>/i.test(svg)) svg = svg.replace(/(<svg\b[^>]*>)/i, '$1<title>Factory Signal generated story illustration</title>');
   return `<!-- factory-signal-generated hash:${hash} source:openai -->\n${svg}\n`;
 }
@@ -408,9 +443,10 @@ function localSvg(story, hash) {
   const shift = c % 90;
 
   return `<!-- factory-signal-generated hash:${hash} source:local -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="${GENERATED_FALLBACK_WIDTH}" height="${GENERATED_FALLBACK_HEIGHT}" viewBox="0 0 ${GENERATED_FALLBACK_WIDTH} ${GENERATED_FALLBACK_HEIGHT}" role="img" aria-labelledby="title desc">
   <title id="title">Factory Signal illustration for ${title}</title>
   <desc id="desc">Branded editorial vector artwork for a manufacturing story about ${topic}.</desc>
+  <g transform="scale(${GENERATED_FALLBACK_WIDTH / 1200})">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette[0]}"/><stop offset="1" stop-color="#020617"/></linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette[1]}"/><stop offset="1" stop-color="${palette[3]}"/></linearGradient>
@@ -443,6 +479,7 @@ function localSvg(story, hash) {
     <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">${escapeXml(label)}</text>
     <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">${topic}</text>
     <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
   </g>
 </svg>
 `;

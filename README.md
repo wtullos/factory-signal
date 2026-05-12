@@ -43,6 +43,8 @@ npm run generate:fallback-images
 
 The script scans `content/briefings/*.md`, creates a stable SVG under `public/generated-images/`, and inserts `**Image:** /generated-images/<stable-slug>.svg` into the relevant story block. If `OPENAI_API_KEY` is set, it asks OpenAI for a safe Factory Signal editorial/manufacturing SVG using `OPENAI_IMAGE_FALLBACK_MODEL` or `gpt-5.5` by default. If the API, key, or model fails, it writes a deterministic local branded SVG instead so builds do not break. Generated SVGs include a content hash and are only overwritten when the story content changes.
 
+Image quality rule: source images are screened before card rendering. Obvious icons, logos, avatars, tracking pixels, placeholders, SVG/GIF remotes, and URL/metadata dimensions below about 600px wide are skipped. Homepage/display cards use a stricter 1200px-wide target; if a remote image is known to be smaller than that, the display card falls back to branded art instead of stretching a thumbnail. Unknown dimensions are allowed when the URL is otherwise credible so valid article images are not rejected just because metadata is missing. Generated fallback SVGs are requested/written at 1600×900 for large classroom-display cards.
+
 The existing card placeholder remains in place for any item that still has no image.
 
 ## Sync briefings from the current generator output
@@ -70,6 +72,35 @@ tags: ["automation", "CNC"]
 
 Article body...
 ```
+
+## Private draft review workflow
+
+Generated article drafts belong in `content/drafts/*.md`. That directory is gitignored, and drafts are not read by the public article routes, RSS feed, or production build unless the review page is explicitly enabled.
+
+Run the local review inbox:
+
+```sh
+FS_ENABLE_REVIEW_PAGE=true npm run dev
+```
+
+Then visit:
+
+```text
+http://localhost:8888/review/
+```
+
+Approval workflow:
+
+1. Review the draft at `/review/`.
+2. If approved, move/rename the Markdown file from `content/drafts/` into `content/articles/`. You can do this manually or run:
+
+   ```sh
+   node scripts/publish-draft.mjs <draft-slug-or-file>
+   ```
+
+3. Run `npm run build` and deploy when ready.
+
+The review page is excluded by default. To build it intentionally, set `FS_ENABLE_REVIEW_PAGE=true` during the Astro build. If you later want a hosted login-protected review page, use Cloudflare Access to protect `/review/*`; do not rely on client-side passwords or hidden-page JavaScript for security.
 
 ## Monetization placeholders
 

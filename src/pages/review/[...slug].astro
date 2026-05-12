@@ -1,0 +1,92 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDraftArticles, formatDate } from '../../lib/content.js';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  if (process.env.FS_ENABLE_REVIEW_PAGE !== 'true') return [];
+  return [{ params: { slug: undefined } }];
+}
+
+const drafts = getDraftArticles();
+const shellCommand = (draft) => `node scripts/publish-draft.mjs ${draft.slug || draft.filename}`;
+const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
+---
+<Base title="Draft review inbox" description="Private local Factory Signal draft review inbox." pathname="/review/" noindex={true}>
+  <main>
+    <div class="section-heading">
+      <div>
+        <p class="meta">Private local workflow · not enabled in production by default</p>
+        <h1>Draft review inbox</h1>
+      </div>
+    </div>
+
+    <section class="panel review-warning">
+      <h2>Review before publishing</h2>
+      <p>
+        This page reads Markdown files from <code>content/drafts/</code>. Drafts are not public articles and this route only builds when
+        <code>FS_ENABLE_REVIEW_PAGE=true</code> is set. For a hosted protected review page later, put <code>/review/*</code> behind Cloudflare Access;
+        do not rely on browser-side passwords.
+      </p>
+    </section>
+
+    {drafts.length === 0 ? (
+      <section class="panel empty-state">
+        <h2>No drafts found</h2>
+        <p>Add generated Markdown drafts to <code>content/drafts/*.md</code>, then refresh this page.</p>
+      </section>
+    ) : (
+      <div class="review-list">
+        {drafts.map((draft) => (
+          <article class="panel draft-card">
+            <header class="draft-header">
+              <div>
+                <p class="meta">{draft.status} · {draft.pubDate && hasDate(draft.pubDate) ? formatDate(draft.pubDate.slice(0, 10)) : draft.pubDate || 'No publish date'}</p>
+                <h2>{draft.title}</h2>
+              </div>
+              <span class="draft-slug">{draft.slug}</span>
+            </header>
+
+            <dl class="review-meta">
+              <div><dt>Author</dt><dd>{draft.author}</dd></div>
+              <div><dt>File</dt><dd><code>{draft.path}</code></dd></div>
+              <div><dt>Updated</dt><dd>{draft.updatedAt || 'Unknown'}</dd></div>
+            </dl>
+
+            {draft.description && <p class="draft-description">{draft.description}</p>}
+
+            {draft.tags.length > 0 && (
+              <div class="tag-row" aria-label="Tags">
+                {draft.tags.map((tag) => <span>{tag}</span>)}
+              </div>
+            )}
+
+            {draft.sourceUrls.length > 0 && (
+              <section class="source-list">
+                <h3>Sources</h3>
+                <ul>
+                  {draft.sourceUrls.map((url) => <li><a href={url}>{url}</a></li>)}
+                </ul>
+              </section>
+            )}
+
+            <section class="body-preview">
+              <h3>Body preview</h3>
+              <div set:html={draft.html} />
+            </section>
+
+            <section class="publish-command">
+              <h3>Approve and publish</h3>
+              <p>After approval, move this Markdown file into <code>content/articles/</code> and run build/deploy when ready.</p>
+              <label>
+                Copyable helper command
+                <input readonly value={shellCommand(draft)} onfocus="this.select()" />
+              </label>
+            </section>
+          </article>
+        ))}
+      </div>
+    )}
+  </main>
+</Base>

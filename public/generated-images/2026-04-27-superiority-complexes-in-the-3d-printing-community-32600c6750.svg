@@ -1,38 +1,40 @@
-<!-- factory-signal-generated hash:6a0645c246005a4154f03594189609f4b570b89399f9cf277560b58b95591ee6 source:local -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+<!-- factory-signal-generated hash:6ebfc6a9f59c8fc08a729932ed1918709fdcb2b588f08ffd396d39b01862d9c5 source:local -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Factory Signal illustration for Superiority complexes in the 3d printing community</title>
   <desc id="desc">Branded editorial vector artwork for a manufacturing story about 3D Printing.</desc>
+  <g transform="scale(1.3333333333333333)">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f172a"/><stop offset="1" stop-color="#020617"/></linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#431407"/><stop offset="1" stop-color="#020617"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#38bdf8"/></linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/></filter>
   </defs>
   <rect width="1200" height="675" fill="url(#bg)"/>
-  <path d="M0 520 C220 440 340 595 560 520 S920 405 1200 500 V675 H0Z" fill="#fde68a" opacity="0.12"/>
-  <g opacity="0.18" stroke="#fde68a" stroke-width="2"><path d="M85 95H1115M85 205H1115M85 315H1115M85 425H1115M85 535H1115"/><path d="M170 60V600M340 60V600M510 60V600M680 60V600M850 60V600M1020 60V600"/></g>
-  <g transform="translate(130 120)" filter="url(#shadow)">
-    <rect x="0" y="260" width="720" height="190" rx="28" fill="#0b1220" stroke="#f59e0b" stroke-width="6"/>
-    <rect x="52" y="305" width="165" height="90" rx="14" fill="#fde68a" opacity="0.16"/>
-    <rect x="252" y="305" width="165" height="90" rx="14" fill="#fde68a" opacity="0.16"/>
-    <rect x="452" y="305" width="165" height="90" rx="14" fill="#fde68a" opacity="0.16"/>
+  <path d="M0 520 C220 440 340 595 560 520 S920 405 1200 500 V675 H0Z" fill="#fee2e2" opacity="0.12"/>
+  <g opacity="0.18" stroke="#fee2e2" stroke-width="2"><path d="M85 95H1115M85 205H1115M85 315H1115M85 425H1115M85 535H1115"/><path d="M170 60V600M340 60V600M510 60V600M680 60V600M850 60V600M1020 60V600"/></g>
+  <g transform="translate(183 120)" filter="url(#shadow)">
+    <rect x="0" y="260" width="720" height="190" rx="28" fill="#0b1220" stroke="#ef4444" stroke-width="6"/>
+    <rect x="52" y="305" width="165" height="90" rx="14" fill="#fee2e2" opacity="0.16"/>
+    <rect x="252" y="305" width="165" height="90" rx="14" fill="#fee2e2" opacity="0.16"/>
+    <rect x="452" y="305" width="165" height="90" rx="14" fill="#fee2e2" opacity="0.16"/>
     <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#38bdf8" stroke-width="5"/>
-    <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#f59e0b" stroke-width="16" stroke-linejoin="round"/>
-    <circle cx="815" cy="352" r="70" fill="url(#accent)" opacity="0.95"/>
-    <circle cx="815" cy="352" r="34" fill="#0f172a"/>
-    <g stroke="#fde68a" stroke-width="16" stroke-linecap="round"><path d="M815 246v34M815 458v-34M709 352h34M921 352h-34"/><path d="M764.6 301.6l25 25M865.4 301.6l-25 25M764.6 402.4l25-25M865.4 402.4l-25-25"/></g>
-    <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#f59e0b" stroke-width="30" stroke-linecap="round"/>
-    <path d="M1030 330 l230 58" stroke="#38bdf8" stroke-width="34" stroke-linecap="round"/>
-    <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#fde68a" stroke-width="12"/>
-    <path d="M1260 388 l54 -35M1260 388 l46 45" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>
+    <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#ef4444" stroke-width="16" stroke-linejoin="round"/>
+    <circle cx="815" cy="352" r="116" fill="url(#accent)" opacity="0.95"/>
+    <circle cx="815" cy="352" r="56" fill="#0f172a"/>
+    <g stroke="#fee2e2" stroke-width="16" stroke-linecap="round"><path d="M815 200v34M815 504v-34M663 352h34M967 352h-34"/><path d="M731.48 268.48l25 25M898.52 268.48l-25 25M731.48 435.52l25-25M898.52 435.52l-25-25"/></g>
+    <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#ef4444" stroke-width="30" stroke-linecap="round"/>
+    <path d="M1030 330 l165 58" stroke="#38bdf8" stroke-width="34" stroke-linecap="round"/>
+    <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#fee2e2" stroke-width="12"/>
+    <path d="M1195 388 l54 -35M1195 388 l46 45" stroke="#ef4444" stroke-width="18" stroke-linecap="round"/>
   </g>
   <g transform="translate(76 70)">
-    <text x="0" y="0" fill="#f59e0b" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
-    <rect x="0" y="30" width="150" height="8" rx="4" fill="#f59e0b"/>
+    <text x="0" y="0" fill="#ef4444" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
+    <rect x="0" y="30" width="150" height="8" rx="4" fill="#ef4444"/>
   </g>
   <g transform="translate(76 535)">
-    <rect x="0" y="-66" width="170" height="96" rx="22" fill="#f59e0b"/>
+    <rect x="0" y="-66" width="170" height="96" rx="22" fill="#ef4444"/>
     <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">3P</text>
     <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">3D Printing</text>
     <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
   </g>
 </svg>

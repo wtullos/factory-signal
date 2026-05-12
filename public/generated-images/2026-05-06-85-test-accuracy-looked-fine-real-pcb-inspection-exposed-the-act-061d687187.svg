@@ -1,38 +1,40 @@
-<!-- factory-signal-generated hash:675c156f3528e239867519baec0b7aaa010e4bdba3f8a5ba6eabb8480f22fc0c source:local -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+<!-- factory-signal-generated hash:ee8e246801cbb471a511c596599cc92c429f46f9979ddcd31a04f76d81f93561 source:local -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Factory Signal illustration for 85% test accuracy looked fine. Real PCB inspection exposed the actual problem.</title>
   <desc id="desc">Branded editorial vector artwork for a manufacturing story about AI Vision.</desc>
+  <g transform="scale(1.3333333333333333)">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b1d0f"/><stop offset="1" stop-color="#020617"/></linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#134e4a"/><stop offset="1" stop-color="#020617"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14b8a6"/><stop offset="1" stop-color="#facc15"/></linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/></filter>
   </defs>
   <rect width="1200" height="675" fill="url(#bg)"/>
-  <path d="M0 520 C220 440 340 595 560 520 S920 405 1200 500 V675 H0Z" fill="#ffedd5" opacity="0.12"/>
-  <g opacity="0.18" stroke="#ffedd5" stroke-width="2"><path d="M85 95H1115M85 205H1115M85 315H1115M85 425H1115M85 535H1115"/><path d="M170 60V600M340 60V600M510 60V600M680 60V600M850 60V600M1020 60V600"/></g>
-  <g transform="translate(176 120)" filter="url(#shadow)">
-    <rect x="0" y="260" width="720" height="190" rx="28" fill="#0b1220" stroke="#fb923c" stroke-width="6"/>
-    <rect x="52" y="305" width="165" height="90" rx="14" fill="#ffedd5" opacity="0.16"/>
-    <rect x="252" y="305" width="165" height="90" rx="14" fill="#ffedd5" opacity="0.16"/>
-    <rect x="452" y="305" width="165" height="90" rx="14" fill="#ffedd5" opacity="0.16"/>
-    <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#60a5fa" stroke-width="5"/>
-    <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#fb923c" stroke-width="16" stroke-linejoin="round"/>
-    <circle cx="815" cy="352" r="110" fill="url(#accent)" opacity="0.95"/>
-    <circle cx="815" cy="352" r="53" fill="#0f172a"/>
-    <g stroke="#ffedd5" stroke-width="16" stroke-linecap="round"><path d="M815 206v34M815 498v-34M669 352h34M961 352h-34"/><path d="M735.8 272.8l25 25M894.2 272.8l-25 25M735.8 431.2l25-25M894.2 431.2l-25-25"/></g>
-    <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#fb923c" stroke-width="30" stroke-linecap="round"/>
-    <path d="M1030 330 l213 58" stroke="#60a5fa" stroke-width="34" stroke-linecap="round"/>
-    <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#ffedd5" stroke-width="12"/>
-    <path d="M1243 388 l54 -35M1243 388 l46 45" stroke="#fb923c" stroke-width="18" stroke-linecap="round"/>
+  <path d="M0 520 C220 440 340 595 560 520 S920 405 1200 500 V675 H0Z" fill="#ccfbf1" opacity="0.12"/>
+  <g opacity="0.18" stroke="#ccfbf1" stroke-width="2"><path d="M85 95H1115M85 205H1115M85 315H1115M85 425H1115M85 535H1115"/><path d="M170 60V600M340 60V600M510 60V600M680 60V600M850 60V600M1020 60V600"/></g>
+  <g transform="translate(130 120)" filter="url(#shadow)">
+    <rect x="0" y="260" width="720" height="190" rx="28" fill="#0b1220" stroke="#14b8a6" stroke-width="6"/>
+    <rect x="52" y="305" width="165" height="90" rx="14" fill="#ccfbf1" opacity="0.16"/>
+    <rect x="252" y="305" width="165" height="90" rx="14" fill="#ccfbf1" opacity="0.16"/>
+    <rect x="452" y="305" width="165" height="90" rx="14" fill="#ccfbf1" opacity="0.16"/>
+    <path d="M92 260 L150 170 H620 L685 260Z" fill="#111827" stroke="#facc15" stroke-width="5"/>
+    <path d="M215 166 V86 H300 V166M465 166 V70 H550 V166" fill="none" stroke="#14b8a6" stroke-width="16" stroke-linejoin="round"/>
+    <circle cx="815" cy="352" r="108" fill="url(#accent)" opacity="0.95"/>
+    <circle cx="815" cy="352" r="52" fill="#0f172a"/>
+    <g stroke="#ccfbf1" stroke-width="16" stroke-linecap="round"><path d="M815 208v34M815 496v-34M671 352h34M959 352h-34"/><path d="M737.24 274.24l25 25M892.76 274.24l-25 25M737.24 429.76l25-25M892.76 429.76l-25-25"/></g>
+    <path d="M835 284 C910 210 1010 245 1030 330" fill="none" stroke="#14b8a6" stroke-width="30" stroke-linecap="round"/>
+    <path d="M1030 330 l161 58" stroke="#facc15" stroke-width="34" stroke-linecap="round"/>
+    <circle cx="1030" cy="330" r="38" fill="#0f172a" stroke="#ccfbf1" stroke-width="12"/>
+    <path d="M1191 388 l54 -35M1191 388 l46 45" stroke="#14b8a6" stroke-width="18" stroke-linecap="round"/>
   </g>
   <g transform="translate(76 70)">
-    <text x="0" y="0" fill="#fb923c" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
-    <rect x="0" y="30" width="150" height="8" rx="4" fill="#fb923c"/>
+    <text x="0" y="0" fill="#14b8a6" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" letter-spacing="4">FACTORY SIGNAL</text>
+    <rect x="0" y="30" width="150" height="8" rx="4" fill="#14b8a6"/>
   </g>
   <g transform="translate(76 535)">
-    <rect x="0" y="-66" width="170" height="96" rx="22" fill="#fb923c"/>
+    <rect x="0" y="-66" width="170" height="96" rx="22" fill="#14b8a6"/>
     <text x="85" y="0" text-anchor="middle" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="900">AV</text>
     <text x="205" y="-26" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">AI Vision</text>
     <text x="205" y="18" fill="#cbd5e1" font-family="Inter, Arial, sans-serif" font-size="22">Generated editorial artwork</text>
+  </g>
   </g>
 </svg>
