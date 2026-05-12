@@ -2,7 +2,20 @@
 import Base from '../layouts/Base.astro';
 import DisplayStoryCard from '../components/DisplayStoryCard.astro';
 import StoryCard from '../components/StoryCard.astro';
-import { getBriefings, getArticles, getNewsStories, getRedditStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
+import { getBriefings, getArticles, getNewsStories, getRedditStories, getStoryArchive, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function storyIdentity(item) {
+  return item?.archiveKey || item?.url || item?.title || '';
+}
 
 const briefings = getBriefings();
 const articles = getArticles();
@@ -15,12 +28,20 @@ const latestNewsOnly = latest
       sections: latest.sections.filter((section) => section.title !== 'Reddit'),
     }
   : null;
-const latestSignals = topItems(latestNewsOnly, 6).filter((item) => item.sectionTitle !== 'Reddit');
-const leadStory = latestSignals[0] || stories[0];
-const supportStories = (latestSignals.length > 1 ? latestSignals.slice(1, 4) : stories.slice(1, 4)).filter((item) => item && item.sectionTitle !== 'Reddit');
+const latestSignals = topItems(latestNewsOnly, 12).filter((item) => item.sectionTitle !== 'Reddit');
+const leadRotationSeed = [latest?.generatedAt, latest?.updatedAt, latest?.slug].filter(Boolean).join('|');
+const rotatedLeadIndex = latestSignals.length > 0 ? hashString(leadRotationSeed || latestSignals.map(storyIdentity).join('|')) % latestSignals.length : 0;
+const leadStory = latestSignals[rotatedLeadIndex] || stories[0];
+const leadStoryIdentity = storyIdentity(leadStory);
+const supportCandidates = latestSignals.filter((item) => storyIdentity(item) !== leadStoryIdentity && item?.url !== leadStory?.url && item?.title !== leadStory?.title);
+const supportFallbacks = stories.filter((item) => storyIdentity(item) !== leadStoryIdentity && item?.url !== leadStory?.url && item?.title !== leadStory?.title);
+const supportStories = [...supportCandidates, ...supportFallbacks]
+  .filter((item, index, all) => item && item.sectionTitle !== 'Reddit' && all.findIndex((candidate) => storyIdentity(candidate) === storyIdentity(item) || candidate?.url === item?.url || candidate?.title === item?.title) === index)
+  .slice(0, 3);
 const tickerItems = [
   ...stories,
 ].filter((item) => item && item.sectionTitle !== 'Reddit').slice(0, 6);
+const archive = getStoryArchive(stories.filter((item) => item && item.sectionTitle !== 'Reddit'));
 const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) => [section.title, section.items.length]));
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/" bodyClass="display-page">
@@ -76,11 +97,28 @@ const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) 
       </div>
     </section>
 
-    {stories.length > 0 && (
-      <section class="display-mobile-river" aria-label="More stories">
-        <div class="section-heading"><h2>More signals</h2><a href="/news/">All news</a></div>
-        <div class="story-grid">
-          {stories.slice(0, 6).map((item) => <StoryCard item={item} compact variant="secondary-card" />)}
+    {archive.groups.length > 0 && (
+      <section class="display-archive-river" aria-label="Full Factory Signal story archive">
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Keep scrolling</p>
+            <h2>Signal archive river</h2>
+          </div>
+          <a href="/news/">All news</a>
+        </div>
+        <p class="archive-river-intro">A continuous, newest-first stream of non-Reddit manufacturing signals from every briefing.</p>
+        <div class="archive-river-groups">
+          {archive.groups.map((group) => (
+            <section class="archive-river-day" aria-labelledby={`archive-${group.date}`}>
+              <div class="archive-river-date">
+                <h3 id={`archive-${group.date}`}>{group.dateLabel}</h3>
+                <a href={`/briefings/${group.briefingSlug}/`}>Open briefing</a>
+              </div>
+              <div class="archive-river-grid">
+                {group.stories.map((item) => <StoryCard item={item} compact variant="river-card archive-river-card" />)}
+              </div>
+            </section>
+          ))}
         </div>
       </section>
     )}
