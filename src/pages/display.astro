@@ -2,12 +2,13 @@
 import Base from '../layouts/Base.astro';
 import DisplayStoryCard from '../components/DisplayStoryCard.astro';
 import StoryCard from '../components/StoryCard.astro';
-import { getBriefings, getArticles, getNewsStories, getRedditStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
+import { getBriefings, getArticles, getNewsStories, getRedditStories, getWhitepaperStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
 
 const briefings = getBriefings();
 const articles = getArticles();
 const stories = getNewsStories();
 const redditStories = getRedditStories();
+const whitepaperStories = getWhitepaperStories(3);
 const latest = briefings[0];
 const latestNewsOnly = latest
   ? {
@@ -50,6 +51,7 @@ const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) 
           <span><strong>{sectionCounts.Reddit || redditStories.length}</strong> Community</span>
           <span><strong>{sectionCounts.YouTube || 0}</strong> Video</span>
           <span><strong>{articles.length}</strong> Articles</span>
+          <span><strong>{whitepaperStories.length}</strong> Papers</span>
         </div>
         <p>Scan later: visit <strong>thefactorysignal.com</strong> for links, sources, and the full briefing archive.</p>
       </div>
@@ -66,6 +68,27 @@ const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) 
         ))}
       </div>
     </section>
+
+    {whitepaperStories.length > 0 && (
+      <section class="display-whitepapers" aria-label="Whitepaper library">
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Download queue</p>
+            <h2>Whitepaper library</h2>
+          </div>
+          <a href={whitepaperStories[0].url} target="_blank" rel="noopener noreferrer">Latest paper</a>
+        </div>
+        <div class="whitepaper-grid">
+          {whitepaperStories.map((item) => (
+            <a class="whitepaper-card" href={item.url} target="_blank" rel="noopener noreferrer">
+              <span class="meta">{item.source || item.topic || 'Resource'} · {item.dateLabel}</span>
+              <strong>{item.title}</strong>
+              {item.body && <p>{item.body}</p>}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
 
     <section class="display-deep-links" aria-label="Browse Factory Signal">
       <div class="section-heading"><h2>Browse the archive</h2><a href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Open latest briefing</a></div>

@@ -479,6 +479,7 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .display-dashboard,
 .display-agenda,
 .display-ticker,
+.display-whitepapers,
 .display-deep-links,
 .display-mobile-river,
 .display-archive-river {
@@ -589,14 +590,35 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .ticker-track a { padding: 10px 12px; border-left: 3px solid var(--accent); background: rgba(232,246,230,.56); color: var(--ink-strong); font-size: clamp(.95rem, 1.05vw, 1.25rem); font-weight: 850; line-height: 1.2; text-decoration: none; }
 .ticker-track span { display: block; margin-bottom: 4px; color: var(--accent-dark); font-size: .68em; letter-spacing: .12em; text-transform: uppercase; }
 .display-deep-links,
+.display-whitepapers,
 .display-mobile-river,
 .display-archive-river { padding: clamp(14px, 1.6vw, 24px); }
 .display-page .display-deep-links .section-heading h2,
+.display-page .display-whitepapers .section-heading h2,
 .display-page .display-mobile-river .section-heading h2,
 .display-page .display-archive-river .section-heading h2 { color: var(--ink-strong); }
 .display-page .display-deep-links .section-heading a,
+.display-page .display-whitepapers .section-heading a,
 .display-page .display-mobile-river .section-heading a,
 .display-page .display-archive-river .section-heading a { color: var(--accent-dark); }
+.display-whitepapers {
+  background:
+    linear-gradient(135deg, rgba(232,246,230,.82), rgba(255,255,255,.9));
+}
+.whitepaper-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 14px; }
+.whitepaper-card {
+  display: grid;
+  gap: 8px;
+  min-height: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  background: rgba(255,255,255,.84);
+  color: var(--ink);
+  text-decoration: none;
+}
+.whitepaper-card strong { color: var(--ink-strong); font-size: clamp(1rem, 1.18vw, 1.35rem); line-height: 1.15; }
+.whitepaper-card p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.35; }
 .display-link-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .display-link-grid a { color: var(--ink); text-decoration: none; background: rgba(255,255,255,.78); border-color: var(--line); }
 .display-link-grid strong { display: block; color: var(--ink-strong); font-size: clamp(1.4rem, 2vw, 2.4rem); line-height: 1.05; }

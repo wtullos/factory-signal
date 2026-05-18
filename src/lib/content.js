@@ -107,6 +107,46 @@ export function getRedditStories() {
   return getStoriesBySection('Reddit');
 }
 
+const WHITEPAPER_ASSET_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|research paper|technical paper|working paper|conference paper|study|survey|report|pdf)\b/i;
+const WHITEPAPER_TITLE_URL_TERMS = WHITEPAPER_ASSET_TERMS;
+const WHITEPAPER_SOURCE_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|journal|arxiv)\b/i;
+const WHITEPAPER_BODY_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|research paper|technical paper|working paper|conference paper|peer[-\s]?reviewed paper|journal (?:article|paper|study)|(?:new|published|released|download(?:ed)?) (?:a |an |the )?(?:paper|report|study|white\s*paper|whitepaper|e-?book|case study|pdf)|study (?:published|appearing) in (?:a |an |the )?(?:journal|proceedings))\b/i;
+
+export function isWhitepaperStory(story) {
+  if (!story || story.sectionTitle === 'Reddit') return false;
+  const titleAndUrl = [story.title, story.url].filter(Boolean).join(' ');
+  const source = story.source || '';
+  const body = story.body || '';
+
+  return WHITEPAPER_TITLE_URL_TERMS.test(titleAndUrl)
+    || WHITEPAPER_SOURCE_TERMS.test(source)
+    || WHITEPAPER_BODY_TERMS.test(body);
+}
+
+export function getWhitepaperStories(limit) {
+  const stories = getNewsStories()
+    .filter(isWhitepaperStory)
+    .sort((a, b) => b.date.localeCompare(a.date) || whitepaperScore(b) - whitepaperScore(a))
+    .filter((story, index, all) => all.findIndex((candidate) => (
+      (candidate.url && candidate.url === story.url)
+      || (candidate.title && candidate.title === story.title)
+      || (candidate.archiveKey && candidate.archiveKey === story.archiveKey)
+    )) === index);
+
+  return Number.isFinite(limit) ? stories.slice(0, limit) : stories;
+}
+
+function whitepaperScore(story) {
+  let score = 0;
+  if (WHITEPAPER_ASSET_TERMS.test(story.title || '')) score += 6;
+  if (WHITEPAPER_ASSET_TERMS.test(story.url || '')) score += 5;
+  if (WHITEPAPER_TITLE_URL_TERMS.test(story.title || '')) score += 4;
+  if (WHITEPAPER_TITLE_URL_TERMS.test(story.url || '')) score += 3;
+  if (WHITEPAPER_SOURCE_TERMS.test(story.source || '')) score += 2;
+  if (WHITEPAPER_BODY_TERMS.test(story.body || '')) score += 1;
+  return score;
+}
+
 export function getStoryArchive(stories = getAllStories()) {
   const groups = [];
   for (const story of stories) {
