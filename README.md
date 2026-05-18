@@ -75,12 +75,12 @@ Article body...
 
 ## Private draft review workflow
 
-Generated article drafts belong in `content/drafts/*.md`. That directory is gitignored, and drafts are not read by the public article routes, RSS feed, or production build unless the review page is explicitly enabled.
+Generated article drafts belong in `content/drafts/*.md`. That directory is gitignored, and drafts are not read by the public article routes, RSS feed, article sitemap/RSS, or generated site sitemap. The review inbox is built at `/review/`, intentionally omitted from the sitemap, marked `noindex`, and protected in production by Cloudflare Pages Functions middleware.
 
 Run the local review inbox:
 
 ```sh
-FS_ENABLE_REVIEW_PAGE=true npm run dev
+npm run dev
 ```
 
 Then visit:
@@ -89,9 +89,37 @@ Then visit:
 http://localhost:8888/review/
 ```
 
+Production review URL:
+
+```text
+https://robot.thefactorysignal.com/
+```
+
+Cloudflare Pages setup after Wes provides credentials:
+
+1. Add `robot.thefactorysignal.com` as a Cloudflare Pages custom domain for the same Pages project that serves `thefactorysignal.com`.
+2. Point the `robot` DNS record/CNAME at the Cloudflare Pages project as instructed by Cloudflare.
+3. Add production environment variables/secrets in Cloudflare Pages:
+   - `FS_REVIEW_USERNAME`
+   - `FS_REVIEW_PASSWORD`
+4. Deploy the Pages project.
+5. Verify:
+   - `https://robot.thefactorysignal.com/` prompts for Basic Auth.
+   - Wrong credentials are rejected.
+   - Correct credentials show the draft review inbox.
+   - Missing credentials fail closed with a 503 instead of exposing drafts.
+   - `https://thefactorysignal.com/` remains public and unaffected.
+
+Middleware behavior:
+
+- `robot.thefactorysignal.com` requires Basic Auth for every path on that host.
+- After login, non-asset paths on `robot.thefactorysignal.com` are rewritten to the built `/review/` page so the robot subdomain does not expose the normal public homepage.
+- `/review/` on the main domain remains protected as a compatibility fallback, but the intended public review URL is `https://robot.thefactorysignal.com/`.
+- Credentials are read only from `FS_REVIEW_USERNAME` and `FS_REVIEW_PASSWORD`; real credentials must not be committed.
+
 Approval workflow:
 
-1. Review the draft at `/review/`.
+1. Review the draft at `https://robot.thefactorysignal.com/` after logging in.
 2. If approved, move/rename the Markdown file from `content/drafts/` into `content/articles/`. You can do this manually or run:
 
    ```sh
@@ -99,8 +127,6 @@ Approval workflow:
    ```
 
 3. Run `npm run build` and deploy when ready.
-
-The review page is excluded by default. To build it intentionally, set `FS_ENABLE_REVIEW_PAGE=true` during the Astro build. If you later want a hosted login-protected review page, use Cloudflare Access to protect `/review/*`; do not rely on client-side passwords or hidden-page JavaScript for security.
 
 ## Monetization placeholders
 

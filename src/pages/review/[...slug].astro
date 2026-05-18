@@ -5,7 +5,6 @@ import { getDraftArticles, formatDate } from '../../lib/content.js';
 export const prerender = true;
 
 export function getStaticPaths() {
-  if (process.env.FS_ENABLE_REVIEW_PAGE !== 'true') return [];
   return [{ params: { slug: undefined } }];
 }
 
@@ -13,11 +12,11 @@ const drafts = getDraftArticles();
 const shellCommand = (draft) => `node scripts/publish-draft.mjs ${draft.slug || draft.filename}`;
 const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
 ---
-<Base title="Draft review inbox" description="Private local Factory Signal draft review inbox." pathname="/review/" noindex={true}>
+<Base title="Draft review inbox" description="Private Factory Signal draft review inbox." pathname="/review/" noindex={true}>
   <main>
     <div class="section-heading">
       <div>
-        <p class="meta">Private local workflow · not enabled in production by default</p>
+        <p class="meta">Private workflow · intended URL: https://robot.thefactorysignal.com/</p>
         <h1>Draft review inbox</h1>
       </div>
     </div>
@@ -25,9 +24,9 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
     <section class="panel review-warning">
       <h2>Review before publishing</h2>
       <p>
-        This page reads Markdown files from <code>content/drafts/</code>. Drafts are not public articles and this route only builds when
-        <code>FS_ENABLE_REVIEW_PAGE=true</code> is set. For a hosted protected review page later, put <code>/review/*</code> behind Cloudflare Access;
-        do not rely on browser-side passwords.
+        This page reads Markdown files from <code>content/drafts/</code>. Drafts are not public articles, the page is marked
+        <code>noindex</code>, and hosted access to <code>https://robot.thefactorysignal.com/</code> is protected at the Cloudflare edge. Do not rely on browser-side
+        passwords or hidden-page JavaScript for security.
       </p>
     </section>
 
