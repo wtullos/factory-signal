@@ -22,7 +22,6 @@ const supportStories = (latestSignals.length > 1 ? latestSignals.slice(1, 4) : s
 const tickerItems = [
   ...stories,
 ].filter((item) => item && item.sectionTitle !== 'Reddit').slice(0, 6);
-const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) => [section.title, section.items.length]));
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/display/" bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
@@ -45,14 +44,7 @@ const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) 
         </aside>
       </div>
 
-      <div class="display-agenda" aria-label="Coverage counts and viewing instructions">
-        <div class="display-counts">
-          <span><strong>{sectionCounts.News || stories.length}</strong> News</span>
-          <span><strong>{sectionCounts.Reddit || redditStories.length}</strong> Community</span>
-          <span><strong>{sectionCounts.YouTube || 0}</strong> Video</span>
-          <span><strong>{articles.length}</strong> Articles</span>
-          <span><strong>{whitepaperStories.length}</strong> Papers</span>
-        </div>
+      <div class="display-agenda" aria-label="Viewing instructions">
         <p>Scan later: visit <strong>thefactorysignal.com</strong> for links, sources, and the full briefing archive.</p>
       </div>
     </section>
@@ -70,7 +62,7 @@ const sectionCounts = Object.fromEntries((latest?.sections || []).map((section) 
     </section>
 
     {whitepaperStories.length > 0 && (
-      <section class="display-whitepapers" aria-label="Whitepaper library">
+      <section class="display-whitepapers" id="whitepaper-library" aria-label="Whitepaper library">
         <div class="section-heading">
           <div>
             <p class="display-eyebrow">Download queue</p>

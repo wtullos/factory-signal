@@ -36,6 +36,13 @@ const logoPath = '/assets/factory-signal-logo.jpg';
     {ADSENSE_ENABLED && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`} crossorigin="anonymous"></script>}
   </head>
   <body class={bodyClass}>
+    <nav class="display-count-overlay" aria-label="Factory Signal sections">
+      <a href="/news/">News</a>
+      <a href="/reddit/">Community</a>
+      <a href="/briefings/">Video</a>
+      <a href="/articles/">Articles</a>
+      <a href="/#whitepaper-library">Papers</a>
+    </nav>
     <div class="shell">
       <header class="site-header">
         <div class="header-grid">
@@ -48,14 +55,6 @@ const logoPath = '/assets/factory-signal-logo.jpg';
             </span>
           </a>
         </div>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/briefings/">Briefings</a>
-          <a href="/news/">News</a>
-          <a href="/reddit/">Reddit</a>
-          <a href="/articles/">Articles</a>
-          <a href="/about/">About</a>
-        </nav>
       </header>
       <slot />
       <footer class="site-footer">
