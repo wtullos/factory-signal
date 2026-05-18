@@ -218,13 +218,17 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   text-transform: uppercase;
 }
 .section-heading a { font-weight: 900; text-transform: uppercase; letter-spacing: .1em; font-size: .78rem; text-decoration: none; color: var(--accent-dark); }
-.archive-list { display: grid; gap: 22px; }
+.archive-list { display: grid; gap: 22px; min-width: 0; }
 .archive-hero { grid-template-columns: 1fr; }
 .archive-toolbar { margin-top: 26px; padding: 12px 14px; border: 1px solid var(--line); background: rgba(255,255,255,.72); }
 .archive-toolbar p { margin: 0; }
-.briefing-summary { padding: 20px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+.briefing-summary { min-width: 0; padding: 20px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+.briefing-summary h2,
+.briefing-summary p,
+.briefing-summary h2 a,
+.story-card h3 a { overflow-wrap: anywhere; }
 .briefing-summary h2 a, .story-card h3 a { text-decoration: none; }
-.story-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 20px; }
+.story-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(245px, 100%), 1fr)); gap: 20px; min-width: 0; }
 .featured-story-grid { margin-top: 12px; }
 .story-archive { margin-top: 24px; }
 .compact-heading { align-items: center; margin-bottom: 18px; }
@@ -255,10 +259,16 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   display: grid;
   gap: 12px;
   align-content: start;
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
   background: var(--paper);
 }
+.story-card > * { min-width: 0; }
+.story-card h3,
+.story-card p,
+.story-card .meta,
+.story-card .stats { overflow-wrap: anywhere; }
 .story-card.compact h3 { font-size: 1rem; line-height: 1.24; }
 .story-card.lead-card {
   min-height: 100%;
@@ -323,8 +333,8 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .story-card .placeholder-art::after { width: 100%; height: 100%; left: 0; top: 0; background-image: linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px); background-size: 18px 18px; mix-blend-mode: screen; opacity: .55; }
 .placeholder-inner { min-height: 100%; display: grid; align-content: space-between; gap: 8px; padding: 14px; }
 .placeholder-kicker { font-size: .62rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; opacity: .82; }
-.placeholder-mark { font: 900 clamp(2rem, 8vw, 4.2rem)/.85 var(--display); letter-spacing: -.08em; text-shadow: 0 2px 18px rgba(0,0,0,.24); }
-.placeholder-topic { justify-self: start; max-width: 88%; padding: 4px 8px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); color: #fffdf8; font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.placeholder-mark { min-width: 0; max-width: 100%; font: 900 clamp(2rem, 8vw, 4.2rem)/.85 var(--display); letter-spacing: -.08em; overflow-wrap: anywhere; text-shadow: 0 2px 18px rgba(0,0,0,.24); }
+.placeholder-topic { justify-self: start; max-width: 88%; padding: 4px 8px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); color: #fffdf8; font-size: .72rem; font-weight: 900; letter-spacing: .08em; overflow-wrap: anywhere; text-transform: uppercase; }
 .article-body {
   max-width: 820px;
   margin: 0 auto;
