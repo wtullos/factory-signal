@@ -167,7 +167,61 @@ Publish request webhook:
   - `X-Factory-Signal-Idempotency-Key`
   - `X-Factory-Signal-Event: factory_signal.review_publish_request`
 - Idempotency keys are deterministic for the logical operation (`draft`, `action`, and `publishAt`, or `now` for immediate publishes) and do not include the request timestamp.
-- Later, point `FS_REVIEW_PUBLISH_WEBHOOK_URL` at the Hermes webhook receiver and configure that receiver with the same `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`. The receiver should verify the HMAC, check/reject stale timestamps and duplicate idempotency keys, then run the existing local publish/build/deploy workflow.
+- Point `FS_REVIEW_PUBLISH_WEBHOOK_URL` at the local receiver exposed through an HTTPS tunnel and configure that receiver with the same `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`.
+
+Local publish receiver:
+
+- Script: `scripts/review-publish-receiver.mjs`
+- Default bind: `http://127.0.0.1:8765/factory-signal/review-publish`
+- Health check: `GET /healthz`
+- The receiver uses only Node stdlib and verifies:
+  - `POST` to the configured route only.
+  - `X-Factory-Signal-Event` equals `factory_signal.review_publish_request`.
+  - `X-Factory-Signal-Timestamp` is parseable and fresh; default max skew is 300 seconds.
+  - `X-Factory-Signal-Signature` is `sha256=<hex hmac>` over `<timestamp>.<raw JSON body>` using `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`.
+  - Draft identifiers are simple slugs/filenames only; no path separators or traversal.
+  - Idempotency keys are persisted locally so duplicate webhook deliveries do not re-run publishing.
+- Dry-run is the default. In dry-run mode, valid requests are authenticated, idempotency-tracked, and logged, but no draft is moved, no build runs, no git commit is created, and no deploy occurs.
+- Local state is written under `.hermes/review-publish-receiver/` by default and is gitignored.
+- `schedule` requests are accepted only for future `publishAt` values. They are persisted in `.hermes/review-publish-receiver/scheduled/` and armed with local timers while the receiver process is running. If the receiver restarts, future scheduled jobs are reloaded.
+
+Run locally in dry-run mode:
+
+```sh
+FS_REVIEW_PUBLISH_WEBHOOK_SECRET='<same-secret-as-cloudflare>' npm run review:publish-receiver
+```
+
+Run locally in execute mode only after verifying the tunnel, secret, and dry-run behavior:
+
+```sh
+FS_REVIEW_PUBLISH_WEBHOOK_SECRET='<same-secret-as-cloudflare>' \
+FS_REVIEW_RECEIVER_EXECUTE=true \
+npm run review:publish-receiver
+```
+
+Optional receiver environment variables:
+
+- `FS_REVIEW_RECEIVER_HOST` — default `127.0.0.1`
+- `FS_REVIEW_RECEIVER_PORT` — default `8765`
+- `FS_REVIEW_RECEIVER_ROUTE` — default `/factory-signal/review-publish`
+- `FS_REVIEW_RECEIVER_STATE_DIR` — default `.hermes/review-publish-receiver`
+- `FS_REVIEW_RECEIVER_FRESHNESS_SECONDS` — default `300`
+- `FS_REVIEW_RECEIVER_MAX_BODY_BYTES` — default `65536`
+- `FS_REVIEW_RECEIVER_EXECUTE=true` — required to run the publish workflow
+
+When execute mode is enabled, an accepted publish runs:
+
+1. `node scripts/publish-draft.mjs <draft>`
+2. `npm run build`
+3. `git add content/drafts content/articles dist`
+4. `git commit -m "Publish review draft: <draft>"`
+5. `npx wrangler pages deploy dist --project-name factory-signal --branch main --commit-hash <new-commit> --commit-message "Publish review draft: <draft>"`
+
+Receiver tests:
+
+```sh
+npm run test:review-publish-receiver
+```
 
 ## Monetization placeholders
 

@@ -10,7 +10,9 @@
     "generate:fallback-images": "node scripts/generate-fallback-images.mjs",
     "generate:daily-briefing": "node scripts/generate-daily-briefing.mjs",
     "build": "npm run generate:fallback-images && astro build",
-    "sync:briefings": "node scripts/sync-briefings.mjs"
+    "sync:briefings": "node scripts/sync-briefings.mjs",
+    "review:publish-receiver": "node scripts/review-publish-receiver.mjs",
+    "test:review-publish-receiver": "node --test test/review-publish-receiver.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
