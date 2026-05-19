@@ -60,6 +60,20 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/" bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
+    <section class="site-search-panel" aria-labelledby="site-search-title">
+      <div>
+        <p class="display-eyebrow">Search Factory Signal</p>
+        <h2 id="site-search-title">Find stories, articles, and resources</h2>
+      </div>
+      <label class="site-search-label" for="site-search-input">Search the main page</label>
+      <div class="site-search-row">
+        <input id="site-search-input" class="site-search-input" type="search" placeholder="Search by title, source, topic, date, description, or URL" autocomplete="off" data-fs-search-input />
+        <button class="site-search-clear" type="button" data-fs-search-clear>Clear</button>
+      </div>
+      <p class="site-search-status" aria-live="polite" data-fs-search-status>Showing all Factory Signal items.</p>
+      <p class="site-search-empty" data-fs-search-empty hidden>No matching stories, articles, or resources found. Try a different topic or source.</p>
+    </section>
+
     <section class="display-hero" aria-label="Factory Signal classroom display" data-fs-search-section>
       <div class="display-topline">
         <h1 id="display-title">Factory Signal</h1>
@@ -78,20 +92,6 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
           </div>
         </aside>
       </div>
-    </section>
-
-    <section class="site-search-panel" aria-labelledby="site-search-title">
-      <div>
-        <p class="display-eyebrow">Search Factory Signal</p>
-        <h2 id="site-search-title">Find stories, articles, and resources</h2>
-      </div>
-      <label class="site-search-label" for="site-search-input">Search the main page</label>
-      <div class="site-search-row">
-        <input id="site-search-input" class="site-search-input" type="search" placeholder="Search by title, source, topic, date, description, or URL" autocomplete="off" data-fs-search-input />
-        <button class="site-search-clear" type="button" data-fs-search-clear>Clear</button>
-      </div>
-      <p class="site-search-status" aria-live="polite" data-fs-search-status>Showing all Factory Signal items.</p>
-      <p class="site-search-empty" data-fs-search-empty hidden>No matching stories, articles, or resources found. Try a different topic or source.</p>
     </section>
 
     <section class="display-ticker" aria-label="Latest manufacturing headlines" data-fs-search-section>

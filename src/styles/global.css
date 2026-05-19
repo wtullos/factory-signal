@@ -31,7 +31,7 @@ body { margin: 0; font-family: var(--sans); line-height: 1.65; }
 a { color: inherit; text-decoration-color: rgba(57,169,53,.55); text-underline-offset: .2em; }
 a:hover { color: var(--accent-dark); }
 img { max-width: 100%; }
-.shell { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.shell { max-width: 1180px; margin: 0 auto; padding: 28px 20px 0; }
 
 .site-header {
   position: relative;
@@ -569,10 +569,11 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
-  width: min(100% - 12px, 720px);
+  gap: 3px;
+  width: fit-content;
+  max-width: calc(100% - 12px);
   margin: 0;
-  padding: 3px 6px 4px;
+  padding: 2px 4px 3px;
   border: 1px solid rgba(214,221,210,.82);
   border-top: 0;
   background: rgba(255,255,255,.82);
@@ -585,9 +586,9 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .display-page .display-count-overlay a {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 3px;
   border: 1px solid transparent;
-  padding: 3px 5px;
+  padding: 3px 4px;
   background: transparent;
   color: var(--muted);
   font-weight: 900;
@@ -875,7 +876,7 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 }
 
 @media (max-width: 520px) {
-  .shell { padding: 0 14px; }
+  .shell { padding: 76px 14px 0; }
   .review-backend main { padding-top: 76px; }
   .review-logout-button {
     inset: 10px 10px auto auto;
