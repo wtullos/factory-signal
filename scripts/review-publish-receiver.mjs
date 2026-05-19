@@ -27,6 +27,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export function startReceiver(options = {}) {
   const config = readConfig(options);
+  if (!config.secret) {
+    throw new Error('FS_REVIEW_PUBLISH_WEBHOOK_SECRET is required.');
+  }
   ensureState(config);
   loadScheduledJobs(config);
 
@@ -191,7 +194,7 @@ export async function runPublishWorkflow(config, requestRecord, idempotencyKey) 
 
     await runCommand(config, 'node', ['scripts/publish-draft.mjs', requestRecord.draft]);
     await runCommand(config, 'npm', ['run', 'build']);
-    await runCommand(config, 'git', ['add', 'content/drafts', 'content/articles', 'dist']);
+    await runCommand(config, 'git', ['add', 'content/articles', 'public/generated-images']);
 
     const commitMessage = `Publish review draft: ${requestRecord.draft}`;
     await runCommand(config, 'git', ['commit', '-m', commitMessage]);
