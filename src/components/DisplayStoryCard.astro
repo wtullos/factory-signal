@@ -29,8 +29,19 @@ const visualLabel = item.topic || item.sectionTitle || item.source || 'Factory S
 const visualInitials = initials(visualLabel);
 const hasDisplayImage = isAcceptableDisplayImage(item.image);
 const imageSrc = hasDisplayImage ? item.image.trim() : '';
+const searchText = [
+  item.title,
+  item.source,
+  item.topic,
+  item.sectionTitle,
+  item.date,
+  item.dateLabel,
+  item.body,
+  item.description,
+  item.url,
+].filter(Boolean).join(' ');
 ---
-<article class:list={["display-story-card", variant, hasDisplayImage && "has-image"]}>
+<article class:list={["display-story-card", variant, hasDisplayImage && "has-image"]} data-fs-search-item data-search-text={searchText}>
   <a class="display-card-link" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`Open story: ${item.title}`}>
     <div class:list={["display-visual-block", !hasDisplayImage && "display-fallback-art"]} aria-hidden={!hasDisplayImage ? "true" : undefined}>
       {hasDisplayImage ? (

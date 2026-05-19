@@ -12,7 +12,8 @@
     "build": "npm run generate:fallback-images && astro build",
     "sync:briefings": "node scripts/sync-briefings.mjs",
     "review:publish-receiver": "node scripts/review-publish-receiver.mjs",
-    "test:review-publish-receiver": "node --test test/review-publish-receiver.test.mjs"
+    "test:review-publish-receiver": "node --test test/review-publish-receiver.test.mjs",
+    "test:school-friendly": "node --test test/school-friendly.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",

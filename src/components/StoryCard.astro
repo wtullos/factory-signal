@@ -59,8 +59,19 @@ const placeholderStyle = [
 const placeholderLabel = labelFrom(item);
 const hasDisplayImage = isAcceptableSourceImage(item.image);
 const cardBody = truncateExcerpt(item.body);
+const searchText = [
+  item.title,
+  item.source,
+  item.topic,
+  item.sectionTitle,
+  item.date,
+  item.dateLabel,
+  item.body,
+  item.description,
+  item.url,
+].filter(Boolean).join(' ');
 ---
-<article class:list={["story-card", compact && "compact", variant]}>
+<article class:list={["story-card", compact && "compact", variant]} data-fs-search-item data-search-text={searchText}>
   <a class:list={["image", !hasDisplayImage && "placeholder-art"]} href={item.url} target="_blank" rel="noopener noreferrer" style={!hasDisplayImage ? placeholderStyle : undefined} aria-label={hasDisplayImage ? undefined : `Open story: ${item.title}`}>
     {hasDisplayImage ? (
       <img src={item.image} alt="" loading="lazy" />

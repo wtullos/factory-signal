@@ -2,6 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { parseArticleMarkdown } from '../src/lib/content.js';
+import { schoolFriendlyViolations } from '../src/lib/school-friendly.js';
 
 const root = process.cwd();
 const input = process.argv[2];
@@ -47,6 +49,18 @@ fs.mkdirSync(articlesDir, { recursive: true });
 
 const sourceFile = candidates[0];
 const sourcePath = path.join(draftsDir, sourceFile);
+const rawDraft = fs.readFileSync(sourcePath, 'utf8');
+const draftArticle = parseArticleMarkdown(sourceFile, rawDraft, { dir: 'content/drafts' });
+const violations = schoolFriendlyViolations(draftArticle);
+
+if (violations.length > 0) {
+  console.error(`Draft "${sourceFile}" was not published because it failed the school-friendly content guard.`);
+  console.error(`Categories: ${[...new Set(violations)].join(', ')}`);
+  console.error('Reason: draft text matched prohibited school-unfriendly content categories.');
+  console.error('Review title, description, body, source URLs, and tags before trying again.');
+  process.exit(1);
+}
+
 const targetFile = uniqueFilename(articlesDir, sourceFile);
 const targetPath = path.join(articlesDir, targetFile);
 

@@ -17,6 +17,20 @@ function storyIdentity(item) {
   return item?.archiveKey || item?.url || item?.title || '';
 }
 
+function searchTextFor(item) {
+  return [
+    item?.title,
+    item?.source,
+    item?.topic,
+    item?.sectionTitle,
+    item?.date,
+    item?.dateLabel,
+    item?.body,
+    item?.description,
+    item?.url,
+  ].filter(Boolean).join(' ');
+}
+
 const briefings = getBriefings();
 const articles = getArticles();
 const stories = getNewsStories();
@@ -46,7 +60,7 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/" bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
-    <section class="display-hero" aria-label="Factory Signal classroom display">
+    <section class="display-hero" aria-label="Factory Signal classroom display" data-fs-search-section>
       <div class="display-topline">
         <h1 id="display-title">Factory Signal</h1>
       </div>
@@ -66,11 +80,25 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
       </div>
     </section>
 
-    <section class="display-ticker" aria-label="Latest manufacturing headlines">
+    <section class="site-search-panel" aria-labelledby="site-search-title">
+      <div>
+        <p class="display-eyebrow">Search Factory Signal</p>
+        <h2 id="site-search-title">Find stories, articles, and resources</h2>
+      </div>
+      <label class="site-search-label" for="site-search-input">Search the main page</label>
+      <div class="site-search-row">
+        <input id="site-search-input" class="site-search-input" type="search" placeholder="Search by title, source, topic, date, description, or URL" autocomplete="off" data-fs-search-input />
+        <button class="site-search-clear" type="button" data-fs-search-clear>Clear</button>
+      </div>
+      <p class="site-search-status" aria-live="polite" data-fs-search-status>Showing all Factory Signal items.</p>
+      <p class="site-search-empty" data-fs-search-empty hidden>No matching stories, articles, or resources found. Try a different topic or source.</p>
+    </section>
+
+    <section class="display-ticker" aria-label="Latest manufacturing headlines" data-fs-search-section>
       <h2>Latest signals</h2>
       <div class="ticker-track">
         {tickerItems.map((item) => (
-          <a href={item.url} target="_blank" rel="noopener noreferrer">
+          <a href={item.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={searchTextFor(item)}>
             <span>{item.topic || item.sectionTitle || item.source}</span>
             {item.title}
           </a>
@@ -79,7 +107,7 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
     </section>
 
     {whitepaperStories.length > 0 && (
-      <section class="display-whitepapers" id="whitepaper-library" aria-label="Whitepaper library">
+      <section class="display-whitepapers" id="whitepaper-library" aria-label="Whitepaper library" data-fs-search-section>
         <div class="section-heading">
           <div>
             <p class="display-eyebrow">Download queue</p>
@@ -89,7 +117,7 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
         </div>
         <div class="whitepaper-grid">
           {whitepaperStories.map((item) => (
-            <a class="whitepaper-card" href={item.url} target="_blank" rel="noopener noreferrer">
+            <a class="whitepaper-card" href={item.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={searchTextFor(item)}>
               <span class="meta">{item.source || item.topic || 'Resource'} · {item.dateLabel}</span>
               <strong>{item.title}</strong>
               {item.body && <p>{item.body}</p>}
@@ -99,17 +127,17 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
       </section>
     )}
 
-    <section class="display-deep-links" aria-label="Browse Factory Signal">
+    <section class="display-deep-links" aria-label="Browse Factory Signal" data-fs-search-section>
       <div class="section-heading"><h2>Browse the archive</h2><a href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Open latest briefing</a></div>
       <div class="display-link-grid">
-        <a class="panel" href="/news/"><span class="meta">News archive</span><strong>{stories.length} non-Reddit stories</strong><p>All manufacturing articles and videos, newest first.</p></a>
-        <a class="panel" href="/reddit/"><span class="meta">Community trends</span><strong>{redditStories.length} Reddit posts</strong><p>Shop-floor questions, builds, and community chatter.</p></a>
-        <a class="panel" href="/briefings/"><span class="meta">Daily briefing</span><strong>{briefings.length} editions</strong><p>Full daily signal reports with sections and source links.</p></a>
+        <a class="panel" href="/news/" data-fs-search-item data-search-text={`News archive ${stories.length} non-Reddit stories manufacturing articles videos newest first /news/`}><span class="meta">News archive</span><strong>{stories.length} non-Reddit stories</strong><p>All manufacturing articles and videos, newest first.</p></a>
+        <a class="panel" href="/reddit/" data-fs-search-item data-search-text={`Community trends ${redditStories.length} Reddit posts shop-floor questions builds community chatter /reddit/`}><span class="meta">Community trends</span><strong>{redditStories.length} Reddit posts</strong><p>Shop-floor questions, builds, and community chatter.</p></a>
+        <a class="panel" href="/briefings/" data-fs-search-item data-search-text={`Daily briefing ${briefings.length} editions full daily signal reports sections source links /briefings/`}><span class="meta">Daily briefing</span><strong>{briefings.length} editions</strong><p>Full daily signal reports with sections and source links.</p></a>
       </div>
     </section>
 
     {archive.groups.length > 0 && (
-      <section class="display-archive-river" aria-label="Full Factory Signal story archive">
+      <section class="display-archive-river" aria-label="Full Factory Signal story archive" data-fs-search-section>
         <div class="section-heading">
           <div>
             <p class="display-eyebrow">Keep scrolling</p>
@@ -120,7 +148,7 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
         <p class="archive-river-intro">A continuous, newest-first stream of non-Reddit manufacturing signals from every briefing.</p>
         <div class="archive-river-groups">
           {archive.groups.map((group) => (
-            <section class="archive-river-day" aria-labelledby={`archive-${group.date}`}>
+            <section class="archive-river-day" aria-labelledby={`archive-${group.date}`} data-fs-search-section>
               <div class="archive-river-date">
                 <h3 id={`archive-${group.date}`}>{group.dateLabel}</h3>
                 <a href={`/briefings/${group.briefingSlug}/`}>Open briefing</a>
@@ -133,5 +161,51 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
         </div>
       </section>
     )}
+    <script is:inline>
+      (() => {
+        const input = document.querySelector('[data-fs-search-input]');
+        const clearButton = document.querySelector('[data-fs-search-clear]');
+        const status = document.querySelector('[data-fs-search-status]');
+        const emptyState = document.querySelector('[data-fs-search-empty]');
+        const items = Array.from(document.querySelectorAll('[data-fs-search-item]'));
+        const sections = Array.from(document.querySelectorAll('[data-fs-search-section]'));
+        if (!input || !status || items.length === 0) return;
+
+        const normalize = (value) => String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const searchable = new Map(items.map((item) => [item, normalize(`${item.dataset.searchText || ''} ${item.textContent || ''}`)]));
+
+        const applySearch = () => {
+          const query = normalize(input.value);
+          let visibleCount = 0;
+
+          for (const item of items) {
+            const matches = !query || searchable.get(item).includes(query);
+            item.hidden = !matches;
+            if (matches) visibleCount += 1;
+          }
+
+          for (const section of sections) {
+            const sectionItems = items.filter((item) => section.contains(item));
+            section.hidden = query ? sectionItems.length > 0 && sectionItems.every((item) => item.hidden) : false;
+          }
+
+          if (query) {
+            status.textContent = `${visibleCount} matching ${visibleCount === 1 ? 'item' : 'items'} for “${input.value.trim()}”.`;
+            if (emptyState) emptyState.hidden = visibleCount !== 0;
+          } else {
+            status.textContent = `Showing all ${items.length} Factory Signal items.`;
+            if (emptyState) emptyState.hidden = true;
+          }
+        };
+
+        input.addEventListener('input', applySearch);
+        clearButton?.addEventListener('click', () => {
+          input.value = '';
+          input.focus();
+          applySearch();
+        });
+        applySearch();
+      })();
+    </script>
   </main>
 </Base>

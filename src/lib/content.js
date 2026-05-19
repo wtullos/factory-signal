@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { marked } from 'marked';
+import { isSchoolFriendlyItem } from './school-friendly.js';
 
 const root = process.cwd();
 export const SITE_NAME = 'Factory Signal';
@@ -41,6 +42,7 @@ export function getArticles() {
       const stat = fs.statSync(fullPath);
       return parseArticleMarkdown(filename, raw, { dir: 'content/articles', updatedAt: stat.mtime.toISOString() });
     })
+    .filter(isSchoolFriendlyArticle)
     .sort((a, b) => String(b.pubDate).localeCompare(String(a.pubDate)) || a.title.localeCompare(b.title));
 }
 
@@ -92,7 +94,16 @@ export function getAllStories() {
       sectionTitle: item.sectionTitle || section.title,
       archiveKey: `${briefing.slug}-${section.title}-${index}`,
     }))))
+    .filter(isSchoolFriendlyStory)
     .sort((a, b) => b.date.localeCompare(a.date) || (Number.parseFloat(b.score || '0') || 0) - (Number.parseFloat(a.score || '0') || 0));
+}
+
+export function isSchoolFriendlyArticle(article = {}) {
+  return isSchoolFriendlyItem(article);
+}
+
+export function isSchoolFriendlyStory(story = {}) {
+  return isSchoolFriendlyItem(story);
 }
 
 export function getStoriesBySection(sectionTitle) {
@@ -176,7 +187,9 @@ export function parseBriefing(filename, content) {
   for (const sectionPattern of patterns) {
     const match = content.match(sectionPattern.pattern);
     if (!match) continue;
-    const items = parseItems(match[1], sectionPattern.title === 'YouTube').map((item) => ({ ...item, sectionTitle: sectionPattern.title }));
+    const items = parseItems(match[1], sectionPattern.title === 'YouTube')
+      .map((item) => ({ ...item, sectionTitle: sectionPattern.title }))
+      .filter(isSchoolFriendlyStory);
     if (items.length) sections.push({ title: sectionPattern.title, items });
   }
   return { date, filename, slug: date, title, deck, generatedAt, sections, html: marked.parse(content) };

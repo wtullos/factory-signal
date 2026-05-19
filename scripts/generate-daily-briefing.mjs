@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSchoolFriendlyItem, schoolFriendlyViolations } from '../src/lib/school-friendly.js';
 
 const TIME_ZONE = 'America/Chicago';
 const MAX_NEWS_ITEMS = 12;
@@ -66,6 +67,7 @@ async function collectNews(date) {
     return [];
   });
   return dedupeByUrl(items)
+    .filter(reportUnsafeItem('news'))
     .sort((a, b) => b.scoreValue - a.scoreValue || a.title.localeCompare(b.title))
     .slice(0, MAX_NEWS_ITEMS)
     .map((item, index) => ({ ...item, rating: ratingFor(index, MAX_NEWS_ITEMS, item.scoreValue) }));
@@ -80,6 +82,7 @@ async function fetchFeed(feed, date) {
     .filter((item) => item.title && item.url)
     .filter((item) => !item.date || item.date === date)
     .filter(isRelevantNews)
+    .filter(reportUnsafeItem('news'))
     .map((item) => ({ ...item, scoreValue: scoreNews(item) }));
 }
 
@@ -109,6 +112,7 @@ async function collectReddit(date) {
     return [];
   });
   return dedupeByUrl(items)
+    .filter(reportUnsafeItem('reddit'))
     .sort((a, b) => b.scoreValue - a.scoreValue || a.title.localeCompare(b.title))
     .slice(0, MAX_REDDIT_ITEMS)
     .map((item, index) => ({ ...item, rating: ratingFor(index, MAX_REDDIT_ITEMS, item.scoreValue) }));
@@ -120,6 +124,7 @@ async function fetchSubreddit(subreddit, date) {
   return children.map(({ data }) => parseRedditPost(data, subreddit))
     .filter((item) => item.title && item.url)
     .filter((item) => item.date === date)
+    .filter(reportUnsafeItem('reddit'))
     .map((item) => ({ ...item, scoreValue: scoreReddit(item) }));
 }
 
@@ -275,6 +280,15 @@ function isRelevantNews(item) {
     'electronics', 'supply chain', 'cad', 'engineering', 'hacker news',
   ];
   return terms.some((term) => haystack.includes(term));
+}
+
+function reportUnsafeItem(kind) {
+  return (item) => {
+    if (isSchoolFriendlyItem(item)) return true;
+    const reasons = schoolFriendlyViolations(item).join(', ');
+    console.warn(`Filtered non-school-friendly ${kind} item (${reasons}): ${item.title || item.url}`);
+    return false;
+  };
 }
 
 function topicFor(text) {
