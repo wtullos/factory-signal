@@ -8,19 +8,15 @@ import { spawn } from 'node:child_process';
 
 export const DEFAULT_ROUTE = '/factory-signal/review-publish';
 export const EVENT_NAME = 'factory_signal.review_publish_request';
+export const SAVE_EVENT_NAME = 'factory_signal.review_save_request';
 
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
 const DEFAULT_PORT = 8765;
 const DEFAULT_FRESHNESS_SECONDS = 300;
 const DEFAULT_MAX_BODY_BYTES = 64 * 1024;
 const DEFAULT_STATE_DIR = path.join('.hermes', 'review-publish-receiver');
-const ADDITION_KEYS = ['opening', 'middle', 'closing'];
-const ADDITION_LABELS = {
-  opening: "Wes's opening note",
-  middle: "Wes's shop-floor note",
-  closing: "Wes's closing note",
-};
-const MAX_ADDITION_LENGTH = 1200;
+const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
+const MAX_REVIEW_EDIT_LENGTH = 1200;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = startReceiver({ env: process.env, cwd: process.cwd() });
@@ -93,6 +89,15 @@ export async function handleRequest(req, res, config) {
     return sendJson(res, 400, { ok: false, error: 'invalid_json' });
   }
 
+  if (String(payload.event || req.headers['x-factory-signal-event'] || '').trim() === SAVE_EVENT_NAME) {
+    const normalizedSave = normalizeSavePayload(payload, req.headers);
+    if (!normalizedSave.ok) {
+      return sendJson(res, 400, { ok: false, error: normalizedSave.error, message: normalizedSave.message });
+    }
+    const result = handleReviewSaveRequest(config, normalizedSave.value);
+    return sendJson(res, result.status, result.payload);
+  }
+
   const normalized = normalizePayload(payload, req.headers);
   if (!normalized.ok) {
     return sendJson(res, 400, { ok: false, error: normalized.error, message: normalized.message });
@@ -123,7 +128,7 @@ export async function handleRequest(req, res, config) {
 
 export function verifyWebhook(headers, rawBody, config) {
   const event = String(headers['x-factory-signal-event'] || '').trim();
-  if (event !== EVENT_NAME) return { ok: false, status: 400, error: 'invalid_event', message: `Expected ${EVENT_NAME}.` };
+  if (event !== EVENT_NAME && event !== SAVE_EVENT_NAME) return { ok: false, status: 400, error: 'invalid_event', message: `Expected ${EVENT_NAME} or ${SAVE_EVENT_NAME}.` };
 
   const timestamp = String(headers['x-factory-signal-timestamp'] || '').trim();
   const timestampMs = Date.parse(timestamp);
@@ -183,11 +188,75 @@ export function normalizePayload(payload, headers = {}) {
       draft,
       title: stringOrEmpty(payload.title),
       publishAt,
-      additions: normalizeAdditions(payload.additions),
+      reviewEdits: normalizeReviewEdits(payload.reviewEdits || payload.additions),
+      additions: normalizeReviewEdits(payload.reviewEdits || payload.additions),
       requestedAt: stringOrEmpty(payload.requestedAt),
       source: payload.source && typeof payload.source === 'object' ? payload.source : undefined,
     },
   };
+}
+
+export function normalizeSavePayload(payload, headers = {}) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, error: 'invalid_payload', message: 'JSON body must be an object.' };
+  }
+
+  const bodyEvent = String(payload.event || '').trim();
+  if (bodyEvent && bodyEvent !== SAVE_EVENT_NAME) return { ok: false, error: 'invalid_event', message: `Body event must be ${SAVE_EVENT_NAME}.` };
+
+  const draft = normalizeDraftIdentifier(payload.draft || payload.slug || payload.file || payload.filename);
+  if (!draft) return { ok: false, error: 'invalid_draft', message: 'Draft must be a simple slug/filename with no path separators.' };
+
+  const action = String(payload.action || '').trim();
+  if (action !== 'save' && action !== 'load') return { ok: false, error: 'invalid_action', message: 'Action must be save or load.' };
+
+  const idempotencyKey = String(headers['x-factory-signal-idempotency-key'] || payload.idempotencyKey || '').trim();
+  if (!/^[a-zA-Z0-9._:-]{8,240}$/.test(idempotencyKey)) {
+    return { ok: false, error: 'invalid_idempotency_key', message: 'Missing or invalid idempotency key.' };
+  }
+
+  return {
+    ok: true,
+    value: {
+      event: SAVE_EVENT_NAME,
+      action,
+      draft,
+      title: stringOrEmpty(payload.title),
+      reviewEdits: normalizeReviewEdits(payload.reviewEdits),
+      requestedAt: stringOrEmpty(payload.requestedAt),
+      idempotencyKey,
+      source: payload.source && typeof payload.source === 'object' ? payload.source : undefined,
+    },
+  };
+}
+
+export function handleReviewSaveRequest(config, requestRecord) {
+  if (requestRecord.action === 'load') {
+    const record = readReviewDraft(config, requestRecord.draft);
+    return {
+      status: 200,
+      payload: {
+        ok: true,
+        draft: requestRecord.draft,
+        reviewEdits: record.reviewEdits,
+        savedAt: record.savedAt || undefined,
+      },
+    };
+  }
+
+  const savedAt = new Date().toISOString();
+  const record = {
+    event: SAVE_EVENT_NAME,
+    draft: requestRecord.draft,
+    title: requestRecord.title || undefined,
+    reviewEdits: normalizeReviewEdits(requestRecord.reviewEdits),
+    savedAt,
+    requestedAt: requestRecord.requestedAt || undefined,
+    source: requestRecord.source,
+  };
+  writeJsonAtomic(reviewDraftPath(config, requestRecord.draft), record);
+  config.log.info(`[receiver] saved_review_draft draft=${requestRecord.draft}`);
+  return { status: 200, payload: { ok: true, draft: requestRecord.draft, reviewEdits: record.reviewEdits, savedAt } };
 }
 
 export async function runPublishWorkflow(config, requestRecord, idempotencyKey) {
@@ -200,8 +269,9 @@ export async function runPublishWorkflow(config, requestRecord, idempotencyKey) 
       return;
     }
 
-    if (hasPersonalAdditions(requestRecord.additions)) {
-      applyPersonalAdditionsToDraft(config.cwd, requestRecord.draft, requestRecord.additions);
+    const reviewEdits = requestRecord.reviewEdits || requestRecord.additions;
+    if (hasReviewEdits(reviewEdits)) {
+      applyPersonalAdditionsToDraft(config.cwd, requestRecord.draft, reviewEdits);
     }
     await runCommand(config, 'node', ['scripts/publish-draft.mjs', requestRecord.draft]);
     await runCommand(config, 'npm', ['run', 'build']);
@@ -280,6 +350,7 @@ function readConfig({ env = process.env, cwd = process.cwd(), log = console } = 
 function ensureState(config) {
   fs.mkdirSync(path.join(config.stateDir, 'idempotency'), { recursive: true, mode: 0o700 });
   fs.mkdirSync(path.join(config.stateDir, 'scheduled'), { recursive: true, mode: 0o700 });
+  fs.mkdirSync(path.join(config.stateDir, 'review-drafts'), { recursive: true, mode: 0o700 });
 }
 
 function claimIdempotencyKey(config, key, payload) {
@@ -314,6 +385,19 @@ function scheduledJobPath(config, key) {
   return path.join(config.stateDir, 'scheduled', `${hashName(key)}.json`);
 }
 
+function reviewDraftPath(config, draft) {
+  return path.join(config.stateDir, 'review-drafts', `${hashName(draft)}.json`);
+}
+
+function readReviewDraft(config, draft) {
+  const file = reviewDraftPath(config, draft);
+  if (!fs.existsSync(file)) {
+    return { draft, reviewEdits: normalizeReviewEdits({}) };
+  }
+  const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return { ...record, reviewEdits: normalizeReviewEdits(record.reviewEdits) };
+}
+
 function hashName(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
@@ -341,32 +425,40 @@ function stringOrEmpty(value) {
 }
 
 export function normalizeAdditions(value = {}) {
-  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-  return Object.fromEntries(ADDITION_KEYS.map((key) => [key, normalizeAdditionText(source[key])]));
+  return normalizeReviewEdits(value);
 }
 
-function normalizeAdditionText(value) {
+export function normalizeReviewEdits(value = {}) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(REVIEW_EDIT_KEYS.map((key) => [key, normalizeReviewEditText(source[key])]));
+}
+
+function normalizeReviewEditText(value) {
   if (typeof value !== 'string') return '';
   return value
     .replace(/\r\n?/g, '\n')
     .replace(/[\t ]+$/gm, '')
     .trim()
-    .slice(0, MAX_ADDITION_LENGTH);
+    .slice(0, MAX_REVIEW_EDIT_LENGTH);
 }
 
-function hasPersonalAdditions(additions = {}) {
-  return ADDITION_KEYS.some((key) => typeof additions[key] === 'string' && additions[key].trim());
+function hasReviewEdits(reviewEdits = {}) {
+  return REVIEW_EDIT_KEYS.some((key) => typeof reviewEdits[key] === 'string' && reviewEdits[key].trim());
 }
 
 export function applyPersonalAdditionsToMarkdown(raw, additions = {}) {
-  const normalized = normalizeAdditions(additions);
-  if (!hasPersonalAdditions(normalized)) return raw;
+  return applyReviewEditsToMarkdown(raw, additions);
+}
+
+export function applyReviewEditsToMarkdown(raw, reviewEdits = {}) {
+  const normalized = normalizeReviewEdits(reviewEdits);
+  if (!hasReviewEdits(normalized)) return raw;
 
   const { frontmatter, body } = splitFrontmatter(raw);
   const insertions = [];
-  for (const key of ADDITION_KEYS) {
+  for (const key of REVIEW_EDIT_KEYS) {
     const text = normalized[key];
-    if (text) insertions.push({ key, markdown: formatAdditionCallout(key, text) });
+    if (text) insertions.push({ key, markdown: formatNaturalReviewEdit(text) });
   }
 
   let nextBody = body.trimStart();
@@ -374,7 +466,7 @@ export function applyPersonalAdditionsToMarkdown(raw, additions = {}) {
   const middle = insertions.find((item) => item.key === 'middle');
   const closing = insertions.find((item) => item.key === 'closing');
 
-  if (opening) nextBody = `${opening.markdown}\n\n${nextBody}`;
+  if (opening) nextBody = insertOpeningReviewEdit(nextBody, opening.markdown);
   if (middle) nextBody = insertMiddleAddition(nextBody, middle.markdown);
   if (closing) nextBody = `${nextBody.trimEnd()}\n\n${closing.markdown}\n`;
 
@@ -396,9 +488,28 @@ function splitFrontmatter(raw) {
   return { frontmatter: raw.slice(0, afterFence).trimEnd(), body: raw.slice(afterFence + 1) };
 }
 
-function formatAdditionCallout(key, text) {
-  const lines = text.split('\n').map((line) => (line ? `> ${line}` : '>'));
-  return `> **${ADDITION_LABELS[key]}:**\n${lines.join('\n')}`;
+function formatNaturalReviewEdit(text) {
+  return text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph
+      .replace(/^>\s?/gm, '')
+      .replace(/^\s*(?:opening|middle|mid-article|closing|wes(?:'s)? note|note)\s*:\s*/i, '')
+      .replace(/\s+/g, ' ')
+      .trim())
+    .filter(Boolean)
+    .map(ensureTerminalPunctuation)
+    .join('\n\n');
+}
+
+function ensureTerminalPunctuation(value) {
+  return /[.!?)]$/.test(value) ? value : `${value}.`;
+}
+
+function insertOpeningReviewEdit(body, markdown) {
+  const trimmed = body.trimStart();
+  const firstBreak = trimmed.search(/\n{2,}/);
+  if (firstBreak === -1) return `${markdown}\n\n${trimmed}`;
+  return `${trimmed.slice(0, firstBreak).trimEnd()}\n\n${markdown}\n\n${trimmed.slice(firstBreak).trimStart()}`;
 }
 
 function insertMiddleAddition(body, markdown) {

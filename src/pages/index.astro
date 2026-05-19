@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import DisplayStoryCard from '../components/DisplayStoryCard.astro';
 import StoryCard from '../components/StoryCard.astro';
-import { getBriefings, getArticles, getNewsStories, getRedditStories, getStoryArchive, getWhitepaperStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
+import { getBriefings, getArticles, getPinnedArticles, getNewsStories, getRedditStories, getStoryArchive, getWhitepaperStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
 
 function hashString(value) {
   let hash = 2166136261;
@@ -33,6 +33,7 @@ function searchTextFor(item) {
 
 const briefings = getBriefings();
 const articles = getArticles();
+const pinnedArticles = getPinnedArticles(articles);
 const stories = getNewsStories();
 const redditStories = getRedditStories();
 const whitepaperStories = getWhitepaperStories(4);
@@ -60,6 +61,27 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname="/" bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
+    {pinnedArticles.length > 0 && (
+      <section class="pinned-articles" aria-label="Pinned articles">
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Pinned for 24 hours</p>
+            <h2>Fresh article</h2>
+          </div>
+          <a href="/articles/">All articles</a>
+        </div>
+        <div class="pinned-article-grid">
+          {pinnedArticles.map((article) => (
+            <article class="pinned-article-card" data-fs-search-item data-search-text={`${article.title} ${article.description} ${article.tags.join(' ')}`}>
+              <p class="meta">{article.pubDate} · pinned until {article.pinnedUntil}</p>
+              <h3><a href={`/articles/${article.slug}/`}>{article.title}</a></h3>
+              <p>{article.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
     <section class="display-hero" aria-label="Factory Signal classroom display" data-fs-search-section>
       <div class="display-topline">
         <h1 id="display-title">Factory Signal</h1>

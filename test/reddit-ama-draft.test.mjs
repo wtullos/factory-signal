@@ -4,6 +4,7 @@ import { buildAmaDraftMarkdown, extractAmaSummary, redditJsonUrl } from '../scri
 import { parseArticleMarkdown } from '../src/lib/content.js';
 import { getAmaContext, getAmaReviewBadgeLabel, getPersonalAdditionRecommendations, isRedditAmaDraft } from '../src/lib/review-prompts.js';
 import { schoolFriendlyViolations } from '../src/lib/school-friendly.js';
+import { aiTellContrastViolations } from '../src/lib/style-guard.js';
 
 test('redditJsonUrl converts Reddit thread URLs to JSON listing URLs', () => {
   const url = redditJsonUrl('https://www.reddit.com/r/raspberry_pi/comments/abc123/example_ama/');
@@ -32,6 +33,7 @@ test('buildAmaDraftMarkdown writes school-friendly Reddit AMA frontmatter and bo
   assert.ok(article.tags.includes('reddit ama'));
   assert.ok(article.tags.includes('Raspberry Pi'));
   assert.deepEqual(schoolFriendlyViolations(article), []);
+  assert.deepEqual(aiTellContrastViolations(article), []);
   assert.match(markdown, /## Key Q\/A takeaways/);
   assert.match(markdown, /Factory Signal angle/);
   assert.match(markdown, /Official thread: https:\/\/www\.reddit\.com\/r\/IAmA\/comments\/abc123\/pi_ama\//);
@@ -55,7 +57,8 @@ test('buildAmaDraftMarkdown writes school-friendly AMA preview frontmatter and b
   assert.equal(article.articleType, 'reddit-ama-preview');
   assert.ok(article.tags.includes('reddit ama'));
   assert.deepEqual(schoolFriendlyViolations(article), []);
-  assert.match(markdown, /not a completed AMA summary/);
+  assert.deepEqual(aiTellContrastViolations(article), []);
+  assert.match(markdown, /Use this preview to frame the questions/);
   assert.match(markdown, /## AMA questions to watch/);
   assert.match(markdown, /## What Wes should add after answers land/);
   assert.match(markdown, /Official thread: https:\/\/reddit\.com\/r\/engineering\/comments\/1tcyfvk\/hello_rengineering_were_eben_upton_ceo_james\//);

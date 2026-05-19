@@ -9,7 +9,7 @@ export default defineConfig({
   trailingSlash: 'always',
   integrations: [
     sitemap({
-      filter: (page) => new URL(page).pathname !== '/review/',
+      filter: (page) => !new URL(page).pathname.startsWith('/review/'),
     }),
   ],
 });

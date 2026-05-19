@@ -2,8 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { parseArticleMarkdown } from '../src/lib/content.js';
+import { applyPublishMetadata, parseArticleMarkdown } from '../src/lib/content.js';
 import { schoolFriendlyViolations } from '../src/lib/school-friendly.js';
+import { aiTellContrastViolations } from '../src/lib/style-guard.js';
 
 const root = process.cwd();
 const input = process.argv[2];
@@ -52,6 +53,7 @@ const sourcePath = path.join(draftsDir, sourceFile);
 const rawDraft = fs.readFileSync(sourcePath, 'utf8');
 const draftArticle = parseArticleMarkdown(sourceFile, rawDraft, { dir: 'content/drafts' });
 const violations = schoolFriendlyViolations(draftArticle);
+const styleViolations = aiTellContrastViolations(draftArticle);
 
 if (violations.length > 0) {
   console.error(`Draft "${sourceFile}" was not published because it failed the school-friendly content guard.`);
@@ -61,12 +63,24 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
+if (styleViolations.length > 0) {
+  console.error(`Draft "${sourceFile}" was not published because it failed the Factory Signal style guard.`);
+  console.error(`Rules: ${[...new Set(styleViolations.map((violation) => violation.code))].join(', ')}`);
+  console.error('Reason: draft text used AI-tell contrast framing. Prefer direct claims.');
+  console.error('Avoid formulas such as “This is not X, it is Y” and “not just X but Y.”');
+  process.exit(1);
+}
+
 const targetFile = uniqueFilename(articlesDir, sourceFile);
 const targetPath = path.join(articlesDir, targetFile);
+const publishedAt = new Date();
+const publishedMarkdown = applyPublishMetadata(rawDraft, publishedAt);
 
-fs.renameSync(sourcePath, targetPath);
+fs.writeFileSync(targetPath, publishedMarkdown);
+fs.rmSync(sourcePath);
 
 console.log(`Moved content/drafts/${sourceFile} -> content/articles/${targetFile}`);
+console.log(`Pinned article until ${new Date(publishedAt.getTime() + 24 * 60 * 60 * 1000).toISOString()}`);
 console.log('Review the article, then run npm run build/deploy when ready.');
 
 function uniqueFilename(dir, filename) {

@@ -5,6 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseArticleMarkdown } from '../src/lib/content.js';
 import { schoolFriendlyViolations } from '../src/lib/school-friendly.js';
+import { aiTellContrastViolations } from '../src/lib/style-guard.js';
 
 const DEFAULT_QA_LIMIT = 8;
 const DEFAULT_PREVIEW_QUESTION_LIMIT = 10;
@@ -147,7 +148,7 @@ function buildPreviewBody(summary, sourceUrls) {
   return [
     `# ${summary.title}`,
     '',
-    'This Reddit AMA thread has not produced enough official answers yet, so this draft is a preview: the questions to watch, not a completed AMA summary. Use it to frame what manufacturers, classrooms, and technical teams should look for once answers land.',
+    'This Reddit AMA thread is still waiting on enough official answers. Use this preview to frame the questions manufacturers, classrooms, and technical teams should track once answers land.',
     '',
     '## Source context',
     '',
@@ -173,7 +174,7 @@ function buildPreviewBody(summary, sourceUrls) {
     '',
     'Replace or supplement this preview with confirmed answers from the AMA participants. Watch for commitments on availability, documentation, industrial support, classroom examples, software maintenance, and any gaps between community needs and official guidance.',
     '',
-    '> Editor note: This is a preview draft, not a completed AMA summary. Verify the thread status and add official answers before publishing as a recap.',
+    '> Editor note: Preview draft. Verify the thread status and add official answers before publishing as a recap.',
   ].filter((line) => line !== null).join('\n');
 }
 
@@ -185,6 +186,10 @@ export async function generateAmaDraft(inputUrl, options = {}) {
   const violations = schoolFriendlyViolations(article);
   if (violations.length > 0) {
     throw new Error(`Generated AMA draft failed the school-friendly content guard. Categories: ${[...new Set(violations)].join(', ')}`);
+  }
+  const styleViolations = aiTellContrastViolations(article);
+  if (styleViolations.length > 0) {
+    throw new Error(`Generated AMA draft failed the Factory Signal style guard. Rules: ${[...new Set(styleViolations.map((violation) => violation.code))].join(', ')}`);
   }
   return { summary, markdown, filename: `${slugify(`${options.date || todayIsoDate()}-${summary.title}`)}.md` };
 }

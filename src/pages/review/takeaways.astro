@@ -1,0 +1,110 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDailyTakeaways } from '../../lib/content.js';
+
+const takeaways = getDailyTakeaways(7);
+const latest = takeaways[0];
+
+function lessonParts(lesson) {
+  if (lesson && typeof lesson === 'object') {
+    return {
+      concept: String(lesson.concept || '').trim(),
+      takeaway: String(lesson.takeaway || '').trim(),
+    };
+  }
+
+  const text = String(lesson || '').trim();
+  const match = text.match(/^(?:\*\*)?(.+?)(?:\*\*)?\s*(?:[:—-])\s+(.+)$/);
+  return match
+    ? { concept: match[1].trim(), takeaway: match[2].trim() }
+    : { concept: '', takeaway: text };
+}
+
+function displayLessons(day, limit = Infinity) {
+  return (day?.lessons || [])
+    .map(lessonParts)
+    .filter((lesson) => lesson.concept || lesson.takeaway)
+    .slice(0, limit);
+}
+---
+<Base title="Daily takeaways" description="Private Factory Signal learning takeaways for the robot backend." pathname="/review/takeaways/" noindex={true} bodyClass="review-backend">
+  <a class="review-logout-button" href="/review/logout" data-review-logout>Logout</a>
+  <main>
+    <div class="section-heading">
+      <div>
+        <p class="meta">Private workflow · intended URL: https://robot.thefactorysignal.com/takeaways/</p>
+        <h1>Daily takeaways</h1>
+      </div>
+    </div>
+
+    <nav class="review-tabs" aria-label="Robot backend sections">
+      <a href="/review/">Drafts</a>
+      <a aria-current="page" href="/review/takeaways/">Daily takeaways</a>
+    </nav>
+
+    <section class="panel review-warning">
+      <h2>Learn the day through manufacturing patterns</h2>
+      <p>
+        This robot-protected/noindex page turns each briefing into general manufacturing concepts Wes can review. It summarizes patterns,
+        source mix, community friction, and practical questions rather than rewriting individual headlines.
+      </p>
+    </section>
+
+    {takeaways.length === 0 ? (
+      <section class="panel empty-state">
+        <h2>No daily briefings found</h2>
+        <p>Add briefing Markdown files to <code>content/briefings/</code>, then rebuild.</p>
+      </section>
+    ) : (
+      <div class="takeaway-layout">
+        {latest && (
+          <article class="panel takeaway-card takeaway-card-latest">
+            <p class="meta">Latest · {latest.dateLabel} · {latest.storyCount} signals</p>
+            <h2>{latest.title}</h2>
+            <p class="draft-description">{latest.deck}</p>
+            <dl class="review-meta">
+              <div><dt>News/videos</dt><dd>{latest.newsCount}</dd></div>
+              <div><dt>Community</dt><dd>{latest.communityCount}</dd></div>
+              <div><dt>Top topics</dt><dd>{latest.topTopics.join(', ') || 'None'}</dd></div>
+            </dl>
+            <ol class="takeaway-list">
+              {displayLessons(latest).map((lesson) => (
+                <li>
+                  {lesson.concept && <strong>{lesson.concept}</strong>}
+                  <p>{lesson.takeaway}</p>
+                </li>
+              ))}
+            </ol>
+            <p><a class="button secondary" href={`/briefings/${latest.slug}/`}>Open source briefing</a></p>
+          </article>
+        )}
+
+        <section class="takeaway-history" aria-label="Previous daily takeaways">
+          {takeaways.slice(1).map((day) => (
+            <article class="panel takeaway-card">
+              <p class="meta">{day.dateLabel} · {day.storyCount} signals</p>
+              <h2>{day.title}</h2>
+              <p><strong>Concept mix:</strong> {day.topTopics.slice(0, 4).join(', ') || 'No topics parsed'}</p>
+              <ul class="takeaway-list compact-takeaway-list">
+                {displayLessons(day, 3).map((lesson) => (
+                  <li>
+                    {lesson.concept && <strong>{lesson.concept}</strong>}
+                    <p>{lesson.takeaway}</p>
+                  </li>
+                ))}
+              </ul>
+              <p><a href={`/briefings/${day.slug}/`}>Open source briefing</a></p>
+            </article>
+          ))}
+        </section>
+      </div>
+    )}
+  </main>
+
+  <script>
+    const logoutButton = document.querySelector('[data-review-logout]');
+    if (logoutButton instanceof HTMLAnchorElement) {
+      logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
+    }
+  </script>
+</Base>

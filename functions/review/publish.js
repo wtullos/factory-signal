@@ -2,8 +2,8 @@ const WEBHOOK_URL = 'FS_REVIEW_PUBLISH_WEBHOOK_URL';
 const WEBHOOK_SECRET = 'FS_REVIEW_PUBLISH_WEBHOOK_SECRET';
 const ALLOWED_ACTIONS = new Set(['publish_now', 'schedule']);
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
-const ADDITION_KEYS = ['opening', 'middle', 'closing'];
-const MAX_ADDITION_LENGTH = 1200;
+const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
+const MAX_REVIEW_EDIT_LENGTH = 1200;
 
 async function handlePost(context) {
   const receiverUrl = context.env?.[WEBHOOK_URL];
@@ -39,7 +39,7 @@ async function handlePost(context) {
   const action = String(input.action || '').trim();
   const title = String(input.title || '').trim();
   const publishAt = String(input.publishAt || input.publish_at || '').trim();
-  const additions = normalizeAdditions(input);
+  const reviewEdits = normalizeReviewEdits(input);
 
   if (!draft) {
     return jsonResponse({
@@ -63,14 +63,16 @@ async function handlePost(context) {
 
   const effectivePublishAt = action === 'schedule' ? publishAt : '';
   const timestamp = new Date().toISOString();
-  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt, additions);
+  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt, reviewEdits);
   const webhookPayload = {
     event: 'factory_signal.review_publish_request',
     action,
     draft,
     title: title || undefined,
     publishAt: effectivePublishAt || undefined,
-    additions,
+    reviewEdits,
+    // Backward-compatible receiver field. New receivers should read reviewEdits.
+    additions: reviewEdits,
     requestedAt: timestamp,
     idempotencyKey,
     source: {
@@ -150,24 +152,26 @@ function normalizeDraftIdentifier(value) {
   return draft.replace(/\.md$/i, '');
 }
 
-function normalizeAdditions(input) {
-  const source = input.additions && typeof input.additions === 'object' && !Array.isArray(input.additions)
-    ? input.additions
+function normalizeReviewEdits(input) {
+  const source = input.reviewEdits && typeof input.reviewEdits === 'object' && !Array.isArray(input.reviewEdits)
+    ? input.reviewEdits
+    : input.additions && typeof input.additions === 'object' && !Array.isArray(input.additions)
+      ? input.additions
     : input;
   return {
-    opening: normalizeAdditionText(source.opening ?? source.additionOpening ?? source['additions.opening']),
-    middle: normalizeAdditionText(source.middle ?? source.mid ?? source.additionMiddle ?? source['additions.middle']),
-    closing: normalizeAdditionText(source.closing ?? source.additionClosing ?? source['additions.closing']),
+    opening: normalizeReviewEditText(source.opening ?? source.additionOpening ?? source.reviewOpening ?? source['reviewEdits.opening'] ?? source['additions.opening']),
+    middle: normalizeReviewEditText(source.middle ?? source.mid ?? source.additionMiddle ?? source.reviewMiddle ?? source['reviewEdits.middle'] ?? source['additions.middle']),
+    closing: normalizeReviewEditText(source.closing ?? source.additionClosing ?? source.reviewClosing ?? source['reviewEdits.closing'] ?? source['additions.closing']),
   };
 }
 
-function normalizeAdditionText(value) {
+function normalizeReviewEditText(value) {
   if (typeof value !== 'string') return '';
   return value
     .replace(/\r\n?/g, '\n')
     .replace(/[\t ]+$/gm, '')
     .trim()
-    .slice(0, MAX_ADDITION_LENGTH);
+    .slice(0, MAX_REVIEW_EDIT_LENGTH);
 }
 
 function isPlausibleDateTime(value) {
@@ -190,14 +194,14 @@ function parseHttpsWebhookUrl(value) {
   return parsed;
 }
 
-async function createIdempotencyKey(draft, action, publishAt, additions = {}) {
-  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now', additions: pickAdditions(additions) });
+async function createIdempotencyKey(draft, action, publishAt, reviewEdits = {}) {
+  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now', reviewEdits: pickReviewEdits(reviewEdits) });
   const digest = await sha256Hex(`factory-signal.review_publish:${operation}`);
   return `${draft}-${action}-${digest.slice(0, 32)}`.slice(0, 220);
 }
 
-function pickAdditions(additions) {
-  return Object.fromEntries(ADDITION_KEYS.map((key) => [key, typeof additions[key] === 'string' ? additions[key] : '']));
+function pickReviewEdits(reviewEdits) {
+  return Object.fromEntries(REVIEW_EDIT_KEYS.map((key) => [key, typeof reviewEdits[key] === 'string' ? reviewEdits[key] : '']));
 }
 
 async function sha256Hex(value) {

@@ -46,6 +46,17 @@ export function getArticles() {
     .sort((a, b) => String(b.pubDate).localeCompare(String(a.pubDate)) || a.title.localeCompare(b.title));
 }
 
+export function getPinnedArticles(articles = getArticles(), now = new Date()) {
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+  if (Number.isNaN(nowMs)) return [];
+  return articles
+    .filter((article) => {
+      const pinnedUntilMs = Date.parse(article.pinnedUntil || '');
+      return !Number.isNaN(pinnedUntilMs) && pinnedUntilMs > nowMs;
+    })
+    .sort((a, b) => String(b.pinnedUntil).localeCompare(String(a.pinnedUntil)) || String(b.pubDate).localeCompare(String(a.pubDate)));
+}
+
 export function getDraftArticles() {
   const dir = contentPath('drafts');
   if (!fs.existsSync(dir)) return [];
@@ -76,12 +87,57 @@ export function parseArticleMarkdown(filename, raw, options = {}) {
     status: data.status || 'draft',
     articleType: data.articleType || data.type || '',
     sourceUrls: normalizeList(data.sourceUrls || data.sources || data.sourceUrl),
+    pinnedUntil: data.pinnedUntil || data.pinned_until || '',
     body,
     html: marked.parse(body),
     filename,
     path: options.dir ? `${options.dir}/${filename}` : filename,
     updatedAt: options.updatedAt || '',
   };
+}
+
+export function getDailyTakeaways(limit = 7) {
+  return getBriefings().map((briefing) => buildDailyTakeaway(briefing, limit));
+}
+
+export function buildDailyTakeaway(briefing, limit = 7) {
+  const stories = (briefing?.sections || []).flatMap((section) => section.items.map((item) => ({ ...item, sectionTitle: section.title })));
+  const nonReddit = stories.filter((story) => story.sectionTitle !== 'Reddit');
+  const reddit = stories.filter((story) => story.sectionTitle === 'Reddit');
+  const topicCounts = countBy(nonReddit.map((story) => story.topic || story.source || story.sectionTitle).filter(Boolean));
+  const sourceCounts = countBy(nonReddit.map((story) => story.source).filter(Boolean));
+  const topTopics = topicCounts.slice(0, 5).map(([label]) => label);
+  const topSources = sourceCounts.slice(0, 5).map(([label]) => label);
+  const strongestStories = [...nonReddit]
+    .sort((a, b) => (Number.parseFloat(b.score || '0') || 0) - (Number.parseFloat(a.score || '0') || 0))
+    .slice(0, 6);
+  const lessons = inferTakeawayLessons({ briefing, topTopics, topSources, strongestStories, reddit }).slice(0, limit);
+
+  return {
+    date: briefing.date,
+    dateLabel: formatDate(briefing.date),
+    slug: briefing.slug,
+    title: `Daily takeaways - ${formatDate(briefing.date)}`,
+    deck: briefing.deck,
+    storyCount: stories.length,
+    newsCount: nonReddit.length,
+    communityCount: reddit.length,
+    topTopics,
+    topSources,
+    strongestStories,
+    lessons,
+  };
+}
+
+export function applyPublishMetadata(raw, publishedAt = new Date()) {
+  const publishedDate = publishedAt instanceof Date ? publishedAt : new Date(publishedAt);
+  if (Number.isNaN(publishedDate.getTime())) throw new Error('publishedAt must be a valid date.');
+  const pinnedUntil = new Date(publishedDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
+  return upsertFrontmatter(raw, {
+    status: 'published',
+    pubDate: publishedDate.toISOString(),
+    pinnedUntil,
+  });
 }
 
 export function getAllStories() {
@@ -223,6 +279,66 @@ function parseItems(text, isYouTube) {
   return items;
 }
 
+function countBy(values) {
+  const counts = new Map();
+  for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+function inferTakeawayLessons({ briefing, topTopics, topSources, strongestStories, reddit }) {
+  const lessons = [];
+  const topicText = topTopics.slice(0, 3).join(', ');
+  if (topicText) {
+    lessons.push({
+      concept: 'Patterns beat isolated headlines',
+      takeaway: `${formatDate(briefing.date)} clustered around ${topicText}. Treat a cluster as a demand signal: repeated themes usually matter more than any one link.`,
+    });
+  }
+
+  const sourceText = topSources.slice(0, 3).join(', ');
+  if (sourceText) {
+    lessons.push({
+      concept: 'Source mix changes confidence',
+      takeaway: `Coverage came most often from ${sourceText}. Vendor, trade-press, community, and research sources each carry different bias; compare them before calling a trend real.`,
+    });
+  }
+
+  if (strongestStories.some((story) => /robot|automation|cobot|vision|ai/i.test([story.title, story.topic, story.body].join(' ')))) {
+    lessons.push({
+      concept: 'Automation value is usually integration value',
+      takeaway: 'Robot, AI vision, and automation signals are strongest when they connect sensing, tooling, fixtures, software, and people into one repeatable workflow.',
+    });
+  }
+
+  if (strongestStories.some((story) => /3d|print|additive|filament|resin|stl/i.test([story.title, story.topic, story.body].join(' ')))) {
+    lessons.push({
+      concept: 'Additive work is a process-control problem',
+      takeaway: '3D printing stories are less about the printer alone and more about material choice, calibration, repeatability, post-processing, and design-for-manufacture decisions.',
+    });
+  }
+
+  if (strongestStories.some((story) => /cnc|mill|machin|tool|insert|cam|g-code/i.test([story.title, story.topic, story.body].join(' ')))) {
+    lessons.push({
+      concept: 'Machining knowledge compounds through constraints',
+      takeaway: 'CNC and tooling signals usually point back to constraints: material, fixturing, cutter geometry, feeds/speeds, tolerance, and inspection. Name the constraint before picking the fix.',
+    });
+  }
+
+  if (reddit.length > 0) {
+    lessons.push({
+      concept: 'Community questions expose adoption friction',
+      takeaway: `${reddit.length} community signal${reddit.length === 1 ? '' : 's'} showed where practitioners get stuck. Use these as a map of concepts worth teaching, documenting, or simplifying.`,
+    });
+  }
+
+  lessons.push({
+    concept: 'A daily briefing should end in a testable question',
+    takeaway: 'Convert the day into one question: what would I inspect, measure, prototype, or ask an operator tomorrow to prove whether this signal matters?',
+  });
+
+  return lessons;
+}
+
 export function topItems(briefing, limit = 6) {
   return [...(briefing?.sections || []).flatMap((section) => section.items)]
     .sort((a, b) => (Number.parseFloat(b.score || '0') || 0) - (Number.parseFloat(a.score || '0') || 0))
@@ -285,6 +401,27 @@ function normalizeList(value) {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
   if (!value) return [];
   return String(value).split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function upsertFrontmatter(raw, patch) {
+  const lines = raw.split('\n');
+  if (!raw.startsWith('---')) {
+    const frontmatter = Object.entries(patch).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n');
+    return `---\n${frontmatter}\n---\n\n${raw.trimStart()}`;
+  }
+
+  const endIndex = lines.findIndex((line, index) => index > 0 && line.trim() === '---');
+  if (endIndex === -1) return upsertFrontmatter(raw.replace(/^---\s*/, ''), patch);
+
+  const fmLines = lines.slice(1, endIndex);
+  const bodyLines = lines.slice(endIndex + 1);
+  for (const [key, value] of Object.entries(patch)) {
+    const rendered = `${key}: ${JSON.stringify(value)}`;
+    const existingIndex = fmLines.findIndex((line) => line.match(new RegExp(`^${key}:\\s*`)));
+    if (existingIndex >= 0) fmLines[existingIndex] = rendered;
+    else fmLines.push(rendered);
+  }
+  return ['---', ...fmLines, '---', ...bodyLines].join('\n');
 }
 
 function slugify(value) {

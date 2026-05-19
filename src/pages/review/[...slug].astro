@@ -23,6 +23,11 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       </div>
     </div>
 
+    <nav class="review-tabs" aria-label="Robot backend sections">
+      <a aria-current="page" href="/review/">Drafts</a>
+      <a href="/review/takeaways/">Daily takeaways</a>
+    </nav>
+
     <section class="panel review-warning">
       <h2>Review before publishing</h2>
       <p>
@@ -100,10 +105,10 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 build, and deploy outside this static review page.
               </p>
 
-              <section class="personal-additions" aria-labelledby={`personal-additions-${draft.slug || draft.filename}`} data-personal-additions>
+              <section class="personal-additions" aria-labelledby={`personal-additions-${draft.slug || draft.filename}`} data-personal-additions data-draft-id={draft.slug || draft.filename} data-draft-title={draft.title}>
                 <div class="personal-additions-heading">
-                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Personal additions</h4>
-                  <p>Add optional Wes-authored notes. These are inserted as editorial callouts when the draft is published.</p>
+                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Wes review edits</h4>
+                  <p>Add optional Wes-authored input. It is saved through the signed receiver and, on publish, cleaned up and blended into the article instead of pasted as labeled callouts.</p>
                   <ul class="personal-recommendations" aria-label="Recommended personal additions">
                     <li><strong>Opening:</strong> {personalPrompts.opening}</li>
                     <li><strong>Mid-article:</strong> {personalPrompts.middle}</li>
@@ -114,18 +119,22 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                   <label>
                     <span>Opening note</span>
                     <small>{personalPrompts.opening}</small>
-                    <textarea name="additionOpening" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.opening}></textarea>
+                    <textarea name="opening" rows="3" maxlength="1200" data-addition-field data-review-edit="opening" placeholder={personalPrompts.opening}></textarea>
                   </label>
                   <label>
                     <span>Mid-article note</span>
                     <small>{personalPrompts.middle}</small>
-                    <textarea name="additionMiddle" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.middle}></textarea>
+                    <textarea name="middle" rows="3" maxlength="1200" data-addition-field data-review-edit="middle" placeholder={personalPrompts.middle}></textarea>
                   </label>
                   <label>
                     <span>Closing note</span>
                     <small>{personalPrompts.closing}</small>
-                    <textarea name="additionClosing" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.closing}></textarea>
+                    <textarea name="closing" rows="3" maxlength="1200" data-addition-field data-review-edit="closing" placeholder={personalPrompts.closing}></textarea>
                   </label>
+                </div>
+                <div class="review-draft-actions">
+                  <button class="button secondary" type="button" data-save-review-draft>Save draft</button>
+                  <p class="publish-status" data-save-review-status role="status" aria-live="polite">Saved review edits will load here automatically.</p>
                 </div>
               </section>
 
@@ -175,6 +184,82 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
 
     const publishForms = document.querySelectorAll('[data-publish-actions] form');
 
+    const collectReviewEdits = (draftCard) => {
+      const reviewEdits = { opening: '', middle: '', closing: '' };
+      draftCard?.querySelectorAll('[data-review-edit]').forEach((field) => {
+        if (field instanceof HTMLTextAreaElement) {
+          const key = field.dataset.reviewEdit;
+          if (key && Object.prototype.hasOwnProperty.call(reviewEdits, key)) reviewEdits[key] = field.value;
+        }
+      });
+      return reviewEdits;
+    };
+
+    const applyReviewEdits = (draftCard, reviewEdits = {}) => {
+      draftCard?.querySelectorAll('[data-review-edit]').forEach((field) => {
+        if (field instanceof HTMLTextAreaElement) {
+          const key = field.dataset.reviewEdit;
+          if (key && typeof reviewEdits[key] === 'string') field.value = reviewEdits[key];
+        }
+      });
+    };
+
+    const setSaveStatus = (section, message, state = '') => {
+      const status = section?.querySelector('[data-save-review-status]');
+      if (status) {
+        status.textContent = message;
+        status.dataset.state = state;
+      }
+    };
+
+    const reviewSections = document.querySelectorAll('[data-personal-additions][data-draft-id]');
+    reviewSections.forEach((section) => {
+      const draft = section.dataset.draftId || '';
+      const title = section.dataset.draftTitle || '';
+      const draftCard = section.closest('.draft-card');
+      const saveButton = section.querySelector('[data-save-review-draft]');
+
+      const loadReviewDraft = async () => {
+        try {
+          const url = new URL('/review/save', window.location.href);
+          url.searchParams.set('draft', draft);
+          const response = await fetch(url.href, { headers: { Accept: 'application/json' } });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.ok) throw new Error(result.message || `Review draft load failed with HTTP ${response.status}.`);
+          if (result.reviewEdits) applyReviewEdits(draftCard, result.reviewEdits);
+          setSaveStatus(section, result.savedAt ? `Loaded saved edits from ${new Date(result.savedAt).toLocaleString()}.` : 'No saved review edits yet.', 'success');
+        } catch (error) {
+          setSaveStatus(section, error instanceof Error ? error.message : 'Review draft load failed.', 'error');
+        }
+      };
+
+      const saveReviewDraft = async () => {
+        if (!(saveButton instanceof HTMLButtonElement)) return;
+        const originalText = saveButton.textContent || '';
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving…';
+        setSaveStatus(section, 'Saving review draft…', 'pending');
+        try {
+          const response = await fetch(new URL('/review/save', window.location.href).href, {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save', draft, title, reviewEdits: collectReviewEdits(draftCard) }),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.ok) throw new Error(result.message || `Review draft save failed with HTTP ${response.status}.`);
+          setSaveStatus(section, `${result.message || 'Review draft saved.'}${result.savedAt ? ` ${new Date(result.savedAt).toLocaleString()}` : ''}`, 'success');
+        } catch (error) {
+          setSaveStatus(section, error instanceof Error ? error.message : 'Review draft save failed.', 'error');
+        } finally {
+          saveButton.disabled = false;
+          saveButton.textContent = originalText;
+        }
+      };
+
+      if (saveButton instanceof HTMLButtonElement) saveButton.addEventListener('click', saveReviewDraft);
+      loadReviewDraft();
+    });
+
     publishForms.forEach((form) => {
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -198,11 +283,12 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           const publishEndpoint = new URL(actionPath, window.location.href).href;
           const formData = new FormData(form);
           const draftCard = form.closest('.draft-card');
-          draftCard?.querySelectorAll('[data-addition-field]').forEach((field) => {
-            if (field instanceof HTMLTextAreaElement && field.name) {
-              formData.set(field.name, field.value);
-            }
-          });
+          const reviewEdits = collectReviewEdits(draftCard);
+          Object.entries(reviewEdits).forEach(([key, value]) => formData.set(`reviewEdits.${key}`, value));
+          // Compatibility for older receiver/function deployments.
+          formData.set('additionOpening', reviewEdits.opening);
+          formData.set('additionMiddle', reviewEdits.middle);
+          formData.set('additionClosing', reviewEdits.closing);
 
           const response = await fetch(publishEndpoint, {
             method: 'POST',
