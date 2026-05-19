@@ -213,7 +213,7 @@ When execute mode is enabled, an accepted publish runs:
 
 1. `node scripts/publish-draft.mjs <draft>`
 2. `npm run build`
-3. `git add content/drafts content/articles dist`
+3. `git add content/articles public/generated-images`
 4. `git commit -m "Publish review draft: <draft>"`
 5. `npx wrangler pages deploy dist --project-name factory-signal --branch main --commit-hash <new-commit> --commit-message "Publish review draft: <draft>"`
 
