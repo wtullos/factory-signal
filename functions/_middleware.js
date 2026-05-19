@@ -255,23 +255,60 @@ function renderLoginPage({ action, logout, redirectPath, errorMessage }) {
   <meta name="robots" content="noindex, nofollow">
   <title>Factory Signal Review Login</title>
   <style>
-    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #08111f; color: #eef4ff; }
-    main { width: min(92vw, 420px); padding: 2rem; border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 24px; background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.82)); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38); }
-    h1 { margin: 0 0 0.5rem; font-size: clamp(1.75rem, 5vw, 2.25rem); letter-spacing: -0.04em; }
-    p { margin: 0 0 1.5rem; color: #a8b3c7; line-height: 1.55; }
-    label { display: block; margin: 1rem 0 0.4rem; font-size: 0.9rem; font-weight: 650; color: #d8e2f3; }
-    input { box-sizing: border-box; width: 100%; padding: 0.85rem 0.95rem; border: 1px solid rgba(148, 163, 184, 0.36); border-radius: 12px; background: rgba(2, 6, 23, 0.72); color: #fff; font: inherit; }
-    input:focus { border-color: #38bdf8; outline: 3px solid rgba(56, 189, 248, 0.18); }
-    button { width: 100%; margin-top: 1.4rem; padding: 0.9rem 1rem; border: 0; border-radius: 999px; background: #38bdf8; color: #03121f; font: inherit; font-weight: 800; cursor: pointer; }
-    button:hover { background: #7dd3fc; }
-    .error { margin: 0 0 1rem; padding: 0.8rem 0.9rem; border-radius: 12px; background: rgba(248, 113, 113, 0.14); color: #fecaca; border: 1px solid rgba(248, 113, 113, 0.32); }
-    .helper { margin-top: 1rem; font-size: 0.85rem; color: #7f8ca3; }
-    a { color: #7dd3fc; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@700;800;900&display=swap');
+    :root {
+      color-scheme: light;
+      --bg: #f7f9f6;
+      --paper: #ffffff;
+      --paper-strong: #f0f5ef;
+      --ink: #262a2e;
+      --ink-strong: #171a1d;
+      --muted: #687176;
+      --line: #d6ddd2;
+      --accent: #39a935;
+      --accent-bright: #49c743;
+      --accent-dark: #237322;
+      --accent-soft: #e8f6e6;
+      --shadow: 0 18px 45px rgba(38, 42, 46, .08);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --display: Orbitron, Inter, ui-sans-serif, system-ui, sans-serif;
+      font-family: var(--sans);
+    }
+    * { box-sizing: border-box; }
+    html {
+      min-height: 100%;
+      background:
+        linear-gradient(90deg, rgba(57,169,53,.045) 1px, transparent 1px),
+        linear-gradient(rgba(57,169,53,.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 42px 42px;
+      color: var(--ink);
+    }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; color: var(--ink); }
+    main { width: min(100%, 430px); padding: clamp(1.35rem, 5vw, 2rem); border: 1px solid var(--line); border-top: 4px solid var(--accent); background: rgba(255,255,255,.9); box-shadow: var(--shadow); }
+    .brand-lockup { display: grid; gap: 0.35rem; margin-bottom: 1.35rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+    .brand { font: 900 clamp(1rem, 4vw, 1.25rem)/.9 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-strong); }
+    .eyebrow { color: var(--accent-dark); font-size: .74rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0 0 0.55rem; color: var(--ink-strong); font-size: clamp(1.75rem, 5vw, 2.25rem); line-height: 1.05; letter-spacing: -0.045em; }
+    p { margin: 0 0 1.5rem; color: var(--muted); line-height: 1.55; }
+    label { display: block; margin: 1rem 0 0.4rem; color: var(--ink-strong); font-size: 0.9rem; font-weight: 800; }
+    input { width: 100%; padding: 0.85rem 0.95rem; border: 1px solid var(--line); border-radius: 0; background: var(--paper); color: var(--ink-strong); font: inherit; }
+    input:focus { border-color: var(--accent); outline: 3px solid rgba(57, 169, 53, 0.18); }
+    button { width: 100%; margin-top: 1.4rem; padding: 0.9rem 1rem; border: 1px solid var(--accent-dark); border-radius: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); }
+    button:hover { background: var(--accent-bright); color: var(--ink-strong); }
+    button:focus-visible { outline: 3px solid rgba(57, 169, 53, 0.25); outline-offset: 3px; }
+    .error { margin: 0 0 1rem; padding: 0.8rem 0.9rem; border: 1px solid rgba(185, 28, 28, 0.24); background: #fff1f2; color: #9f1239; }
+    .helper { margin-top: 1rem; margin-bottom: 0; font-size: 0.85rem; color: var(--muted); }
+    a { color: var(--accent-dark); text-decoration-color: rgba(57,169,53,.55); text-underline-offset: .2em; }
+    a:hover { color: var(--ink-strong); }
   </style>
 </head>
 <body>
   <main>
+    <div class="brand-lockup" aria-label="Factory Signal">
+      <span class="brand">Factory Signal</span>
+      <span class="eyebrow">Private review access</span>
+    </div>
     <h1>Review access</h1>
     <p>Sign in to view the private Factory Signal review site.</p>
     ${safeError ? `<div class="error" role="alert">${safeError}</div>` : ''}
