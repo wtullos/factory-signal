@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getDraftArticles, formatDate } from '../../lib/content.js';
+import { getAmaContext, getAmaReviewBadgeLabel, getPersonalAdditionRecommendations, isRedditAmaDraft } from '../../lib/review-prompts.js';
 
 export const prerender = true;
 
@@ -38,14 +39,22 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       </section>
     ) : (
       <div class="review-list">
-        {drafts.map((draft) => (
-          <article class="panel draft-card">
+        {drafts.map((draft) => {
+          const personalPrompts = getPersonalAdditionRecommendations(draft);
+          const amaContext = getAmaContext(draft);
+          const isAmaDraft = isRedditAmaDraft(draft);
+          const amaBadgeLabel = getAmaReviewBadgeLabel(draft);
+          return (
+          <article class:list={["panel", "draft-card", { "ama-draft-card": isAmaDraft }]} data-article-type={draft.articleType || undefined}>
             <header class="draft-header">
               <div>
                 <p class="meta">{draft.status} · {draft.pubDate && hasDate(draft.pubDate) ? formatDate(draft.pubDate.slice(0, 10)) : draft.pubDate || 'No publish date'}</p>
                 <h2>{draft.title}</h2>
               </div>
-              <span class="draft-slug">{draft.slug}</span>
+              <div class="draft-header-badges">
+                {amaBadgeLabel && <span class="ama-badge">{amaBadgeLabel}</span>}
+                <span class="draft-slug">{draft.slug}</span>
+              </div>
             </header>
 
             <dl class="review-meta">
@@ -55,6 +64,14 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
             </dl>
 
             {draft.description && <p class="draft-description">{draft.description}</p>}
+
+            {amaContext && (
+              <section class="ama-context" aria-label="Reddit AMA source context">
+                <h3>{amaContext.label}</h3>
+                <p>{amaContext.summary}</p>
+                {amaContext.sourceUrl && <p><strong>AMA source:</strong> <a href={amaContext.sourceUrl}>{amaContext.sourceUrl}</a></p>}
+              </section>
+            )}
 
             {draft.tags.length > 0 && (
               <div class="tag-row" aria-label="Tags">
@@ -87,22 +104,27 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 <div class="personal-additions-heading">
                   <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Personal additions</h4>
                   <p>Add optional Wes-authored notes. These are inserted as editorial callouts when the draft is published.</p>
+                  <ul class="personal-recommendations" aria-label="Recommended personal additions">
+                    <li><strong>Opening:</strong> {personalPrompts.opening}</li>
+                    <li><strong>Mid-article:</strong> {personalPrompts.middle}</li>
+                    <li><strong>Closing:</strong> {personalPrompts.closing}</li>
+                  </ul>
                 </div>
                 <div class="personal-addition-grid">
                   <label>
                     <span>Opening note</span>
-                    <small>Why this one matters right now.</small>
-                    <textarea name="additionOpening" rows="3" maxlength="1200" data-addition-field placeholder="Example: What caught my eye here is…"></textarea>
+                    <small>{personalPrompts.opening}</small>
+                    <textarea name="additionOpening" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.opening}></textarea>
                   </label>
                   <label>
                     <span>Mid-article note</span>
-                    <small>A practical shop-floor angle or operator takeaway.</small>
-                    <textarea name="additionMiddle" rows="3" maxlength="1200" data-addition-field placeholder="Example: On the floor, I’d watch for…"></textarea>
+                    <small>{personalPrompts.middle}</small>
+                    <textarea name="additionMiddle" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.middle}></textarea>
                   </label>
                   <label>
                     <span>Closing note</span>
-                    <small>A short final takeaway, caution, or next step.</small>
-                    <textarea name="additionClosing" rows="3" maxlength="1200" data-addition-field placeholder="Example: Bottom line for manufacturers…"></textarea>
+                    <small>{personalPrompts.closing}</small>
+                    <textarea name="additionClosing" rows="3" maxlength="1200" data-addition-field placeholder={personalPrompts.closing}></textarea>
                   </label>
                 </div>
               </section>
@@ -139,7 +161,8 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
               </details>
             </section>
           </article>
-        ))}
+          );
+        })}
       </div>
     )}
   </main>

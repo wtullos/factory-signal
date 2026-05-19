@@ -74,6 +74,7 @@ export function parseArticleMarkdown(filename, raw, options = {}) {
     author: data.author || SITE_NAME,
     tags: normalizeList(data.tags),
     status: data.status || 'draft',
+    articleType: data.articleType || data.type || '',
     sourceUrls: normalizeList(data.sourceUrls || data.sources || data.sourceUrl),
     body,
     html: marked.parse(body),
