@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { startReceiver, DEFAULT_ROUTE, EVENT_NAME } from '../scripts/review-publish-receiver.mjs';
+import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown } from '../scripts/review-publish-receiver.mjs';
 
 const secret = 'unit-test-secret';
 
@@ -15,6 +15,11 @@ test('accepts a signed publish_now webhook in dry-run mode and persists idempote
       event: EVENT_NAME,
       action: 'publish_now',
       draft: 'sample-draft',
+      additions: {
+        opening: 'Opening perspective',
+        middle: 'Shop-floor angle',
+        closing: 'Closing takeaway',
+      },
       requestedAt: new Date().toISOString(),
       idempotencyKey: 'sample-draft-publish-now-0001',
     };
@@ -25,7 +30,8 @@ test('accepts a signed publish_now webhook in dry-run mode and persists idempote
     assert.equal(firstJson.ok, true);
     assert.equal(firstJson.execute, false);
 
-    await waitForStatus(fixture.stateDir, 'dry_run_complete');
+    const record = await waitForStatus(fixture.stateDir, 'dry_run_complete');
+    assert.deepEqual(record.payload.additions, payload.additions);
 
     const duplicate = await postSigned(fixture.url, payload, payload.idempotencyKey);
     assert.equal(duplicate.status, 200);
@@ -105,6 +111,7 @@ test('accepts a signed future schedule request without executing immediately', a
       action: 'schedule',
       draft: 'sample-draft',
       publishAt: new Date(Date.now() + 3_600_000).toISOString(),
+      additions: { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' },
       idempotencyKey: 'sample-draft-schedule-0001',
     };
 
@@ -115,10 +122,37 @@ test('accepts a signed future schedule request without executing immediately', a
 
     const scheduledDir = path.join(fixture.stateDir, 'scheduled');
     assert.equal(fs.readdirSync(scheduledDir).length, 1);
+    const [scheduledFile] = fs.readdirSync(scheduledDir);
+    const scheduledJob = JSON.parse(fs.readFileSync(path.join(scheduledDir, scheduledFile), 'utf8'));
+    assert.deepEqual(scheduledJob.additions, { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' });
   } finally {
     await closeServer(fixture.server);
     fs.rmSync(fixture.tmp, { recursive: true, force: true });
   }
+});
+
+test('normalizes and applies personal additions as markdown callouts', () => {
+  const normalized = normalizeAdditions({
+    opening: '  Opener\r\nwith detail  ',
+    middle: 'M'.repeat(1300),
+    closing: 123,
+  });
+  assert.equal(normalized.opening, 'Opener\nwith detail');
+  assert.equal(normalized.middle.length, 1200);
+  assert.equal(normalized.closing, '');
+
+  const raw = `---\ntitle: Sample\nslug: sample\n---\n\nIntro paragraph.\n\n## First section\n\nFirst body.\n\n## Later section\n\nMore body.\n`;
+  const updated = applyPersonalAdditionsToMarkdown(raw, {
+    opening: 'Why this matters.',
+    middle: 'Use this on the floor.\nWatch quality escapes.',
+    closing: 'Bottom line.',
+  });
+
+  assert.match(updated, /^---\ntitle: Sample\nslug: sample\n---\n> \*\*Wes's opening note:\*\*/);
+  assert.match(updated, /> \*\*Wes's shop-floor note:\*\*\n> Use this on the floor\.\n> Watch quality escapes\./);
+  assert.match(updated, /> \*\*Wes's closing note:\*\*\n> Bottom line\.\n$/);
+  assert.ok(updated.indexOf("Wes's opening note") < updated.indexOf('Intro paragraph.'));
+  assert.ok(updated.indexOf("Wes's shop-floor note") < updated.indexOf('## Later section'));
 });
 
 async function createServerFixture() {

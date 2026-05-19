@@ -82,6 +82,30 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 build, and deploy outside this static review page.
               </p>
 
+              <section class="personal-additions" aria-labelledby={`personal-additions-${draft.slug || draft.filename}`} data-personal-additions>
+                <div class="personal-additions-heading">
+                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Personal additions</h4>
+                  <p>Add optional Wes-authored notes. These are inserted as editorial callouts when the draft is published.</p>
+                </div>
+                <div class="personal-addition-grid">
+                  <label>
+                    <span>Opening note</span>
+                    <small>Why this one matters right now.</small>
+                    <textarea name="additionOpening" rows="3" maxlength="1200" data-addition-field placeholder="Example: What caught my eye here is…"></textarea>
+                  </label>
+                  <label>
+                    <span>Mid-article note</span>
+                    <small>A practical shop-floor angle or operator takeaway.</small>
+                    <textarea name="additionMiddle" rows="3" maxlength="1200" data-addition-field placeholder="Example: On the floor, I’d watch for…"></textarea>
+                  </label>
+                  <label>
+                    <span>Closing note</span>
+                    <small>A short final takeaway, caution, or next step.</small>
+                    <textarea name="additionClosing" rows="3" maxlength="1200" data-addition-field placeholder="Example: Bottom line for manufacturers…"></textarea>
+                  </label>
+                </div>
+              </section>
+
               <div class="publish-actions" data-publish-actions>
                 <form class="publish-form publish-now-form" method="post" action="/review/publish">
                   <input type="hidden" name="draft" value={draft.slug || draft.filename} />
@@ -143,10 +167,18 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
         try {
           const actionPath = form.getAttribute('action') || '';
           const publishEndpoint = new URL(actionPath, window.location.href).href;
+          const formData = new FormData(form);
+          const draftCard = form.closest('.draft-card');
+          draftCard?.querySelectorAll('[data-addition-field]').forEach((field) => {
+            if (field instanceof HTMLTextAreaElement && field.name) {
+              formData.set(field.name, field.value);
+            }
+          });
+
           const response = await fetch(publishEndpoint, {
             method: 'POST',
             headers: { Accept: 'application/json' },
-            body: new FormData(form),
+            body: formData,
           });
           const result = await response.json().catch(() => ({}));
 

@@ -14,6 +14,13 @@ const DEFAULT_PORT = 8765;
 const DEFAULT_FRESHNESS_SECONDS = 300;
 const DEFAULT_MAX_BODY_BYTES = 64 * 1024;
 const DEFAULT_STATE_DIR = path.join('.hermes', 'review-publish-receiver');
+const ADDITION_KEYS = ['opening', 'middle', 'closing'];
+const ADDITION_LABELS = {
+  opening: "Wes's opening note",
+  middle: "Wes's shop-floor note",
+  closing: "Wes's closing note",
+};
+const MAX_ADDITION_LENGTH = 1200;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = startReceiver({ env: process.env, cwd: process.cwd() });
@@ -176,6 +183,7 @@ export function normalizePayload(payload, headers = {}) {
       draft,
       title: stringOrEmpty(payload.title),
       publishAt,
+      additions: normalizeAdditions(payload.additions),
       requestedAt: stringOrEmpty(payload.requestedAt),
       source: payload.source && typeof payload.source === 'object' ? payload.source : undefined,
     },
@@ -192,6 +200,9 @@ export async function runPublishWorkflow(config, requestRecord, idempotencyKey) 
       return;
     }
 
+    if (hasPersonalAdditions(requestRecord.additions)) {
+      applyPersonalAdditionsToDraft(config.cwd, requestRecord.draft, requestRecord.additions);
+    }
     await runCommand(config, 'node', ['scripts/publish-draft.mjs', requestRecord.draft]);
     await runCommand(config, 'npm', ['run', 'build']);
     await runCommand(config, 'git', ['add', 'content/articles', 'public/generated-images']);
@@ -327,6 +338,124 @@ function normalizeDraftIdentifier(value) {
 
 function stringOrEmpty(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+export function normalizeAdditions(value = {}) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return Object.fromEntries(ADDITION_KEYS.map((key) => [key, normalizeAdditionText(source[key])]));
+}
+
+function normalizeAdditionText(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, MAX_ADDITION_LENGTH);
+}
+
+function hasPersonalAdditions(additions = {}) {
+  return ADDITION_KEYS.some((key) => typeof additions[key] === 'string' && additions[key].trim());
+}
+
+export function applyPersonalAdditionsToMarkdown(raw, additions = {}) {
+  const normalized = normalizeAdditions(additions);
+  if (!hasPersonalAdditions(normalized)) return raw;
+
+  const { frontmatter, body } = splitFrontmatter(raw);
+  const insertions = [];
+  for (const key of ADDITION_KEYS) {
+    const text = normalized[key];
+    if (text) insertions.push({ key, markdown: formatAdditionCallout(key, text) });
+  }
+
+  let nextBody = body.trimStart();
+  const opening = insertions.find((item) => item.key === 'opening');
+  const middle = insertions.find((item) => item.key === 'middle');
+  const closing = insertions.find((item) => item.key === 'closing');
+
+  if (opening) nextBody = `${opening.markdown}\n\n${nextBody}`;
+  if (middle) nextBody = insertMiddleAddition(nextBody, middle.markdown);
+  if (closing) nextBody = `${nextBody.trimEnd()}\n\n${closing.markdown}\n`;
+
+  return `${frontmatter}${frontmatter && nextBody ? '\n' : ''}${nextBody}`;
+}
+
+function applyPersonalAdditionsToDraft(cwd, draft, additions) {
+  const draftPath = findDraftPath(cwd, draft);
+  const raw = fs.readFileSync(draftPath, 'utf8');
+  fs.writeFileSync(draftPath, applyPersonalAdditionsToMarkdown(raw, additions));
+}
+
+function splitFrontmatter(raw) {
+  if (!raw.startsWith('---')) return { frontmatter: '', body: raw };
+  const end = raw.indexOf('\n---', 3);
+  if (end === -1) return { frontmatter: '', body: raw };
+  const afterFence = raw.indexOf('\n', end + 4);
+  if (afterFence === -1) return { frontmatter: raw, body: '' };
+  return { frontmatter: raw.slice(0, afterFence).trimEnd(), body: raw.slice(afterFence + 1) };
+}
+
+function formatAdditionCallout(key, text) {
+  const lines = text.split('\n').map((line) => (line ? `> ${line}` : '>'));
+  return `> **${ADDITION_LABELS[key]}:**\n${lines.join('\n')}`;
+}
+
+function insertMiddleAddition(body, markdown) {
+  const trimmed = body.trimEnd();
+  const h2Matches = [...trimmed.matchAll(/^##\s+/gm)];
+  const afterMidpoint = h2Matches.find((match) => match.index > trimmed.length / 2);
+  if (afterMidpoint) {
+    return `${trimmed.slice(0, afterMidpoint.index).trimEnd()}\n\n${markdown}\n\n${trimmed.slice(afterMidpoint.index).trimStart()}\n`;
+  }
+
+  const paragraphBreaks = [...trimmed.matchAll(/\n{2,}/g)];
+  const afterHalf = paragraphBreaks.find((match) => match.index > trimmed.length / 2);
+  const fallback = paragraphBreaks[Math.max(0, Math.floor(paragraphBreaks.length * 2 / 3) - 1)];
+  const boundary = afterHalf || fallback;
+  if (!boundary) return `${trimmed}\n\n${markdown}\n`;
+
+  const insertAt = boundary.index + boundary[0].length;
+  return `${trimmed.slice(0, insertAt).trimEnd()}\n\n${markdown}\n\n${trimmed.slice(insertAt).trimStart()}\n`;
+}
+
+function findDraftPath(cwd, input) {
+  const draftsDir = path.join(cwd, 'content', 'drafts');
+  const normalizedInput = String(input || '').replace(/\.md$/i, '');
+  const candidates = fs.readdirSync(draftsDir)
+    .filter((file) => file.endsWith('.md'))
+    .filter((file) => {
+      const raw = fs.readFileSync(path.join(draftsDir, file), 'utf8');
+      const frontmatterSlug = readFrontmatterValue(raw, 'slug');
+      return file === input
+        || file === `${input}.md`
+        || file.replace(/\.md$/, '') === normalizedInput
+        || slugify(file.replace(/\.md$/, '')) === slugify(normalizedInput)
+        || (frontmatterSlug && slugify(frontmatterSlug) === slugify(normalizedInput));
+    });
+
+  if (candidates.length !== 1) {
+    throw new Error(candidates.length === 0
+      ? `No draft matched "${input}" in content/drafts/.`
+      : `Multiple drafts matched "${input}": ${candidates.join(', ')}`);
+  }
+  return path.join(draftsDir, candidates[0]);
+}
+
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+}
+
+function readFrontmatterValue(raw, key) {
+  if (!raw.startsWith('---')) return '';
+  const end = raw.indexOf('\n---', 3);
+  if (end === -1) return '';
+  const match = raw.slice(3, end).match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
+  return match ? match[1].trim().replace(/^[\"']|[\"']$/g, '') : '';
 }
 
 function readRawBody(req, maxBytes) {

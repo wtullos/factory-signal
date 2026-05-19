@@ -2,6 +2,8 @@ const WEBHOOK_URL = 'FS_REVIEW_PUBLISH_WEBHOOK_URL';
 const WEBHOOK_SECRET = 'FS_REVIEW_PUBLISH_WEBHOOK_SECRET';
 const ALLOWED_ACTIONS = new Set(['publish_now', 'schedule']);
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
+const ADDITION_KEYS = ['opening', 'middle', 'closing'];
+const MAX_ADDITION_LENGTH = 1200;
 
 async function handlePost(context) {
   const receiverUrl = context.env?.[WEBHOOK_URL];
@@ -37,6 +39,7 @@ async function handlePost(context) {
   const action = String(input.action || '').trim();
   const title = String(input.title || '').trim();
   const publishAt = String(input.publishAt || input.publish_at || '').trim();
+  const additions = normalizeAdditions(input);
 
   if (!draft) {
     return jsonResponse({
@@ -60,13 +63,14 @@ async function handlePost(context) {
 
   const effectivePublishAt = action === 'schedule' ? publishAt : '';
   const timestamp = new Date().toISOString();
-  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt);
+  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt, additions);
   const webhookPayload = {
     event: 'factory_signal.review_publish_request',
     action,
     draft,
     title: title || undefined,
     publishAt: effectivePublishAt || undefined,
+    additions,
     requestedAt: timestamp,
     idempotencyKey,
     source: {
@@ -146,6 +150,26 @@ function normalizeDraftIdentifier(value) {
   return draft.replace(/\.md$/i, '');
 }
 
+function normalizeAdditions(input) {
+  const source = input.additions && typeof input.additions === 'object' && !Array.isArray(input.additions)
+    ? input.additions
+    : input;
+  return {
+    opening: normalizeAdditionText(source.opening ?? source.additionOpening ?? source['additions.opening']),
+    middle: normalizeAdditionText(source.middle ?? source.mid ?? source.additionMiddle ?? source['additions.middle']),
+    closing: normalizeAdditionText(source.closing ?? source.additionClosing ?? source['additions.closing']),
+  };
+}
+
+function normalizeAdditionText(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, MAX_ADDITION_LENGTH);
+}
+
 function isPlausibleDateTime(value) {
   // Accept datetime-local values (YYYY-MM-DDTHH:mm) and ISO-ish strings with timezone/seconds.
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value);
@@ -166,10 +190,14 @@ function parseHttpsWebhookUrl(value) {
   return parsed;
 }
 
-async function createIdempotencyKey(draft, action, publishAt) {
-  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now' });
+async function createIdempotencyKey(draft, action, publishAt, additions = {}) {
+  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now', additions: pickAdditions(additions) });
   const digest = await sha256Hex(`factory-signal.review_publish:${operation}`);
   return `${draft}-${action}-${digest.slice(0, 32)}`.slice(0, 220);
+}
+
+function pickAdditions(additions) {
+  return Object.fromEntries(ADDITION_KEYS.map((key) => [key, typeof additions[key] === 'string' ? additions[key] : '']));
 }
 
 async function sha256Hex(value) {

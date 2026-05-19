@@ -124,8 +124,9 @@ Middleware behavior:
 Approval workflow:
 
 1. Review the draft at `https://robot.thefactorysignal.com/` after logging in.
-2. Use **Publish now** to request immediate publishing, or choose a `datetime-local` value and use **Schedule publish** to request a future publish. The Cloudflare Function does not publish or wait itself; it only sends a signed request to the configured receiver.
-3. Keep the manual fallback command available if the webhook receiver is not connected yet:
+2. Optionally type personal additions in the Opening note, Mid-article note, and Closing note fields on the draft card. The receiver inserts them as Wes-authored Markdown callouts when the draft is published.
+3. Use **Publish now** to request immediate publishing, or choose a `datetime-local` value and use **Schedule publish** to request a future publish. The Cloudflare Function does not publish or wait itself; it only sends a signed request to the configured receiver.
+4. Keep the manual fallback command available if the webhook receiver is not connected yet:
 
    ```sh
    node scripts/publish-draft.mjs <draft-slug-or-file>
@@ -143,6 +144,7 @@ Publish request webhook:
   - `action`: `publish_now` or `schedule`
   - `publishAt`: required for `schedule`; accepts `datetime-local`/ISO-ish values.
   - `title`: optional display title.
+  - `additionOpening`, `additionMiddle`, `additionClosing` form fields, or JSON `additions.opening`/`middle`/`closing`: optional personal notes capped at 1,200 characters each.
 - Webhook payload shape sent to Hermes/local automation:
 
   ```json
@@ -152,6 +154,11 @@ Publish request webhook:
     "draft": "example-draft-slug",
     "title": "Optional draft title",
     "publishAt": "2026-05-20T09:00",
+    "additions": {
+      "opening": "Why this matters right now...",
+      "middle": "Practical shop-floor angle...",
+      "closing": "Final takeaway..."
+    },
     "requestedAt": "2026-05-18T19:30:00.000Z",
     "idempotencyKey": "example-draft-slug-schedule-<sha256-prefix>",
     "source": {
@@ -166,7 +173,7 @@ Publish request webhook:
   - `X-Factory-Signal-Timestamp`
   - `X-Factory-Signal-Idempotency-Key`
   - `X-Factory-Signal-Event: factory_signal.review_publish_request`
-- Idempotency keys are deterministic for the logical operation (`draft`, `action`, and `publishAt`, or `now` for immediate publishes) and do not include the request timestamp.
+- Idempotency keys are deterministic for the logical operation (`draft`, `action`, `publishAt` or `now`, and normalized personal additions) and do not include the request timestamp.
 - Point `FS_REVIEW_PUBLISH_WEBHOOK_URL` at the local receiver exposed through an HTTPS tunnel and configure that receiver with the same `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`.
 
 Local publish receiver:
@@ -184,6 +191,7 @@ Local publish receiver:
 - Dry-run is the default. In dry-run mode, valid requests are authenticated, idempotency-tracked, and logged, but no draft is moved, no build runs, no git commit is created, and no deploy occurs.
 - Local state is written under `.hermes/review-publish-receiver/` by default and is gitignored.
 - `schedule` requests are accepted only for future `publishAt` values. They are persisted in `.hermes/review-publish-receiver/scheduled/` and armed with local timers while the receiver process is running. If the receiver restarts, future scheduled jobs are reloaded.
+- Personal additions are normalized and persisted with scheduled jobs, then inserted immediately before the publish move runs.
 
 Run locally in dry-run mode:
 
@@ -211,11 +219,12 @@ Optional receiver environment variables:
 
 When execute mode is enabled, an accepted publish runs:
 
-1. `node scripts/publish-draft.mjs <draft>`
-2. `npm run build`
-3. `git add content/articles public/generated-images`
-4. `git commit -m "Publish review draft: <draft>"`
-5. `npx wrangler pages deploy dist --project-name factory-signal --branch main --commit-hash <new-commit> --commit-message "Publish review draft: <draft>"`
+1. Insert any personal additions into the draft Markdown as `> **Wes's ... note:**` callouts.
+2. `node scripts/publish-draft.mjs <draft>`
+3. `npm run build`
+4. `git add content/articles public/generated-images`
+5. `git commit -m "Publish review draft: <draft>"`
+6. `npx wrangler pages deploy dist --project-name factory-signal --branch main --commit-hash <new-commit> --commit-message "Publish review draft: <draft>"`
 
 Receiver tests:
 
