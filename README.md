@@ -102,9 +102,12 @@ Cloudflare Pages setup after Wes provides credentials:
 3. Add production environment variables/secrets in Cloudflare Pages:
    - `FS_REVIEW_USERNAME`
    - `FS_REVIEW_PASSWORD`
+   - `FS_REVIEW_SESSION_SECRET`
+   - `FS_REVIEW_PUBLISH_WEBHOOK_URL` — HTTPS receiver that Hermes/local automation will expose later.
+   - `FS_REVIEW_PUBLISH_WEBHOOK_SECRET` — shared HMAC secret for signing publish requests.
 4. Deploy the Pages project.
 5. Verify:
-   - `https://robot.thefactorysignal.com/` prompts for Basic Auth.
+   - `https://robot.thefactorysignal.com/` prompts for review login.
    - Wrong credentials are rejected.
    - Correct credentials show the draft review inbox.
    - Missing credentials fail closed with a 503 instead of exposing drafts.
@@ -112,21 +115,59 @@ Cloudflare Pages setup after Wes provides credentials:
 
 Middleware behavior:
 
-- `robot.thefactorysignal.com` requires Basic Auth for every path on that host.
+- `robot.thefactorysignal.com` requires the signed review login session for every path on that host.
 - After login, non-asset paths on `robot.thefactorysignal.com` are rewritten to the built `/review/` page so the robot subdomain does not expose the normal public homepage.
 - `/review/` on the main domain remains protected as a compatibility fallback, but the intended public review URL is `https://robot.thefactorysignal.com/`.
-- Credentials are read only from `FS_REVIEW_USERNAME` and `FS_REVIEW_PASSWORD`; real credentials must not be committed.
+- `/review/publish` is also protected by the same middleware and is passed through to the Cloudflare Pages Function instead of being rewritten to the review page.
+- Credentials are read only from `FS_REVIEW_USERNAME`, `FS_REVIEW_PASSWORD`, and `FS_REVIEW_SESSION_SECRET`; real credentials must not be committed.
 
 Approval workflow:
 
 1. Review the draft at `https://robot.thefactorysignal.com/` after logging in.
-2. If approved, move/rename the Markdown file from `content/drafts/` into `content/articles/`. You can do this manually or run:
+2. Use **Publish now** to request immediate publishing, or choose a `datetime-local` value and use **Schedule publish** to request a future publish. The Cloudflare Function does not publish or wait itself; it only sends a signed request to the configured receiver.
+3. Keep the manual fallback command available if the webhook receiver is not connected yet:
 
    ```sh
    node scripts/publish-draft.mjs <draft-slug-or-file>
    ```
 
-3. Run `npm run build` and deploy when ready.
+Publish request webhook:
+
+- Endpoint called by the review UI: `POST /review/publish`
+- Required Cloudflare environment variables:
+  - `FS_REVIEW_PUBLISH_WEBHOOK_URL`
+  - `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`
+- If either variable is missing, or if `FS_REVIEW_PUBLISH_WEBHOOK_URL` is not a valid `https://` URL, the endpoint fails closed with HTTP 503 and does not expose any secret or send a request.
+- Accepted form/JSON fields:
+  - `draft` (or `slug`/`file`/`filename`): conservative slug/filename identifier; letters, numbers, `.`, `_`, and `-` only; no path traversal.
+  - `action`: `publish_now` or `schedule`
+  - `publishAt`: required for `schedule`; accepts `datetime-local`/ISO-ish values.
+  - `title`: optional display title.
+- Webhook payload shape sent to Hermes/local automation:
+
+  ```json
+  {
+    "event": "factory_signal.review_publish_request",
+    "action": "schedule",
+    "draft": "example-draft-slug",
+    "title": "Optional draft title",
+    "publishAt": "2026-05-20T09:00",
+    "requestedAt": "2026-05-18T19:30:00.000Z",
+    "idempotencyKey": "example-draft-slug-schedule-<sha256-prefix>",
+    "source": {
+      "url": "https://robot.thefactorysignal.com/review/publish",
+      "userAgent": "..."
+    }
+  }
+  ```
+
+- Signature headers:
+  - `X-Factory-Signal-Signature: sha256=<hex hmac>` where the HMAC SHA-256 input is `<X-Factory-Signal-Timestamp>.<raw JSON body>`.
+  - `X-Factory-Signal-Timestamp`
+  - `X-Factory-Signal-Idempotency-Key`
+  - `X-Factory-Signal-Event: factory_signal.review_publish_request`
+- Idempotency keys are deterministic for the logical operation (`draft`, `action`, and `publishAt`, or `now` for immediate publishes) and do not include the request timestamp.
+- Later, point `FS_REVIEW_PUBLISH_WEBHOOK_URL` at the Hermes webhook receiver and configure that receiver with the same `FS_REVIEW_PUBLISH_WEBHOOK_SECRET`. The receiver should verify the HMAC, check/reject stale timestamps and duplicate idempotency keys, then run the existing local publish/build/deploy workflow.
 
 ## Monetization placeholders
 

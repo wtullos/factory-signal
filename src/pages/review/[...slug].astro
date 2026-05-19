@@ -77,15 +77,99 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
 
             <section class="publish-command">
               <h3>Approve and publish</h3>
-              <p>After approval, move this Markdown file into <code>content/articles/</code> and run build/deploy when ready.</p>
-              <label>
-                Copyable helper command
-                <input readonly value={shellCommand(draft)} onfocus="this.select()" />
-              </label>
+              <p>
+                Send a signed publish request to the local/Hermes receiver. The receiver still performs the actual repo move,
+                build, and deploy outside this static review page.
+              </p>
+
+              <div class="publish-actions" data-publish-actions>
+                <form class="publish-form publish-now-form" method="post" action="/review/publish">
+                  <input type="hidden" name="draft" value={draft.slug || draft.filename} />
+                  <input type="hidden" name="title" value={draft.title} />
+                  <input type="hidden" name="action" value="publish_now" />
+                  <button class="button" type="submit">Publish now</button>
+                </form>
+
+                <form class="publish-form schedule-form" method="post" action="/review/publish">
+                  <input type="hidden" name="draft" value={draft.slug || draft.filename} />
+                  <input type="hidden" name="title" value={draft.title} />
+                  <input type="hidden" name="action" value="schedule" />
+                  <label>
+                    Publish date/time
+                    <input type="datetime-local" name="publishAt" required />
+                  </label>
+                  <button class="button secondary" type="submit">Schedule publish</button>
+                </form>
+
+                <p class="publish-status" data-publish-status role="status" aria-live="polite">No publish request sent yet.</p>
+              </div>
+
+              <details class="command-fallback">
+                <summary>Manual fallback command</summary>
+                <p>Copy this command if the webhook receiver is not connected yet.</p>
+                <label>
+                  Copyable helper command
+                  <input readonly value={shellCommand(draft)} onfocus="this.select()" />
+                </label>
+              </details>
             </section>
           </article>
         ))}
       </div>
     )}
   </main>
+
+  <script>
+    const publishForms = document.querySelectorAll('[data-publish-actions] form');
+
+    publishForms.forEach((form) => {
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const container = form.closest('[data-publish-actions]');
+        const status = container?.querySelector('[data-publish-status]');
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton?.textContent || '';
+
+        if (status) {
+          status.textContent = 'Sending publish request…';
+          status.dataset.state = 'pending';
+        }
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Sending…';
+        }
+
+        try {
+          const actionPath = form.getAttribute('action') || '';
+          const publishEndpoint = new URL(actionPath, window.location.href).href;
+          const response = await fetch(publishEndpoint, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: new FormData(form),
+          });
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || !result.ok) {
+            throw new Error(result.message || `Publish request failed with HTTP ${response.status}.`);
+          }
+
+          if (status) {
+            status.textContent = `${result.message || 'Publish request sent.'} Idempotency key: ${result.idempotencyKey || 'n/a'}`;
+            status.dataset.state = 'success';
+          }
+        } catch (error) {
+          if (status) {
+            status.textContent = error instanceof Error ? error.message : 'Publish request failed.';
+            status.dataset.state = 'error';
+          }
+        } finally {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+          }
+        }
+      });
+    });
+  </script>
 </Base>
