@@ -26,6 +26,19 @@ test('AdSense verification renders only on indexed public pages and ads.txt uses
   const home = fs.readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
   assert.ok(home.includes(adsenseScript));
   assert.ok(home.includes(adsenseMeta));
+  assert.ok(home.includes('/dashboard/'));
+  assert.ok(!home.includes('site-search-dropdown'));
+  assert.ok(!home.includes('Latest signals'));
+  assert.ok(!home.includes('Whitepaper library'));
+
+  const dashboard = fs.readFileSync(new URL('../dist/dashboard/index.html', import.meta.url), 'utf8');
+  assert.ok(dashboard.includes(adsenseScript));
+  assert.ok(dashboard.includes(adsenseMeta));
+  assert.ok(dashboard.includes('Dashboard'));
+  assert.ok(dashboard.includes('site-search-dropdown'));
+  assert.ok(dashboard.includes('aria-label="Open site search"'));
+  assert.ok(!dashboard.includes('site-search-toggle-text'));
+  assert.ok(!dashboard.includes('>Search</span>'));
 
   const article = getArticles()[0];
   assert.ok(article, 'expected at least one public article fixture');
