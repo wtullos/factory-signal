@@ -7,11 +7,13 @@ const TIME_ZONE = 'America/Chicago';
 const MAX_NEWS_ITEMS = 12;
 const MAX_REDDIT_ITEMS = 10;
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const scriptPath = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(scriptPath);
 const repoRoot = path.resolve(__dirname, '..');
 const outputDir = path.join(repoRoot, 'content', 'briefings');
+const sourcesPath = path.join(repoRoot, 'content', 'sources.json');
 
-const rssFeeds = [
+const defaultRssFeeds = [
   { name: '3D Printing Media', topic: '3D Printing', url: 'https://www.voxelmatters.com/feed/' },
   { name: 'Robotics Business Review', topic: 'Robotics', url: 'https://www.therobotreport.com/feed/' },
   { name: 'The Decoder', topic: 'AI Vision', url: 'https://the-decoder.com/feed/' },
@@ -22,7 +24,7 @@ const rssFeeds = [
   { name: 'Hacker News', topic: 'Technology', url: 'https://news.ycombinator.com/rss' },
 ];
 
-const subreddits = [
+const defaultSubreddits = [
   { name: '3Dprinting', topic: '3D Printing' },
   { name: 'CNC', topic: 'CNC' },
   { name: 'Machining', topic: 'CNC' },
@@ -30,34 +32,85 @@ const subreddits = [
   { name: 'manufacturing', topic: 'Manufacturing' },
 ];
 
-const targetDate = process.argv[2] || chicagoDate(new Date());
-if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
-  console.error('Usage: npm run generate:daily-briefing -- [YYYY-MM-DD]');
-  process.exit(1);
+let { rssFeeds, subreddits } = { rssFeeds: defaultRssFeeds, subreddits: defaultSubreddits };
+
+if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
+  await main();
 }
 
-const generatedTime = new Intl.DateTimeFormat('en-US', {
-  timeZone: TIME_ZONE,
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false,
-}).format(new Date());
+async function main() {
+  ({ rssFeeds, subreddits } = readContentSources());
 
-const outputPath = path.join(outputDir, `${targetDate}.md`);
+  const targetDate = process.argv[2] || chicagoDate(new Date());
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+    console.error('Usage: npm run generate:daily-briefing -- [YYYY-MM-DD]');
+    process.exit(1);
+  }
 
-const [newsItems, redditItems] = await Promise.all([collectNews(targetDate), collectReddit(targetDate)]);
+  const generatedTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(new Date());
 
-if (newsItems.length < 3 && redditItems.length < 3) {
-  console.error(`Refusing to write ${outputPath}: only ${newsItems.length} news items and ${redditItems.length} Reddit items found.`);
-  process.exit(1);
+  const outputPath = path.join(outputDir, `${targetDate}.md`);
+
+  const [newsItems, redditItems] = await Promise.all([collectNews(targetDate), collectReddit(targetDate)]);
+
+  if (newsItems.length < 3 && redditItems.length < 3) {
+    console.error(`Refusing to write ${outputPath}: only ${newsItems.length} news items and ${redditItems.length} Reddit items found.`);
+    process.exit(1);
+  }
+
+  const markdown = renderBriefing(targetDate, generatedTime, redditItems, newsItems);
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(outputPath, markdown, 'utf8');
+  console.log(`Wrote ${outputPath}`);
+  console.log(`Included ${newsItems.length} news items and ${redditItems.length} Reddit items for ${targetDate}.`);
 }
 
-const markdown = renderBriefing(targetDate, generatedTime, redditItems, newsItems);
-fs.mkdirSync(outputDir, { recursive: true });
-fs.writeFileSync(outputPath, markdown, 'utf8');
-console.log(`Wrote ${outputPath}`);
-console.log(`Included ${newsItems.length} news items and ${redditItems.length} Reddit items for ${targetDate}.`);
+function readContentSources() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+    const sources = Array.isArray(parsed?.sources) ? parsed.sources : [];
+    const enabled = sources.filter((source) => source && source.enabled !== false);
+    const rss = enabled
+      .filter((source) => source.type === 'rss')
+      .map((source) => ({ name: cleanSourceField(source.name), topic: cleanSourceField(source.topic), url: cleanSourceField(source.url) }))
+      .filter((source) => source.name && source.topic && /^https?:\/\//i.test(source.url));
+    const reddit = enabled
+      .filter((source) => source.type === 'subreddit')
+      .map((source) => ({ name: subredditNameFromSource(source), topic: cleanSourceField(source.topic) }))
+      .filter((source) => source.name && source.topic);
+    if (rss.length || reddit.length) {
+      return { rssFeeds: rss.length ? rss : defaultRssFeeds, subreddits: reddit.length ? reddit : defaultSubreddits };
+    }
+  } catch (error) {
+    console.warn(`Using built-in source defaults; could not read ${sourcesPath}: ${error.message}`);
+  }
+  return { rssFeeds: defaultRssFeeds, subreddits: defaultSubreddits };
+}
+
+function cleanSourceField(value) {
+  return String(value || '').trim();
+}
+
+function normalizeSubredditName(value) {
+  const text = cleanSourceField(value);
+  return extractSubredditName(text) || text.replace(/^r\//i, '').replace(/\/$/, '');
+}
+
+function extractSubredditName(value) {
+  const match = cleanSourceField(value).match(/(?:reddit\.com\/r\/|^r\/)([A-Za-z0-9_]+)/i);
+  return match ? match[1] : '';
+}
+
+export function subredditNameFromSource(source) {
+  const fromUrl = extractSubredditName(source?.url);
+  return fromUrl || normalizeSubredditName(source?.name);
+}
 
 async function collectNews(date) {
   const settled = await Promise.allSettled(rssFeeds.map((feed) => fetchFeed(feed, date)));

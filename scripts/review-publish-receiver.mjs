@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 export const DEFAULT_ROUTE = '/factory-signal/review-publish';
 export const EVENT_NAME = 'factory_signal.review_publish_request';
 export const SAVE_EVENT_NAME = 'factory_signal.review_save_request';
+export const SOURCES_EVENT_NAME = 'factory_signal.review_sources_request';
 
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
 const DEFAULT_PORT = 8765;
@@ -21,6 +22,9 @@ const DRAFT_EDIT_KEYS = ['title', 'author', 'body'];
 const MAX_DRAFT_TITLE_LENGTH = 220;
 const MAX_DRAFT_AUTHOR_LENGTH = 320;
 const MAX_DRAFT_BODY_LENGTH = 200000;
+const MAX_SOURCES = 100;
+const MAX_SOURCE_FIELD_LENGTH = 500;
+const SOURCE_TYPES = new Set(['rss', 'subreddit']);
 const DEFAULT_AI_REWRITE_TIMEOUT_MS = 120000;
 const AI_OUTPUT_EXTRA_BYTES = 12000;
 const BUILT_IN_PERSONAL_DENYLIST = [
@@ -102,12 +106,22 @@ export async function handleRequest(req, res, config) {
     return sendJson(res, 400, { ok: false, error: 'invalid_json' });
   }
 
-  if (String(payload.event || req.headers['x-factory-signal-event'] || '').trim() === SAVE_EVENT_NAME) {
+  const payloadEvent = String(payload.event || req.headers['x-factory-signal-event'] || '').trim();
+  if (payloadEvent === SAVE_EVENT_NAME) {
     const normalizedSave = normalizeSavePayload(payload, req.headers);
     if (!normalizedSave.ok) {
       return sendJson(res, 400, { ok: false, error: normalizedSave.error, message: normalizedSave.message });
     }
     const result = handleReviewSaveRequest(config, normalizedSave.value);
+    return sendJson(res, result.status, result.payload);
+  }
+
+  if (payloadEvent === SOURCES_EVENT_NAME) {
+    const normalizedSources = normalizeSourcesPayload(payload, req.headers);
+    if (!normalizedSources.ok) {
+      return sendJson(res, 400, { ok: false, error: normalizedSources.error, message: normalizedSources.message });
+    }
+    const result = handleReviewSourcesRequest(config, normalizedSources.value);
     return sendJson(res, result.status, result.payload);
   }
 
@@ -143,7 +157,7 @@ export async function handleRequest(req, res, config) {
 
 export function verifyWebhook(headers, rawBody, config) {
   const event = String(headers['x-factory-signal-event'] || '').trim();
-  if (event !== EVENT_NAME && event !== SAVE_EVENT_NAME) return { ok: false, status: 400, error: 'invalid_event', message: `Expected ${EVENT_NAME} or ${SAVE_EVENT_NAME}.` };
+  if (event !== EVENT_NAME && event !== SAVE_EVENT_NAME && event !== SOURCES_EVENT_NAME) return { ok: false, status: 400, error: 'invalid_event', message: `Expected ${EVENT_NAME}, ${SAVE_EVENT_NAME}, or ${SOURCES_EVENT_NAME}.` };
 
   const timestamp = String(headers['x-factory-signal-timestamp'] || '').trim();
   const timestampMs = Date.parse(timestamp);
@@ -247,6 +261,57 @@ export function normalizeSavePayload(payload, headers = {}) {
   };
 }
 
+export function normalizeSourcesPayload(payload, headers = {}) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, error: 'invalid_payload', message: 'JSON body must be an object.' };
+  }
+
+  const bodyEvent = String(payload.event || '').trim();
+  if (bodyEvent && bodyEvent !== SOURCES_EVENT_NAME) return { ok: false, error: 'invalid_event', message: `Body event must be ${SOURCES_EVENT_NAME}.` };
+
+  const action = String(payload.action || '').trim();
+  if (action !== 'save' && action !== 'load') return { ok: false, error: 'invalid_action', message: 'Action must be save or load.' };
+
+  const idempotencyKey = String(headers['x-factory-signal-idempotency-key'] || payload.idempotencyKey || '').trim();
+  if (!/^[a-zA-Z0-9._:-]{8,240}$/.test(idempotencyKey)) {
+    return { ok: false, error: 'invalid_idempotency_key', message: 'Missing or invalid idempotency key.' };
+  }
+
+  try {
+    return {
+      ok: true,
+      value: {
+        event: SOURCES_EVENT_NAME,
+        action,
+        sources: action === 'save' ? normalizeSourcesList(payload.sources) : undefined,
+        requestedAt: stringOrEmpty(payload.requestedAt),
+        idempotencyKey,
+        source: payload.source && typeof payload.source === 'object' ? payload.source : undefined,
+      },
+    };
+  } catch (error) {
+    return { ok: false, error: 'invalid_sources', message: error.message };
+  }
+}
+
+export function handleReviewSourcesRequest(config, requestRecord) {
+  if (requestRecord.action === 'load') {
+    const record = readSourcesRecord(config);
+    return { status: 200, payload: { ok: true, sources: record.sources, savedAt: record.savedAt || undefined } };
+  }
+
+  const savedAt = new Date().toISOString();
+  const record = {
+    sources: normalizeSourcesList(requestRecord.sources),
+    savedAt,
+    requestedAt: requestRecord.requestedAt || undefined,
+    source: requestRecord.source,
+  };
+  writeJsonAtomic(sourcesRecordPath(config), record);
+  config.log.info(`[receiver] saved_sources count=${record.sources.length}`);
+  return { status: 200, payload: { ok: true, sources: record.sources, savedAt } };
+}
+
 export function handleReviewSaveRequest(config, requestRecord) {
   if (requestRecord.action === 'load') {
     const record = readReviewDraft(config, requestRecord.draft);
@@ -255,7 +320,7 @@ export function handleReviewSaveRequest(config, requestRecord) {
       payload: {
         ok: true,
         draft: requestRecord.draft,
-        draftEdits: record.draftEdits,
+        draftEdits: compactDraftEdits(record.draftEdits),
         reviewEdits: record.reviewEdits,
         savedAt: record.savedAt || undefined,
       },
@@ -467,6 +532,39 @@ function reviewDraftPath(config, draft) {
   return path.join(config.stateDir, 'review-drafts', `${hashName(draft)}.json`);
 }
 
+function sourcesRecordPath(config) {
+  return path.join(config.cwd, 'content', 'sources.json');
+}
+
+function readSourcesRecord(config) {
+  const file = sourcesRecordPath(config);
+  if (!fs.existsSync(file)) return { sources: [] };
+  const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return { ...record, sources: normalizeSourcesList(record.sources) };
+}
+
+function normalizeSourcesList(value) {
+  if (!Array.isArray(value)) throw new Error('Sources must be an array.');
+  if (value.length > MAX_SOURCES) throw new Error(`Sources list cannot exceed ${MAX_SOURCES} items.`);
+  return value.map(normalizeSourceRecord).filter(Boolean);
+}
+
+function normalizeSourceRecord(source) {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
+  const type = stringOrEmpty(source.type).toLowerCase();
+  if (!SOURCE_TYPES.has(type)) throw new Error('Each source type must be rss or subreddit.');
+  const name = sourceField(source.name);
+  const topic = sourceField(source.topic || source.category);
+  const url = sourceField(source.url || source.href);
+  if (!name || !topic || !url) throw new Error('Each source needs a name, topic, and URL.');
+  if (!/^https?:\/\//i.test(url)) throw new Error('Each source URL must start with http:// or https://.');
+  return { name, type, topic, url, enabled: source.enabled === false || source.active === false ? false : true };
+}
+
+function sourceField(value) {
+  return String(value || '').replace(/\r\n?/g, '\n').trim().slice(0, MAX_SOURCE_FIELD_LENGTH);
+}
+
 function readReviewDraft(config, draft) {
   const file = reviewDraftPath(config, draft);
   if (!fs.existsSync(file)) {
@@ -545,6 +643,12 @@ function normalizeDraftBody(value) {
     .replace(/[\t ]+$/gm, '')
     .trim()
     .slice(0, MAX_DRAFT_BODY_LENGTH);
+}
+
+function compactDraftEdits(draftEdits = {}) {
+  return Object.fromEntries(
+    Object.entries(normalizeDraftEdits(draftEdits)).filter(([, value]) => value.trim().length > 0),
+  );
 }
 
 function hasDraftEdits(draftEdits = {}) {

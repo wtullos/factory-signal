@@ -1,0 +1,95 @@
+{
+  "sources": [
+    {
+      "name": "3D Printing Media",
+      "type": "rss",
+      "topic": "3D Printing",
+      "url": "https://www.voxelmatters.com/feed/",
+      "enabled": true
+    },
+    {
+      "name": "Robotics Business Review",
+      "type": "rss",
+      "topic": "Robotics",
+      "url": "https://www.therobotreport.com/feed/",
+      "enabled": true
+    },
+    {
+      "name": "The Decoder",
+      "type": "rss",
+      "topic": "AI Vision",
+      "url": "https://the-decoder.com/feed/",
+      "enabled": true
+    },
+    {
+      "name": "Hackaday",
+      "type": "rss",
+      "topic": "Engineering",
+      "url": "https://hackaday.com/blog/feed/",
+      "enabled": true
+    },
+    {
+      "name": "TechCrunch AI",
+      "type": "rss",
+      "topic": "AI Vision",
+      "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+      "enabled": true
+    },
+    {
+      "name": "Adafruit Blog",
+      "type": "rss",
+      "topic": "Electronics",
+      "url": "https://blog.adafruit.com/feed/",
+      "enabled": true
+    },
+    {
+      "name": "Fabbaloo",
+      "type": "rss",
+      "topic": "3D Printing",
+      "url": "https://www.fabbaloo.com/feed/",
+      "enabled": true
+    },
+    {
+      "name": "Hacker News",
+      "type": "rss",
+      "topic": "Technology",
+      "url": "https://news.ycombinator.com/rss",
+      "enabled": true
+    },
+    {
+      "name": "3Dprinting",
+      "type": "subreddit",
+      "topic": "3D Printing",
+      "url": "https://www.reddit.com/r/3Dprinting/",
+      "enabled": true
+    },
+    {
+      "name": "CNC",
+      "type": "subreddit",
+      "topic": "CNC",
+      "url": "https://www.reddit.com/r/CNC/",
+      "enabled": true
+    },
+    {
+      "name": "Machining",
+      "type": "subreddit",
+      "topic": "CNC",
+      "url": "https://www.reddit.com/r/Machining/",
+      "enabled": true
+    },
+    {
+      "name": "robotics",
+      "type": "subreddit",
+      "topic": "Robotics",
+      "url": "https://www.reddit.com/r/robotics/",
+      "enabled": true
+    },
+    {
+      "name": "manufacturing",
+      "type": "subreddit",
+      "topic": "Manufacturing",
+      "url": "https://www.reddit.com/r/manufacturing/",
+      "enabled": true
+    }
+  ]
+}

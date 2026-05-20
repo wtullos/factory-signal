@@ -1,0 +1,244 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import Base from '../../layouts/Base.astro';
+
+export const prerender = true;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const sourcesPath = path.resolve(__dirname, '../../../content/sources.json');
+const defaultSources = [];
+
+function readSources() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+    return Array.isArray(parsed?.sources) ? parsed.sources.map(normalizeSource).filter(Boolean) : defaultSources;
+  } catch {
+    return defaultSources;
+  }
+}
+
+function normalizeSource(source) {
+  if (!source || typeof source !== 'object') return null;
+  return {
+    name: String(source.name || '').trim(),
+    type: String(source.type || 'rss').trim() === 'subreddit' ? 'subreddit' : 'rss',
+    topic: String(source.topic || source.category || '').trim(),
+    url: String(source.url || '').trim(),
+    enabled: source.enabled !== false,
+  };
+}
+
+const sources = readSources();
+const rssSources = sources.filter((source) => source.type === 'rss');
+const communitySources = sources.filter((source) => source.type === 'subreddit');
+const sourcesJson = JSON.stringify(sources).replace(/</g, '\\u003c');
+---
+<Base title="Watched sources" description="Private Factory Signal source list for the robot backend." pathname="/review/sources/" noindex={true} bodyClass="review-backend">
+  <a class="review-logout-button" href="/review/logout" data-review-logout>Logout</a>
+  <main>
+    <div class="section-heading">
+      <div>
+        <p class="meta">Private workflow · intended URL: https://robot.thefactorysignal.com/sources/</p>
+        <h1>Watched sources</h1>
+      </div>
+    </div>
+
+    <nav class="review-tabs" aria-label="Robot backend sections">
+      <a href="/review/">Drafts</a>
+      <a href="/review/takeaways/">Daily takeaways</a>
+      <a aria-current="page" href="/review/sources/">Sources</a>
+    </nav>
+
+    <section class="panel review-warning">
+      <h2>Content-check source list</h2>
+      <p>
+        This private/noindex backend page edits <code>content/sources.json</code> through the signed review receiver. The daily briefing generator reads the same file at build time and falls back to its built-in defaults if the file is missing or malformed.
+      </p>
+    </section>
+
+    <section class="panel" data-sources-editor>
+      <div class="inline-editor-heading">
+        <div>
+          <h2>Editable watched sites</h2>
+          <p class="meta">{rssSources.length} RSS/news feeds · {communitySources.length} community sources · {sources.filter((source) => source.enabled).length} enabled</p>
+        </div>
+        <div class="review-draft-actions">
+          <button class="button secondary" type="button" data-add-source>Add source</button>
+          <button class="button" type="button" data-save-sources>Save sources</button>
+        </div>
+      </div>
+
+      <p class="publish-status" data-sources-status role="status" aria-live="polite">Saved source edits will load here automatically.</p>
+
+      <div class="source-list" data-source-list aria-label="Watched content sources">
+        {sources.length === 0 ? (
+          <p>No source file was found at build time. Add a source or configure the receiver to load the current file.</p>
+        ) : sources.map((source, index) => (
+          <article class="panel draft-card" data-source-row>
+            <header class="draft-header">
+              <div>
+                <p class="meta">Source {index + 1}</p>
+                <label class="inline-draft-field inline-title-field">
+                  <span>Name</span>
+                  <input type="text" value={source.name} maxlength="500" data-source-field="name" />
+                </label>
+              </div>
+              <button class="button secondary" type="button" data-remove-source>Remove</button>
+            </header>
+            <dl class="review-meta">
+              <div>
+                <dt>Type</dt>
+                <dd>
+                  <label class="inline-draft-field">
+                    <span class="visually-hidden">Source type</span>
+                    <select data-source-field="type">
+                      <option value="rss" selected={source.type === 'rss'}>RSS/news</option>
+                      <option value="subreddit" selected={source.type === 'subreddit'}>Community/subreddit</option>
+                    </select>
+                  </label>
+                </dd>
+              </div>
+              <div>
+                <dt>Topic</dt>
+                <dd><input type="text" value={source.topic} maxlength="500" data-source-field="topic" aria-label="Source topic" /></dd>
+              </div>
+              <div>
+                <dt>Enabled</dt>
+                <dd><label><input type="checkbox" checked={source.enabled} data-source-field="enabled" /> Active</label></dd>
+              </div>
+            </dl>
+            <label class="inline-draft-field inline-author-field">
+              <span>URL or subreddit link</span>
+              <input type="url" value={source.url} maxlength="500" data-source-field="url" placeholder="https://example.com/feed/" />
+            </label>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <script is:inline define:vars={{ sourcesJson }}>
+    const logoutButton = document.querySelector('[data-review-logout]');
+    if (logoutButton instanceof HTMLAnchorElement) {
+      logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
+    }
+
+    const initialSources = JSON.parse(sourcesJson);
+    const editor = document.querySelector('[data-sources-editor]');
+    const list = editor?.querySelector('[data-source-list]');
+    const status = editor?.querySelector('[data-sources-status]');
+    const addButton = editor?.querySelector('[data-add-source]');
+    const saveButton = editor?.querySelector('[data-save-sources]');
+
+    const setStatus = (message, state = '') => {
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.state = state;
+    };
+
+    const rowTemplate = (source = {}) => {
+      const article = document.createElement('article');
+      article.className = 'panel draft-card';
+      article.dataset.sourceRow = '';
+      article.innerHTML = `
+        <header class="draft-header">
+          <div>
+            <p class="meta">Source</p>
+            <label class="inline-draft-field inline-title-field">
+              <span>Name</span>
+              <input type="text" maxlength="500" data-source-field="name" />
+            </label>
+          </div>
+          <button class="button secondary" type="button" data-remove-source>Remove</button>
+        </header>
+        <dl class="review-meta">
+          <div><dt>Type</dt><dd><label class="inline-draft-field"><span class="visually-hidden">Source type</span><select data-source-field="type"><option value="rss">RSS/news</option><option value="subreddit">Community/subreddit</option></select></label></dd></div>
+          <div><dt>Topic</dt><dd><input type="text" maxlength="500" data-source-field="topic" aria-label="Source topic" /></dd></div>
+          <div><dt>Enabled</dt><dd><label><input type="checkbox" data-source-field="enabled" /> Active</label></dd></div>
+        </dl>
+        <label class="inline-draft-field inline-author-field">
+          <span>URL or subreddit link</span>
+          <input type="url" maxlength="500" data-source-field="url" placeholder="https://example.com/feed/" />
+        </label>`;
+      applySource(article, source);
+      return article;
+    };
+
+    const applySource = (row, source = {}) => {
+      const fields = row.querySelectorAll('[data-source-field]');
+      fields.forEach((field) => {
+        const key = field.dataset.sourceField;
+        if (field instanceof HTMLInputElement && field.type === 'checkbox') field.checked = source.enabled !== false;
+        else if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) field.value = source[key] || (key === 'type' ? 'rss' : '');
+      });
+    };
+
+    const renderSources = (sources) => {
+      if (!list) return;
+      list.innerHTML = '';
+      sources.forEach((source) => list.append(rowTemplate(source)));
+      if (sources.length === 0) setStatus('No sources loaded. Add one and save when the receiver is configured.', '');
+    };
+
+    const collectSources = () => [...(list?.querySelectorAll('[data-source-row]') || [])].map((row) => {
+      const valueFor = (key) => row.querySelector(`[data-source-field="${key}"]`);
+      return {
+        name: valueFor('name')?.value.trim() || '',
+        type: valueFor('type')?.value || 'rss',
+        topic: valueFor('topic')?.value.trim() || '',
+        url: valueFor('url')?.value.trim() || '',
+        enabled: Boolean(valueFor('enabled')?.checked),
+      };
+    }).filter((source) => source.name || source.topic || source.url);
+
+    addButton?.addEventListener('click', () => {
+      list?.append(rowTemplate({ name: '', type: 'rss', topic: '', url: '', enabled: true }));
+      setStatus('Added a blank source row. Fill it out, then save.', '');
+    });
+
+    list?.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-remove-source]') : null;
+      if (!button) return;
+      button.closest('[data-source-row]')?.remove();
+      setStatus('Removed source row. Save to persist the change.', '');
+    });
+
+    const loadSources = async () => {
+      try {
+        const response = await fetch(new URL('/review/sources', window.location.href), { headers: { Accept: 'application/json' } });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.message || `Sources load failed with HTTP ${response.status}.`);
+        if (Array.isArray(result.sources)) renderSources(result.sources);
+        setStatus(result.savedAt ? `Loaded saved sources from ${new Date(result.savedAt).toLocaleString()}.` : 'Loaded sources from receiver.', 'success');
+      } catch (error) {
+        if (initialSources.length) renderSources(initialSources);
+        setStatus(error instanceof Error ? error.message : 'Sources load failed. Receiver may not be configured.', 'error');
+      }
+    };
+
+    saveButton?.addEventListener('click', async () => {
+      const sources = collectSources();
+      try {
+        saveButton.disabled = true;
+        setStatus('Saving sources…', '');
+        const response = await fetch(new URL('/review/sources', window.location.href), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ action: 'save', sources }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.message || `Sources save failed with HTTP ${response.status}.`);
+        if (Array.isArray(result.sources)) renderSources(result.sources);
+        setStatus(result.savedAt ? `Saved sources at ${new Date(result.savedAt).toLocaleString()}.` : 'Sources saved.', 'success');
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'Sources save failed. Receiver may not be configured.', 'error');
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+
+    loadSources();
+  </script>
+</Base>

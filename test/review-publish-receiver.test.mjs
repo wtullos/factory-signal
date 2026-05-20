@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown, applyDraftEditsToMarkdown, applyAiReviewEditsToMarkdown, validateAiRevisedBody } from '../scripts/review-publish-receiver.mjs';
+import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, SOURCES_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown, applyDraftEditsToMarkdown, applyAiReviewEditsToMarkdown, validateAiRevisedBody } from '../scripts/review-publish-receiver.mjs';
 
 const secret = 'unit-test-secret';
 
@@ -291,6 +291,68 @@ test('saves and loads review edits through signed receiver event', async () => {
   }
 });
 
+test('loads saved review draft without blank draft edit fields that would wipe the editor', async () => {
+  const fixture = await createServerFixture();
+  try {
+    const savePayload = {
+      event: SAVE_EVENT_NAME,
+      action: 'save',
+      draft: 'blank-draft-edits',
+      draftEdits: { title: '', author: '  ', body: '\n\t  ' },
+      reviewEdits: { opening: '', middle: '', closing: '' },
+      idempotencyKey: 'blank-draft-edits-save-0001',
+    };
+    const save = await postSigned(fixture.url, savePayload, savePayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
+    assert.equal(save.status, 200);
+
+    const loadPayload = {
+      event: SAVE_EVENT_NAME,
+      action: 'load',
+      draft: 'blank-draft-edits',
+      idempotencyKey: 'blank-draft-edits-load-0001',
+    };
+    const load = await postSigned(fixture.url, loadPayload, loadPayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
+    assert.equal(load.status, 200);
+    const loadJson = await load.json();
+    assert.equal(loadJson.ok, true);
+    assert.deepEqual(loadJson.draftEdits, {});
+  } finally {
+    await closeServer(fixture.server);
+    fs.rmSync(fixture.tmp, { recursive: true, force: true });
+  }
+});
+
+test('loads non-empty saved draft edits for the review editor', async () => {
+  const fixture = await createServerFixture();
+  try {
+    const savePayload = {
+      event: SAVE_EVENT_NAME,
+      action: 'save',
+      draft: 'non-empty-draft-edits',
+      draftEdits: { title: 'Saved title', author: '', body: 'Saved body.' },
+      reviewEdits: { opening: '', middle: '', closing: '' },
+      idempotencyKey: 'non-empty-draft-edits-save-0001',
+    };
+    const save = await postSigned(fixture.url, savePayload, savePayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
+    assert.equal(save.status, 200);
+
+    const loadPayload = {
+      event: SAVE_EVENT_NAME,
+      action: 'load',
+      draft: 'non-empty-draft-edits',
+      idempotencyKey: 'non-empty-draft-edits-load-0001',
+    };
+    const load = await postSigned(fixture.url, loadPayload, loadPayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
+    assert.equal(load.status, 200);
+    const loadJson = await load.json();
+    assert.equal(loadJson.ok, true);
+    assert.deepEqual(loadJson.draftEdits, { title: 'Saved title', body: 'Saved body.' });
+  } finally {
+    await closeServer(fixture.server);
+    fs.rmSync(fixture.tmp, { recursive: true, force: true });
+  }
+});
+
 test('deterministic natural cleanup strips labels and adds punctuation', () => {
   const raw = `Intro one\n\n## Body\n\nOriginal body`;
   const updated = applyReviewEditsToMarkdown(raw, { opening: 'Opening: no label please', closing: '> Closing: final check' });
@@ -322,6 +384,35 @@ test('AI review rewrite preserves frontmatter and validates body-only output', a
   assert.match(updated, /Operators need the context/);
   assert.match(updated, /quality escapes/);
   assert.match(updated, /repeat\.\n$/);
+});
+
+test('saves and loads watched sources through signed receiver event', async () => {
+  const fixture = await createServerFixture();
+  try {
+    const sources = [
+      { name: 'Unit feed', type: 'rss', topic: 'CNC', url: 'https://example.com/feed.xml', enabled: true },
+      { name: 'CNC', type: 'subreddit', topic: 'CNC', url: 'https://www.reddit.com/r/CNC/', enabled: false },
+    ];
+    const savePayload = { event: SOURCES_EVENT_NAME, action: 'save', sources, idempotencyKey: 'sources-save-0001' };
+    const save = await postSigned(fixture.url, savePayload, savePayload.idempotencyKey, new Date().toISOString(), SOURCES_EVENT_NAME);
+    assert.equal(save.status, 200);
+    const saveJson = await save.json();
+    assert.equal(saveJson.ok, true);
+    assert.deepEqual(saveJson.sources, sources);
+
+    const persisted = JSON.parse(fs.readFileSync(path.join(fixture.tmp, 'content', 'sources.json'), 'utf8'));
+    assert.deepEqual(persisted.sources, sources);
+
+    const loadPayload = { event: SOURCES_EVENT_NAME, action: 'load', idempotencyKey: 'sources-load-0001' };
+    const load = await postSigned(fixture.url, loadPayload, loadPayload.idempotencyKey, new Date().toISOString(), SOURCES_EVENT_NAME);
+    assert.equal(load.status, 200);
+    const loadJson = await load.json();
+    assert.equal(loadJson.ok, true);
+    assert.deepEqual(loadJson.sources, sources);
+  } finally {
+    await closeServer(fixture.server);
+    fs.rmSync(fixture.tmp, { recursive: true, force: true });
+  }
 });
 
 test('AI rewrite validation rejects frontmatter and private-info leakage', () => {

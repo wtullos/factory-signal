@@ -26,6 +26,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
     <nav class="review-tabs" aria-label="Robot backend sections">
       <a aria-current="page" href="/review/">Drafts</a>
       <a href="/review/takeaways/">Daily takeaways</a>
+      <a href="/review/sources/">Sources</a>
     </nav>
 
     <section class="panel review-warning">
@@ -202,11 +203,15 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       });
     };
 
+    const hasSavedDraftEditContent = (draftEdits = {}, key) => (
+      typeof draftEdits[key] === 'string' && draftEdits[key].trim().length > 0
+    );
+
     const applyDraftEdits = (draftCard, draftEdits = {}) => {
       draftCard?.querySelectorAll('[data-draft-edit]').forEach((field) => {
         if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
           const key = field.dataset.draftEdit;
-          if (key && typeof draftEdits[key] === 'string') field.value = draftEdits[key];
+          if (key && hasSavedDraftEditContent(draftEdits, key)) field.value = draftEdits[key];
         }
       });
     };

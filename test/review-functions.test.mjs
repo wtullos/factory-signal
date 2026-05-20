@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequest as onSaveRequest } from '../functions/review/save.js';
 import { onRequest as onPublishRequest } from '../functions/review/publish.js';
+import { onRequest as onSourcesRequest } from '../functions/review/sources.js';
 
 const env = {
   FS_REVIEW_PUBLISH_WEBHOOK_URL: 'https://receiver.example.com/factory-signal/review-publish',
@@ -72,6 +73,40 @@ test('review publish retries transient webhook 5xx before succeeding', async () 
     assert.equal(response.status, 200);
     assert.equal((await response.json()).ok, true);
     assert.equal(calls.length, 2);
+  });
+});
+
+test('review sources load/save use signed receiver webhook and fail closed without config', async () => {
+  const missing = await onSourcesRequest({
+    env: {},
+    request: new Request('https://factory-signal.example/review/sources', { method: 'GET' }),
+  });
+  assert.equal(missing.status, 503);
+  assert.equal((await missing.json()).error, 'sources_receiver_not_configured');
+
+  const calls = [];
+  await withFetchMock(async (url, options) => {
+    calls.push({ url, options });
+    return jsonResponse({ ok: true, sources: [{ name: 'Test feed', type: 'rss', topic: 'CNC', url: 'https://example.com/feed.xml', enabled: true }], savedAt: '2026-05-20T00:00:00.000Z' }, 200);
+  }, async () => {
+    const response = await onSourcesRequest({
+      env,
+      request: jsonRequest('https://factory-signal.example/review/sources', {
+        action: 'save',
+        sources: [{ name: 'Test feed', type: 'rss', topic: 'CNC', url: 'https://example.com/feed.xml', enabled: true }],
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.sources[0].name, 'Test feed');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, env.FS_REVIEW_PUBLISH_WEBHOOK_URL);
+    assert.equal(calls[0].options.headers['X-Factory-Signal-Event'], 'factory_signal.review_sources_request');
+    const body = JSON.parse(calls[0].options.body);
+    assert.equal(body.event, 'factory_signal.review_sources_request');
+    assert.equal(body.sources[0].type, 'rss');
   });
 });
 
