@@ -20,7 +20,6 @@ function sourceLabel(sourceUrl, index) {
 <Base title={article.title} description={article.description} pathname={`/articles/${article.slug}/`} type="article">
   <main>
     <article class="article-body">
-      <p class="meta">{article.pubDate} · {article.author}</p>
       <h1>{article.title}</h1>
       <ShareButton title={article.title} text={article.description} pathname={`/articles/${article.slug}/`} />
       {article.imageUrl && (
@@ -44,6 +43,9 @@ function sourceLabel(sourceUrl, index) {
           </ul>
         </section>
       )}
+      <footer class="article-footer-meta" aria-label="Article metadata">
+        <p class="meta">{article.pubDate} · {article.author}</p>
+      </footer>
     </article>
   </main>
 </Base>
