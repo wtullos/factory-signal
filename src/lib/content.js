@@ -191,6 +191,24 @@ export function isWhitepaperStory(story) {
     || WHITEPAPER_BODY_TERMS.test(body);
 }
 
+const VIDEO_URL_TERMS = /(?:^|\/\/)(?:www\.)?(?:youtube\.com\/(?:watch\?|shorts\/|embed\/|live\/)|youtu\.be\/|vimeo\.com\/|player\.vimeo\.com\/video\/|dailymotion\.com\/video\/|twitch\.tv\/videos\/|v\.redd\.it\/)/i;
+const VIDEO_MEDIA_TYPE_TERMS = /^video(?:\/|$)|\bvideo\b/i;
+
+export function isVideoStory(story = {}) {
+  if (!story || story.sectionTitle === 'Reddit') return false;
+  const url = story.url || '';
+  const mediaSignals = [
+    story.mediaType,
+    story.media_type,
+    story.type,
+    story.format,
+  ].filter(Boolean).join(' ');
+
+  return VIDEO_URL_TERMS.test(url)
+    || Boolean(story.videoUrl || story.video_url || story.embedUrl || story.embed_url)
+    || VIDEO_MEDIA_TYPE_TERMS.test(mediaSignals);
+}
+
 export function getWhitepaperStories(limit) {
   const stories = getNewsStories()
     .filter(isWhitepaperStory)
@@ -244,8 +262,10 @@ export function parseBriefing(filename, content) {
   for (const sectionPattern of patterns) {
     const match = content.match(sectionPattern.pattern);
     if (!match) continue;
-    const items = parseItems(match[1], sectionPattern.title === 'YouTube')
+    const isYouTubeSection = sectionPattern.title === 'YouTube';
+    const items = parseItems(match[1], isYouTubeSection)
       .map((item) => ({ ...item, sectionTitle: sectionPattern.title }))
+      .filter((item) => !isYouTubeSection || isVideoStory(item))
       .filter(isSchoolFriendlyStory);
     if (items.length) sections.push({ title: sectionPattern.title, items });
   }

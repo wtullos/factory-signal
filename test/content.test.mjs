@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, parseArticleMarkdown } from '../src/lib/content.js';
+import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, isVideoStory, parseArticleMarkdown, parseBriefing } from '../src/lib/content.js';
 
 test('applyPublishMetadata materializes published status, pubDate, and 24-hour pinnedUntil', () => {
   const raw = `---\ntitle: Sample Article\nslug: sample-article\nstatus: draft\n---\n\nBody.`;
@@ -49,4 +49,42 @@ test('buildDailyTakeaway summarizes day-level concepts rather than individual st
   assert.ok(takeaway.lessons.some((lesson) => lesson.concept === 'Patterns beat isolated headlines'));
   assert.ok(takeaway.lessons.some((lesson) => lesson.concept === 'Automation value is usually integration value'));
   assert.ok(takeaway.lessons.some((lesson) => lesson.concept === 'Community questions expose adoption friction'));
+});
+
+test('isVideoStory requires explicit video media indicators', () => {
+  assert.equal(isVideoStory({ title: 'A related product resource', url: 'https://example.com/resource', sectionTitle: 'YouTube' }), false);
+  assert.equal(isVideoStory({ title: 'Factory walkthrough', url: 'https://www.youtube.com/watch?v=abc123', sectionTitle: 'YouTube' }), true);
+  assert.equal(isVideoStory({ title: 'Embedded demo', embedUrl: 'https://player.vimeo.com/video/123', sectionTitle: 'News' }), true);
+  assert.equal(isVideoStory({ title: 'Reddit video is still community content', url: 'https://v.redd.it/abc123', sectionTitle: 'Reddit' }), false);
+});
+
+test('parseBriefing drops non-video items from YouTube section', () => {
+  const briefing = parseBriefing('2026-05-19.md', `# Factory Signal Briefing - 2026-05-19
+> Advanced Manufacturing · 3D Printing · CNC · Robotics · AI Vision
+> Generated: 12:00:00
+
+---
+
+## 📺 YouTube Worth Watching
+
+### [Actual machining video](https://www.youtube.com/watch?v=abc123)
+**Channel:** Machine Shop | **Topic:** CNC  
+**Rating:** ★★★★☆ 4.5/5.0 | **Views:** 1,200
+**Duration:** 8:42
+
+> A CNC setup walkthrough.
+
+---
+
+### [Related vendor download](https://example.com/whitepaper.pdf)
+**Channel:** Vendor Resource | **Topic:** CNC  
+**Rating:** ★★★★☆ 4.1/5.0
+
+> A download that was accidentally placed in the video section.
+
+---
+`);
+
+  const youtube = briefing.sections.find((section) => section.title === 'YouTube');
+  assert.deepEqual(youtube.items.map((item) => item.title), ['Actual machining video']);
 });
