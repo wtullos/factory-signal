@@ -481,7 +481,16 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
 }
+.review-backend .draft-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
 .draft-header h2 { margin-bottom: 0; }
+.draft-header > div:first-child {
+  flex: 1 1 min(860px, 100%);
+  min-width: 0;
+}
+.review-backend .draft-header > div:first-child { width: 100%; }
 .inline-draft-field {
   display: grid;
   gap: 5px;
@@ -508,13 +517,25 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 }
 .inline-draft-field input:focus,
 .inline-draft-field textarea:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
+.inline-title-field { max-width: min(860px, 100%); }
+.review-backend .inline-title-field {
+  max-width: none;
+  width: 100%;
+}
 .inline-title-field input {
-  max-width: min(860px, 100%);
+  max-width: 100%;
+  min-width: 0;
   color: var(--ink-strong);
   font-size: clamp(1.32rem, 2.25vw, 1.9rem);
   font-weight: 850;
   letter-spacing: -.025em;
   line-height: 1.14;
+}
+.review-backend .inline-title-field input {
+  font-size: clamp(.84rem, 1.08vw, 1rem);
+  letter-spacing: -.01em;
+  line-height: 1.25;
+  min-height: 40px;
 }
 .inline-author-field input { min-height: 38px; font-weight: 700; }
 .draft-slug,
@@ -1088,6 +1109,8 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   .wes-suggestion-grid,
   .archive-river-day,
   .archive-river-grid { grid-template-columns: 1fr; }
+  .draft-header { flex-direction: column; }
+  .draft-header-badges { justify-content: flex-start; }
   .site-search-nav { position: static; }
   .site-search-dropdown { left: 6px; right: 6px; width: auto; max-width: none; }
   .archive-river-date { position: static; }
