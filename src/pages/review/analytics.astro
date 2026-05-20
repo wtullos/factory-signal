@@ -1,0 +1,162 @@
+---
+import Base from '../../layouts/Base.astro';
+
+export const prerender = true;
+---
+<Base title="Robot analytics" description="Private Factory Signal analytics dashboard." pathname="/review/analytics/" noindex={true} bodyClass="review-backend analytics-backend">
+  <a class="review-logout-button" href="/review/logout" data-review-logout>Logout</a>
+  <main>
+    <div class="section-heading">
+      <div>
+        <p class="meta">Private workflow · intended URL: https://robot.thefactorysignal.com/analytics</p>
+        <h1>Robot analytics</h1>
+      </div>
+    </div>
+
+    <nav class="review-tabs" aria-label="Robot backend sections">
+      <a class="review-tab-drafts" href="/review/">Drafts</a>
+      <a href="/review/takeaways/">Daily takeaways</a>
+      <a href="/review/sources/">Sources</a>
+      <a aria-current="page" href="/review/analytics/">Analytics</a>
+    </nav>
+
+    <section class="panel analytics-notice" data-analytics-status>
+      <h2>Loading analytics…</h2>
+      <p>Collects only page path/title and click label/href metadata. No raw IP address, user-agent, cookies, or fingerprint IDs are stored by this app.</p>
+    </section>
+
+    <section class="analytics-metrics" aria-label="Seven day totals">
+      <article class="panel metric-card"><span>Page views</span><strong data-total-pageviews>0</strong></article>
+      <article class="panel metric-card"><span>Clicks</span><strong data-total-clicks>0</strong></article>
+      <article class="panel metric-card"><span>Events</span><strong data-total-events>0</strong></article>
+    </section>
+
+    <section class="analytics-grid">
+      <article class="panel">
+        <h2>Top pages</h2>
+        <ol class="analytics-list" data-top-pages></ol>
+      </article>
+      <article class="panel">
+        <h2>Top clicks</h2>
+        <ol class="analytics-list" data-top-clicks></ol>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="inline-editor-heading">
+        <h2>7-day activity grid</h2>
+        <p>UTC hours. Darker cells mean more page views/clicks during that hour.</p>
+      </div>
+      <div class="heatmap-wrap" data-heatmap aria-label="Seven day analytics heatmap"></div>
+    </section>
+  </main>
+
+  <style>
+    .analytics-metrics, .analytics-grid { display: grid; gap: 1rem; margin: 1rem 0; }
+    .analytics-metrics { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .analytics-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+    .metric-card { display: grid; gap: .35rem; }
+    .metric-card span { color: var(--muted); font-size: .78rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .metric-card strong { color: var(--ink-strong); font-size: clamp(2rem, 8vw, 3.5rem); line-height: 1; }
+    .analytics-list { display: grid; gap: .75rem; margin: 0; padding-left: 1.2rem; }
+    .analytics-list li { padding-bottom: .75rem; border-bottom: 1px solid var(--line); }
+    .analytics-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+    .analytics-list strong { display: block; color: var(--ink-strong); }
+    .analytics-list span, .analytics-list a { color: var(--muted); overflow-wrap: anywhere; }
+    .heatmap-wrap { display: grid; gap: .55rem; overflow-x: auto; padding-bottom: .3rem; }
+    .heatmap-row { display: grid; grid-template-columns: 6.5rem repeat(24, minmax(1.25rem, 1fr)); gap: .18rem; align-items: center; min-width: 720px; }
+    .heatmap-date { color: var(--muted); font-size: .78rem; font-weight: 900; }
+    .heatmap-cell { aspect-ratio: 1 / 1; border: 1px solid rgba(57,169,53,.15); background: #eef5ec; }
+    .heatmap-cell[data-level="1"] { background: #cfe8ca; }
+    .heatmap-cell[data-level="2"] { background: #9fd499; }
+    .heatmap-cell[data-level="3"] { background: #61ba5a; }
+    .heatmap-cell[data-level="4"] { background: #237322; }
+    .heatmap-empty { color: var(--muted); }
+  </style>
+
+  <script>
+    const logoutButton = document.querySelector('[data-review-logout]');
+    if (logoutButton instanceof HTMLAnchorElement) {
+      logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
+    }
+
+    if (window.location.hostname === 'robot.thefactorysignal.com') {
+      document.querySelectorAll('.review-tabs a[href^="/review/"]').forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) return;
+        link.href = link.getAttribute('href')?.replace(/^\/review\/?/, '/') || link.href;
+      });
+    }
+
+    const statusPanel = document.querySelector('[data-analytics-status]');
+    const topPages = document.querySelector('[data-top-pages]');
+    const topClicks = document.querySelector('[data-top-clicks]');
+    const heatmap = document.querySelector('[data-heatmap]');
+
+    const setText = (selector, value) => {
+      const element = document.querySelector(selector);
+      if (element) element.textContent = Number(value || 0).toLocaleString();
+    };
+
+    const escapeText = (value) => String(value || '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[character]));
+
+    const renderEmpty = (element, message) => {
+      if (element) element.innerHTML = `<li class="heatmap-empty">${escapeText(message)}</li>`;
+    };
+
+    const renderList = (element, rows, type) => {
+      if (!element) return;
+      if (!rows.length) {
+        renderEmpty(element, 'No analytics recorded yet.');
+        return;
+      }
+      element.innerHTML = rows.map((row) => {
+        if (type === 'pages') {
+          return `<li><strong>${row.views.toLocaleString()} views</strong><a href="${escapeText(row.path)}">${escapeText(row.title)}</a><span>${escapeText(row.path)}</span></li>`;
+        }
+        const href = row.href ? `<a href="${escapeText(row.href)}">${escapeText(row.href)}</a>` : '<span>No href captured</span>';
+        return `<li><strong>${row.clicks.toLocaleString()} clicks</strong><span>${escapeText(row.label)} · ${escapeText(row.path)}</span>${href}</li>`;
+      }).join('');
+    };
+
+    const renderHeatmap = (summary) => {
+      if (!heatmap) return;
+      const days = summary.heatmap?.days || [];
+      if (!days.length) {
+        heatmap.innerHTML = '<p class="heatmap-empty">No heatmap data available.</p>';
+        return;
+      }
+      heatmap.innerHTML = days.map((day) => `
+        <div class="heatmap-row">
+          <span class="heatmap-date">${escapeText(day.date)}</span>
+          ${(day.hours || []).map((cell) => `<span class="heatmap-cell" data-level="${cell.level || 0}" title="${escapeText(day.date)} ${String(cell.hour).padStart(2, '0')}:00 UTC · ${cell.events || 0} events"></span>`).join('')}
+        </div>
+      `).join('');
+    };
+
+    const loadAnalytics = async () => {
+      try {
+        const endpoint = window.location.hostname === 'robot.thefactorysignal.com' ? '/analytics/data' : '/review/analytics/data';
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+        const summary = await response.json();
+        if (!response.ok) throw new Error(summary.message || `Analytics API failed with HTTP ${response.status}.`);
+        setText('[data-total-pageviews]', summary.totals?.pageviews);
+        setText('[data-total-clicks]', summary.totals?.clicks);
+        setText('[data-total-events]', summary.totals?.totalEvents);
+        renderList(topPages, summary.topPages || [], 'pages');
+        renderList(topClicks, summary.topClicks || [], 'clicks');
+        renderHeatmap(summary);
+        if (statusPanel) {
+          statusPanel.innerHTML = summary.configured
+            ? '<h2>Analytics active</h2><p>Showing privacy-friendly events from the last 7 days. No visitor IDs are stored by this app.</p>'
+            : '<h2>D1 not configured</h2><p>Analytics collection is installed, but the <code>ANALYTICS_DB</code> D1 binding is missing. Public tracking will fail open and this dashboard stays usable with empty data.</p>';
+        }
+      } catch (error) {
+        if (statusPanel) statusPanel.innerHTML = `<h2>Analytics unavailable</h2><p>${escapeText(error instanceof Error ? error.message : 'Unable to load analytics.')}</p>`;
+      }
+    };
+
+    loadAnalytics();
+  </script>
+</Base>

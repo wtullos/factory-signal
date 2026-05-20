@@ -106,6 +106,8 @@ async function nextReviewResponse(context, url, isRobotHost) {
 }
 
 function robotReviewPath(pathname) {
+  if (pathname === '/analytics' || pathname === '/analytics/') return '/review/analytics/';
+  if (pathname === '/analytics/data' || pathname === '/analytics/data/') return '/review/analytics/data';
   if (pathname === '/sources' || pathname === '/sources/') return '/review/sources/';
   if (pathname === '/takeaways' || pathname === '/takeaways/') return '/review/takeaways/';
   return '/review/';

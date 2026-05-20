@@ -35,6 +35,55 @@ const showNavSearch = pathname === '/' || pathname === '/testpage/';
     <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} RSS`} href="/rss.xml" />
     {ADSENSE_ENABLED && <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />}
     {ADSENSE_ENABLED && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`} crossorigin="anonymous"></script>}
+    {!noindex && (
+      <script is:inline>
+        (() => {
+          const endpoint = '/analytics/collect';
+          const send = (payload) => {
+            if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+            const body = JSON.stringify({
+              ...payload,
+              path: window.location.pathname,
+              title: document.title,
+              timestamp: new Date().toISOString(),
+            });
+            if (navigator.sendBeacon) {
+              const blob = new Blob([body], { type: 'application/json' });
+              navigator.sendBeacon(endpoint, blob);
+              return;
+            }
+            fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body,
+              keepalive: true,
+              credentials: 'omit',
+            }).catch(() => {});
+          };
+
+          const clickLabel = (element) => (
+            element.getAttribute('aria-label')
+            || element.getAttribute('title')
+            || element.textContent
+            || ''
+          ).replace(/\s+/g, ' ').trim().slice(0, 140);
+
+          if (document.visibilityState !== 'prerender') {
+            send({ type: 'pageview' });
+          }
+
+          document.addEventListener('click', (event) => {
+            const link = event.target?.closest?.('a[href], button');
+            if (!link) return;
+            send({
+              type: 'click',
+              href: link instanceof HTMLAnchorElement ? link.href : '',
+              text: clickLabel(link),
+            });
+          }, { capture: true, passive: true });
+        })();
+      </script>
+    )}
   </head>
   <body class={bodyClass}>
     <nav class="display-count-overlay" aria-label="Factory Signal sections">

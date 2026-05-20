@@ -52,7 +52,7 @@ test('authenticated robot non-pass-through page still rewrites to /review/', asy
 test('authenticated robot clean review tabs rewrite to their protected review pages', async () => {
   const cookie = await loginCookie('https://robot.thefactorysignal.com/login', '/sources/');
 
-  for (const [path, expectedPath] of [['/sources/', '/review/sources/'], ['/takeaways/', '/review/takeaways/']]) {
+  for (const [path, expectedPath] of [['/sources/', '/review/sources/'], ['/takeaways/', '/review/takeaways/'], ['/analytics/', '/review/analytics/'], ['/analytics/data', '/review/analytics/data']]) {
     let nextRequest;
     const response = await onRequest({
       env,
