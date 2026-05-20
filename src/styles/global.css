@@ -228,6 +228,30 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .personal-addition-grid textarea:focus,
 .draft-edit-grid textarea:focus,
 .draft-edit-grid input:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
+.wes-suggestions {
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 1px solid rgba(57,169,53,.34);
+  background: rgba(232,246,230,.36);
+}
+.wes-suggestions-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.wes-suggestions h4 { margin: 0; color: var(--ink-strong); font-size: .98rem; line-height: 1.2; }
+.wes-suggestions p { margin: 0; color: var(--muted); font-size: .86rem; font-weight: 700; line-height: 1.35; }
+.wes-suggestion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.wes-suggestion-grid label { display: grid; gap: 4px; min-width: 0; color: var(--ink-strong); font-weight: 850; }
+.wes-suggestion-grid small { color: var(--muted); font-weight: 650; line-height: 1.35; }
+.wes-suggestion-grid textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  padding: 9px;
+  color: var(--ink);
+  background: rgba(255,255,255,.94);
+  font: inherit;
+}
+.wes-suggestion-grid textarea:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
 .panel { padding: 16px; }
 .panel h2, .panel h3 { position: relative; padding-top: 12px; }
 .panel h2::before, .panel h3::before {
@@ -1030,6 +1054,7 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   .display-dashboard,
   .ticker-track,
   .display-link-grid,
+  .wes-suggestion-grid,
   .archive-river-day,
   .archive-river-grid { grid-template-columns: 1fr; }
   .site-search-nav { position: static; }

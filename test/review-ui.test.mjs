@@ -6,18 +6,29 @@ const reviewPagePath = new URL('../src/pages/review/[...slug].astro', import.met
 const takeawaysPagePath = new URL('../src/pages/review/takeaways.astro', import.meta.url);
 const sourcesPagePath = new URL('../src/pages/review/sources.astro', import.meta.url);
 
-test('review page keeps draft editing inline and removes Wes review copy block', async () => {
+test('review page keeps draft editing inline and restores compact Wes suggestion fields', async () => {
   const source = await readFile(reviewPagePath, 'utf8');
 
   assert.doesNotMatch(source, /Draft edits and Wes review edits/);
   assert.doesNotMatch(source, /Opening note|Mid-article note|Closing note/);
   assert.doesNotMatch(source, /Full Markdown body/);
   assert.doesNotMatch(source, /data-personal-additions/);
+  assert.doesNotMatch(source, /Review guidance|Paste the exact edits/i);
 
   assert.match(source, /data-review-editor/);
   assert.match(source, /data-draft-edit="title"/);
   assert.match(source, /data-draft-edit="author"/);
   assert.match(source, /data-draft-edit="body"/);
+  assert.match(source, /<section class="wes-suggestions" aria-label="Suggested additions from Wes">/);
+  assert.match(source, /data-review-edit="opening"/);
+  assert.match(source, /data-review-edit="middle"/);
+  assert.match(source, /data-review-edit="closing"/);
+  assert.match(source, /Opening/);
+  assert.match(source, /Frame why worth attention now \/ what made draft stand out\./);
+  assert.match(source, /Mid-article/);
+  assert.match(source, /Practical angle such as friction, operator, training, quality, or test-first\./);
+  assert.match(source, /Closing/);
+  assert.match(source, /Concise takeaway \+ next signal\./);
   assert.match(source, /<section class="body-preview markdown-body-editor">/);
 });
 

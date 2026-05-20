@@ -113,6 +113,29 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 <span class="visually-hidden">Article Markdown body</span>
                 <textarea rows="28" data-draft-edit="body" aria-label={`Article Markdown body for ${draft.slug || draft.filename}`}>{draft.body}</textarea>
               </label>
+              <section class="wes-suggestions" aria-label="Suggested additions from Wes">
+                <div class="wes-suggestions-heading">
+                  <h4>Suggested additions</h4>
+                  <p>Optional notes to fold into the draft during save or publish.</p>
+                </div>
+                <div class="wes-suggestion-grid">
+                  <label>
+                    <span>Opening</span>
+                    <small>Frame why worth attention now / what made draft stand out.</small>
+                    <textarea rows="4" data-review-edit="opening" aria-label={`Opening addition for ${draft.slug || draft.filename}`}></textarea>
+                  </label>
+                  <label>
+                    <span>Mid-article</span>
+                    <small>Practical angle such as friction, operator, training, quality, or test-first.</small>
+                    <textarea rows="4" data-review-edit="middle" aria-label={`Mid-article addition for ${draft.slug || draft.filename}`}></textarea>
+                  </label>
+                  <label>
+                    <span>Closing</span>
+                    <small>Concise takeaway + next signal.</small>
+                    <textarea rows="4" data-review-edit="closing" aria-label={`Closing addition for ${draft.slug || draft.filename}`}></textarea>
+                  </label>
+                </div>
+              </section>
               <div class="review-draft-actions">
                 <button class="button secondary" type="button" data-save-review-draft>Save edits</button>
                 <p class="publish-status" data-save-review-status role="status" aria-live="polite">Saved edits will load here automatically.</p>
