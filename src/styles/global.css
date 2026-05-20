@@ -422,6 +422,11 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   border: 1px solid var(--line);
   background: rgba(255,255,255,.72);
 }
+.review-tabs .review-tab-drafts {
+  min-inline-size: clamp(5.75rem, 12vw, 7rem);
+  text-align: center;
+  white-space: nowrap;
+}
 .review-tabs a[aria-current="page"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); }
 .takeaway-layout { display: grid; gap: 22px; }
 .takeaway-history { display: grid; gap: 18px; }
