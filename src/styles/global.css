@@ -184,6 +184,14 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .button:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: white; }
 .button.secondary { color: var(--ink); background: transparent; border-color: var(--ink); box-shadow: none; }
 .button.secondary:hover { color: var(--accent-dark); border-color: var(--accent); background: var(--accent-soft); }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .personal-additions {
   margin: 16px 0;
   padding: 14px;
@@ -442,6 +450,41 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   padding-bottom: 12px;
 }
 .draft-header h2 { margin-bottom: 0; }
+.inline-draft-field {
+  display: grid;
+  gap: 5px;
+  font-weight: 900;
+}
+.inline-draft-field span:not(.visually-hidden) {
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.inline-draft-field input,
+.inline-draft-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  padding: 9px 10px;
+  background: rgba(255,255,255,.94);
+  color: var(--ink);
+  font: inherit;
+}
+.inline-draft-field input:focus,
+.inline-draft-field textarea:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
+.inline-title-field input {
+  max-width: min(860px, 100%);
+  color: var(--ink-strong);
+  font-size: clamp(1.32rem, 2.25vw, 1.9rem);
+  font-weight: 850;
+  letter-spacing: -.025em;
+  line-height: 1.14;
+}
+.inline-author-field input { min-height: 38px; font-weight: 700; }
 .draft-slug,
 .tag-row span,
 .ama-badge {
@@ -492,6 +535,33 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   padding: 14px;
   border: 1px solid var(--line);
   background: rgba(247,249,246,.78);
+}
+.markdown-body-editor {
+  display: grid;
+  gap: 12px;
+  max-height: none;
+  overflow: visible;
+}
+.inline-editor-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 14px;
+}
+.inline-editor-heading p { margin: 0; color: var(--muted); font-size: .9rem; font-weight: 700; }
+.inline-body-field textarea {
+  min-height: 620px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: .94rem;
+  line-height: 1.52;
+}
+.review-draft-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
 }
 .publish-command {
   padding: 14px;

@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getDraftArticles, formatDate } from '../../lib/content.js';
-import { getAmaContext, getAmaReviewBadgeLabel, getPersonalAdditionRecommendations, isRedditAmaDraft } from '../../lib/review-prompts.js';
+import { getAmaContext, getAmaReviewBadgeLabel, isRedditAmaDraft } from '../../lib/review-prompts.js';
 
 export const prerender = true;
 
@@ -45,16 +45,18 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
     ) : (
       <div class="review-list">
         {drafts.map((draft) => {
-          const personalPrompts = getPersonalAdditionRecommendations(draft);
           const amaContext = getAmaContext(draft);
           const isAmaDraft = isRedditAmaDraft(draft);
           const amaBadgeLabel = getAmaReviewBadgeLabel(draft);
           return (
-          <article class:list={["panel", "draft-card", { "ama-draft-card": isAmaDraft }]} data-article-type={draft.articleType || undefined}>
+          <article class:list={["panel", "draft-card", { "ama-draft-card": isAmaDraft }]} data-article-type={draft.articleType || undefined} data-review-editor data-draft-id={draft.slug || draft.filename}>
             <header class="draft-header">
               <div>
                 <p class="meta">{draft.status} · {draft.pubDate && hasDate(draft.pubDate) ? formatDate(draft.pubDate.slice(0, 10)) : draft.pubDate || 'No publish date'}</p>
-                <h2>{draft.title}</h2>
+                <label class="inline-draft-field inline-title-field">
+                  <span>Publish title</span>
+                  <input type="text" value={draft.title} maxlength="220" data-draft-edit="title" aria-label={`Publish title for ${draft.slug || draft.filename}`} />
+                </label>
               </div>
               <div class="draft-header-badges">
                 {amaBadgeLabel && <span class="ama-badge">{amaBadgeLabel}</span>}
@@ -63,7 +65,15 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
             </header>
 
             <dl class="review-meta">
-              <div><dt>Author</dt><dd>{draft.author}</dd></div>
+              <div>
+                <dt>Author</dt>
+                <dd>
+                  <label class="inline-draft-field inline-author-field">
+                    <span class="visually-hidden">Author(s)</span>
+                    <input type="text" value={draft.author} maxlength="320" data-draft-edit="author" aria-label={`Author(s) for ${draft.slug || draft.filename}`} />
+                  </label>
+                </dd>
+              </div>
               <div><dt>File</dt><dd><code>{draft.path}</code></dd></div>
               <div><dt>Updated</dt><dd>{draft.updatedAt || 'Unknown'}</dd></div>
             </dl>
@@ -93,9 +103,19 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
               </section>
             )}
 
-            <section class="body-preview">
-              <h3>Body preview</h3>
-              <div set:html={draft.html} />
+            <section class="body-preview markdown-body-editor">
+              <div class="inline-editor-heading">
+                <h3>Markdown body</h3>
+                <p>Edit the article Markdown here. Frontmatter stays managed by the receiver.</p>
+              </div>
+              <label class="inline-draft-field inline-body-field">
+                <span class="visually-hidden">Article Markdown body</span>
+                <textarea rows="28" data-draft-edit="body" aria-label={`Article Markdown body for ${draft.slug || draft.filename}`}>{draft.body}</textarea>
+              </label>
+              <div class="review-draft-actions">
+                <button class="button secondary" type="button" data-save-review-draft>Save edits</button>
+                <p class="publish-status" data-save-review-status role="status" aria-live="polite">Saved edits will load here automatically.</p>
+              </div>
             </section>
 
             <section class="publish-command">
@@ -104,54 +124,6 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 Send a signed publish request to the local/Hermes receiver. The receiver still performs the actual repo move,
                 build, and deploy outside this static review page.
               </p>
-
-              <section class="personal-additions" aria-labelledby={`personal-additions-${draft.slug || draft.filename}`} data-personal-additions data-draft-id={draft.slug || draft.filename} data-draft-title={draft.title}>
-                <div class="personal-additions-heading">
-                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Draft edits and Wes review edits</h4>
-                  <p>Edit the publish title, author, and full Markdown body here. Optional Wes-authored input is saved through the signed receiver and, on publish, cleaned up and blended into the article instead of pasted as labeled callouts.</p>
-                  <ul class="personal-recommendations" aria-label="Recommended personal additions">
-                    <li><strong>Opening:</strong> {personalPrompts.opening}</li>
-                    <li><strong>Mid-article:</strong> {personalPrompts.middle}</li>
-                    <li><strong>Closing:</strong> {personalPrompts.closing}</li>
-                  </ul>
-                </div>
-                <div class="draft-edit-grid">
-                  <label>
-                    <span>Publish title</span>
-                    <input type="text" value={draft.title} maxlength="220" data-draft-edit="title" />
-                  </label>
-                  <label>
-                    <span>Author(s)</span>
-                    <input type="text" value={draft.author} maxlength="320" data-draft-edit="author" />
-                  </label>
-                  <label>
-                    <span>Full Markdown body</span>
-                    <small>Edit Markdown, not rendered HTML. Frontmatter stays managed by the receiver.</small>
-                    <textarea rows="24" data-draft-edit="body">{draft.body}</textarea>
-                  </label>
-                </div>
-                <div class="personal-addition-grid">
-                  <label>
-                    <span>Opening note</span>
-                    <small>{personalPrompts.opening}</small>
-                    <textarea name="opening" rows="3" maxlength="1200" data-addition-field data-review-edit="opening" placeholder={personalPrompts.opening}></textarea>
-                  </label>
-                  <label>
-                    <span>Mid-article note</span>
-                    <small>{personalPrompts.middle}</small>
-                    <textarea name="middle" rows="3" maxlength="1200" data-addition-field data-review-edit="middle" placeholder={personalPrompts.middle}></textarea>
-                  </label>
-                  <label>
-                    <span>Closing note</span>
-                    <small>{personalPrompts.closing}</small>
-                    <textarea name="closing" rows="3" maxlength="1200" data-addition-field data-review-edit="closing" placeholder={personalPrompts.closing}></textarea>
-                  </label>
-                </div>
-                <div class="review-draft-actions">
-                  <button class="button secondary" type="button" data-save-review-draft>Save draft</button>
-                  <p class="publish-status" data-save-review-status role="status" aria-live="polite">Saved review edits will load here automatically.</p>
-                </div>
-              </section>
 
               <div class="publish-actions" data-publish-actions>
                 <form class="publish-form publish-now-form" method="post" action="/review/publish">
@@ -247,10 +219,9 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       }
     };
 
-    const reviewSections = document.querySelectorAll('[data-personal-additions][data-draft-id]');
+    const reviewSections = document.querySelectorAll('[data-review-editor][data-draft-id]');
     reviewSections.forEach((section) => {
       const draft = section.dataset.draftId || '';
-      const title = section.dataset.draftTitle || '';
       const draftCard = section.closest('.draft-card');
       const saveButton = section.querySelector('[data-save-review-draft]');
 
@@ -263,7 +234,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           if (!response.ok || !result.ok) throw new Error(result.message || `Review draft load failed with HTTP ${response.status}.`);
           if (result.reviewEdits) applyReviewEdits(draftCard, result.reviewEdits);
           if (result.draftEdits) applyDraftEdits(draftCard, result.draftEdits);
-          setSaveStatus(section, result.savedAt ? `Loaded saved edits from ${new Date(result.savedAt).toLocaleString()}.` : 'No saved review edits yet.', 'success');
+          setSaveStatus(section, result.savedAt ? `Loaded saved edits from ${new Date(result.savedAt).toLocaleString()}.` : 'No saved edits yet.', 'success');
         } catch (error) {
           setSaveStatus(section, error instanceof Error ? error.message : 'Review draft load failed.', 'error');
         }
@@ -276,10 +247,11 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
         saveButton.textContent = 'Saving…';
         setSaveStatus(section, 'Saving review draft…', 'pending');
         try {
+          const draftEdits = collectDraftEdits(draftCard);
           const response = await fetch(new URL('/review/save', window.location.href).href, {
             method: 'POST',
             headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'save', draft, title, draftEdits: collectDraftEdits(draftCard), reviewEdits: collectReviewEdits(draftCard) }),
+            body: JSON.stringify({ action: 'save', draft, title: draftEdits.title, draftEdits, reviewEdits: collectReviewEdits(draftCard) }),
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok || !result.ok) throw new Error(result.message || `Review draft save failed with HTTP ${response.status}.`);
