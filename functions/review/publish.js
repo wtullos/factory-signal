@@ -7,6 +7,7 @@ const MAX_REVIEW_EDIT_LENGTH = 1200;
 const MAX_DRAFT_TITLE_LENGTH = 220;
 const MAX_DRAFT_AUTHOR_LENGTH = 320;
 const MAX_DRAFT_BODY_LENGTH = 200000;
+const WEBHOOK_RETRY_DELAYS_MS = [100, 300];
 
 async function handlePost(context) {
   const receiverUrl = context.env?.[WEBHOOK_URL];
@@ -91,7 +92,7 @@ async function handlePost(context) {
 
   let webhookResponse;
   try {
-    webhookResponse = await fetch(receiverEndpoint.toString(), {
+    webhookResponse = await fetchWebhookWithRetry(receiverEndpoint.toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -121,6 +122,25 @@ async function handlePost(context) {
     message: action === 'schedule' ? 'Schedule publish request sent.' : 'Publish request sent.',
     idempotencyKey,
   });
+}
+
+async function fetchWebhookWithRetry(url, options) {
+  let lastError;
+  for (let attempt = 0; attempt <= WEBHOOK_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      if (response.status < 500 || attempt === WEBHOOK_RETRY_DELAYS_MS.length) return response;
+    } catch (error) {
+      lastError = error;
+      if (attempt === WEBHOOK_RETRY_DELAYS_MS.length) throw error;
+    }
+    await delay(WEBHOOK_RETRY_DELAYS_MS[attempt]);
+  }
+  throw lastError || new Error('Webhook request failed.');
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 export function onRequest(context) {
