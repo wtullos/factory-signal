@@ -14,6 +14,8 @@ const pageTitle = title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`;
 const url = canonical(pathname);
 const logoPath = '/assets/factory-signal-logo.jpg';
 const showNavSearch = pathname === '/' || pathname === '/testpage/';
+const isPrivatePath = pathname === '/review' || pathname.startsWith('/review/') || pathname === '/admin' || pathname.startsWith('/admin/');
+const showAdsenseVerification = ADSENSE_ENABLED && !noindex && !isPrivatePath;
 ---
 <!doctype html>
 <html lang="en">
@@ -33,8 +35,8 @@ const showNavSearch = pathname === '/' || pathname === '/testpage/';
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#39a935" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} RSS`} href="/rss.xml" />
-    {ADSENSE_ENABLED && <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />}
-    {ADSENSE_ENABLED && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`} crossorigin="anonymous"></script>}
+    {showAdsenseVerification && <meta name="google-adsense-account" content={ADSENSE_PUBLISHER_ID} />}
+    {showAdsenseVerification && <script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`} crossorigin="anonymous"></script>}
     {!noindex && (
       <script is:inline>
         (() => {

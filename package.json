@@ -18,6 +18,7 @@
     "test:review-functions": "node --test test/review-functions.test.mjs",
     "test:review-publish-receiver": "node --test test/review-publish-receiver.test.mjs",
     "test:content": "node --test test/content.test.mjs",
+    "test:adsense": "node --test test/adsense.test.mjs",
     "test:school-friendly": "node --test test/school-friendly.test.mjs",
     "test:style-guard": "node --test test/style-guard.test.mjs"
   },

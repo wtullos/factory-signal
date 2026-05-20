@@ -12,6 +12,10 @@ export const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'hello@thefactorysigna
 export const ADSENSE_PUBLISHER_ID = process.env.ADSENSE_PUBLISHER_ID || '';
 export const ADSENSE_ENABLED = ADSENSE_PUBLISHER_ID.startsWith('ca-pub-');
 
+export function adsTxtPublisherId(publisherId = ADSENSE_PUBLISHER_ID) {
+  return String(publisherId || '').replace(/^ca-pub-/, 'pub-');
+}
+
 export function contentPath(...parts) {
   return path.join(root, 'content', ...parts);
 }
