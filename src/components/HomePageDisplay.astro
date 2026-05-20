@@ -1,0 +1,249 @@
+---
+import Base from '../layouts/Base.astro';
+import DisplayStoryCard from './DisplayStoryCard.astro';
+import StoryCard from './StoryCard.astro';
+import { getBriefings, getArticles, getPinnedArticles, getNewsStories, getRedditStories, getStoryArchive, getWhitepaperStories, SITE_NAME, TAGLINE, topItems } from '../lib/content.js';
+
+const {
+  pathname = '/',
+  noindex = false,
+} = Astro.props;
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function storyIdentity(item) {
+  return item?.archiveKey || item?.url || item?.title || '';
+}
+
+function searchTextFor(item) {
+  return [
+    item?.title,
+    item?.source,
+    item?.topic,
+    item?.sectionTitle,
+    item?.date,
+    item?.dateLabel,
+    item?.body,
+    item?.description,
+    item?.url,
+  ].filter(Boolean).join(' ');
+}
+
+const briefings = getBriefings();
+const articles = getArticles();
+const pinnedArticles = getPinnedArticles(articles);
+const stories = getNewsStories();
+const redditStories = getRedditStories();
+const whitepaperStories = getWhitepaperStories(4);
+const latest = briefings[0];
+const latestNewsOnly = latest
+  ? {
+      ...latest,
+      sections: latest.sections.filter((section) => section.title !== 'Reddit'),
+    }
+  : null;
+const latestSignals = topItems(latestNewsOnly, 12).filter((item) => item.sectionTitle !== 'Reddit');
+const leadRotationSeed = [latest?.generatedAt, latest?.updatedAt, latest?.slug].filter(Boolean).join('|');
+const rotatedLeadIndex = latestSignals.length > 0 ? hashString(leadRotationSeed || latestSignals.map(storyIdentity).join('|')) % latestSignals.length : 0;
+const leadStory = latestSignals[rotatedLeadIndex] || stories[0];
+const leadStoryIdentity = storyIdentity(leadStory);
+const supportCandidates = latestSignals.filter((item) => storyIdentity(item) !== leadStoryIdentity && item?.url !== leadStory?.url && item?.title !== leadStory?.title);
+const supportFallbacks = stories.filter((item) => storyIdentity(item) !== leadStoryIdentity && item?.url !== leadStory?.url && item?.title !== leadStory?.title);
+const supportStories = [...supportCandidates, ...supportFallbacks]
+  .filter((item, index, all) => item && item.sectionTitle !== 'Reddit' && all.findIndex((candidate) => storyIdentity(candidate) === storyIdentity(item) || candidate?.url === item?.url || candidate?.title === item?.title) === index)
+  .slice(0, 3);
+const tickerItems = [
+  ...stories,
+].filter((item) => item && item.sectionTitle !== 'Reddit').slice(0, 6);
+const archive = getStoryArchive(stories.filter((item) => item && item.sectionTitle !== 'Reddit'));
+---
+<Base title={SITE_NAME} description={TAGLINE} pathname={pathname} noindex={noindex} bodyClass="display-page">
+  <main class="display-home" aria-labelledby="display-title">
+    {pinnedArticles.length > 0 && (
+      <section class="pinned-articles" aria-label="Pinned articles">
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Pinned for 24 hours</p>
+            <h2>Fresh article</h2>
+          </div>
+          <a href="/articles/">All articles</a>
+        </div>
+        <div class="pinned-article-grid">
+          {pinnedArticles.map((article) => (
+            <article class="pinned-article-card" data-fs-search-item data-search-text={`${article.title} ${article.description} ${article.tags.join(' ')}`}>
+              <p class="meta">{article.pubDate} · pinned until {article.pinnedUntil}</p>
+              <h3><a href={`/articles/${article.slug}/`}>{article.title}</a></h3>
+              <p>{article.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="display-hero" aria-label="Factory Signal classroom display" data-fs-search-section>
+      <div class="display-topline">
+        <h1 id="display-title">Factory Signal</h1>
+      </div>
+
+      <div class="display-dashboard">
+        {leadStory && <DisplayStoryCard item={leadStory} variant="lead" />}
+
+        <aside class="display-side-panel" aria-label="Signal stack">
+          <div class="display-panel-heading">
+            <p class="display-eyebrow">What to watch</p>
+            <h2>Today’s signal stack</h2>
+          </div>
+          <div class="display-support-grid">
+            {supportStories.map((item) => <DisplayStoryCard item={item} />)}
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="display-ticker" aria-label="Latest manufacturing headlines" data-fs-search-section>
+      <h2>Latest signals</h2>
+      <div class="ticker-track">
+        {tickerItems.map((item) => (
+          <a href={item.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={searchTextFor(item)}>
+            <span>{item.topic || item.sectionTitle || item.source}</span>
+            {item.title}
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {whitepaperStories.length > 0 && (
+      <section class="display-whitepapers" id="whitepaper-library" aria-label="Whitepaper library" data-fs-search-section>
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Download queue</p>
+            <h2>Whitepaper library</h2>
+          </div>
+          <a href={whitepaperStories[0].url} target="_blank" rel="noopener noreferrer">Latest paper</a>
+        </div>
+        <div class="whitepaper-grid">
+          {whitepaperStories.map((item) => (
+            <a class="whitepaper-card" href={item.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={searchTextFor(item)}>
+              <span class="meta">{item.source || item.topic || 'Resource'} · {item.dateLabel}</span>
+              <strong>{item.title}</strong>
+              {item.body && <p>{item.body}</p>}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="display-deep-links" aria-label="Browse Factory Signal" data-fs-search-section>
+      <div class="section-heading"><h2>Browse the archive</h2><a href={latest ? `/briefings/${latest.slug}/` : '/briefings/'}>Open latest briefing</a></div>
+      <div class="display-link-grid">
+        <a class="panel" href="/news/" data-fs-search-item data-search-text={`News archive ${stories.length} non-Reddit stories manufacturing articles videos newest first /news/`}><span class="meta">News archive</span><strong>{stories.length} non-Reddit stories</strong><p>All manufacturing articles and videos, newest first.</p></a>
+        <a class="panel" href="/reddit/" data-fs-search-item data-search-text={`Community trends ${redditStories.length} Reddit posts shop-floor questions builds community chatter /reddit/`}><span class="meta">Community trends</span><strong>{redditStories.length} Reddit posts</strong><p>Shop-floor questions, builds, and community chatter.</p></a>
+        <a class="panel" href="/briefings/" data-fs-search-item data-search-text={`Daily briefing ${briefings.length} editions full daily signal reports sections source links /briefings/`}><span class="meta">Daily briefing</span><strong>{briefings.length} editions</strong><p>Full daily signal reports with sections and source links.</p></a>
+      </div>
+    </section>
+
+    {archive.groups.length > 0 && (
+      <section class="display-archive-river" aria-label="Full Factory Signal story archive" data-fs-search-section>
+        <div class="section-heading">
+          <div>
+            <p class="display-eyebrow">Keep scrolling</p>
+            <h2>Signal archive river</h2>
+          </div>
+          <a href="/news/">All news</a>
+        </div>
+        <p class="archive-river-intro">A continuous, newest-first stream of non-Reddit manufacturing signals from every briefing.</p>
+        <div class="archive-river-groups">
+          {archive.groups.map((group) => (
+            <section class="archive-river-day" aria-labelledby={`archive-${group.date}`} data-fs-search-section>
+              <div class="archive-river-date">
+                <h3 id={`archive-${group.date}`}>{group.dateLabel}</h3>
+                <a href={`/briefings/${group.briefingSlug}/`}>Open briefing</a>
+              </div>
+              <div class="archive-river-grid">
+                {group.stories.map((item) => <StoryCard item={item} compact variant="river-card archive-river-card" />)}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+    )}
+    <script is:inline>
+      (() => {
+        const input = document.querySelector('[data-fs-search-input]');
+        const clearButton = document.querySelector('[data-fs-search-clear]');
+        const status = document.querySelector('[data-fs-search-status]');
+        const emptyState = document.querySelector('[data-fs-search-empty]');
+        const searchNav = document.querySelector('[data-fs-search-nav]');
+        const toggle = document.querySelector('[data-fs-search-toggle]');
+        const dropdown = document.querySelector('[data-fs-search-dropdown]');
+        const items = Array.from(document.querySelectorAll('[data-fs-search-item]'));
+        const sections = Array.from(document.querySelectorAll('[data-fs-search-section]'));
+        if (!input || !status || items.length === 0) return;
+
+        const setSearchOpen = (open) => {
+          if (!toggle || !dropdown) return;
+          toggle.setAttribute('aria-expanded', String(open));
+          toggle.setAttribute('aria-label', open ? 'Close site search' : 'Open site search');
+          dropdown.hidden = !open;
+          if (open) window.requestAnimationFrame(() => input.focus());
+        };
+
+        const normalize = (value) => String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const searchable = new Map(items.map((item) => [item, normalize(`${item.dataset.searchText || ''} ${item.textContent || ''}`)]));
+
+        const applySearch = () => {
+          const query = normalize(input.value);
+          let visibleCount = 0;
+
+          for (const item of items) {
+            const matches = !query || searchable.get(item).includes(query);
+            item.hidden = !matches;
+            if (matches) visibleCount += 1;
+          }
+
+          for (const section of sections) {
+            const sectionItems = items.filter((item) => section.contains(item));
+            section.hidden = query ? sectionItems.length > 0 && sectionItems.every((item) => item.hidden) : false;
+          }
+
+          if (query) {
+            status.textContent = `${visibleCount} matching ${visibleCount === 1 ? 'item' : 'items'} for “${input.value.trim()}”.`;
+            if (emptyState) emptyState.hidden = visibleCount !== 0;
+          } else {
+            status.textContent = `Showing all ${items.length} Factory Signal items.`;
+            if (emptyState) emptyState.hidden = true;
+          }
+        };
+
+        input.addEventListener('input', applySearch);
+        clearButton?.addEventListener('click', () => {
+          input.value = '';
+          input.focus();
+          applySearch();
+        });
+        toggle?.addEventListener('click', () => {
+          setSearchOpen(toggle.getAttribute('aria-expanded') !== 'true');
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+            setSearchOpen(false);
+            toggle.focus();
+          }
+        });
+        document.addEventListener('pointerdown', (event) => {
+          if (toggle?.getAttribute('aria-expanded') === 'true' && searchNav && !searchNav.contains(event.target)) {
+            setSearchOpen(false);
+          }
+        });
+        applySearch();
+      })();
+    </script>
+  </main>
+</Base>

@@ -14,6 +14,7 @@
     "sync:briefings": "node scripts/sync-briefings.mjs",
     "review:publish-receiver": "node scripts/review-publish-receiver.mjs",
     "style:guard": "node scripts/style-guard.mjs",
+    "test:middleware": "node --test test/middleware.test.mjs",
     "test:review-functions": "node --test test/review-functions.test.mjs",
     "test:review-publish-receiver": "node --test test/review-publish-receiver.test.mjs",
     "test:content": "node --test test/content.test.mjs",

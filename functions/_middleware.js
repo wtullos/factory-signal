@@ -11,8 +11,9 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const isRobotHost = url.hostname.toLowerCase() === ROBOT_HOST;
   const isMainDomainReviewPath = isReviewPath(url.pathname);
+  const isMainDomainTestPage = isTestPagePath(url.pathname);
 
-  if (!isRobotHost && !isMainDomainReviewPath) {
+  if (!isRobotHost && !isMainDomainReviewPath && !isMainDomainTestPage) {
     return context.next();
   }
 
@@ -108,8 +109,16 @@ function isReviewPath(pathname) {
   return pathname === '/review' || pathname === '/review/' || pathname.startsWith('/review/');
 }
 
+function isTestPagePath(pathname) {
+  return pathname === '/testpage' || pathname === '/testpage/';
+}
+
 function shouldPassThroughRobotPath(pathname) {
-  return pathname === '/review' || pathname === '/review/' || pathname.startsWith('/review/') || isStaticAssetPath(pathname);
+  return pathname === '/review'
+    || pathname === '/review/'
+    || pathname.startsWith('/review/')
+    || isTestPagePath(pathname)
+    || isStaticAssetPath(pathname);
 }
 
 function isStaticAssetPath(pathname) {

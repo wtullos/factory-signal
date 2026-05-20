@@ -13,7 +13,7 @@ const {
 const pageTitle = title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`;
 const url = canonical(pathname);
 const logoPath = '/assets/factory-signal-logo.jpg';
-const showNavSearch = pathname === '/';
+const showNavSearch = pathname === '/' || pathname === '/testpage/';
 ---
 <!doctype html>
 <html lang="en">
