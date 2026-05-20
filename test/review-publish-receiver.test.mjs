@@ -231,6 +231,8 @@ test('AI review rewrite preserves frontmatter and validates body-only output', a
       const request = JSON.parse(prompt);
       assert.equal(request.metadata.title, 'AI draft');
       assert.match(request.hard_rules.join('\n'), /Do not use, infer, reveal, or mention Hermes memory/);
+      assert.match(request.hard_rules.join('\n'), /Preserve the already-proofed original article as much as possible/);
+      assert.match(request.hard_rules.join('\n'), /Graft reviewer additions only where needed/);
       assert.match(request.article_body_markdown, /Original quality paragraph/);
       return `${request.article_body_markdown.trim()}\n\nOperators need the context before the shift starts.\n\nThat matters because quality escapes often hide at handoffs.\n\nEnd with one boring check the floor can actually repeat.`;
     },
