@@ -66,27 +66,6 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
 ---
 <Base title={SITE_NAME} description={TAGLINE} pathname={pathname} noindex={noindex} bodyClass="display-page">
   <main class="display-home" aria-labelledby="display-title">
-    {pinnedArticles.length > 0 && (
-      <section class="pinned-articles" aria-label="Pinned articles">
-        <div class="section-heading">
-          <div>
-            <p class="display-eyebrow">Pinned for 24 hours</p>
-            <h2>Fresh article</h2>
-          </div>
-          <a href="/articles/">All articles</a>
-        </div>
-        <div class="pinned-article-grid">
-          {pinnedArticles.map((article) => (
-            <article class="pinned-article-card" data-fs-search-item data-search-text={`${article.title} ${article.description} ${article.tags.join(' ')}`}>
-              <p class="meta">{article.pubDate} · pinned until {article.pinnedUntil}</p>
-              <h3><a href={`/articles/${article.slug}/`}>{article.title}</a></h3>
-              <p>{article.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    )}
-
     <section class="display-hero" aria-label="Factory Signal classroom display" data-fs-search-section>
       <div class="display-topline">
         <h1 id="display-title">Factory Signal</h1>
@@ -103,6 +82,23 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
           <div class="display-support-grid">
             {supportStories.map((item) => <DisplayStoryCard item={item} />)}
           </div>
+          {pinnedArticles.length > 0 && (
+            <section class="display-pinned-articles" aria-label="Pinned articles">
+              <div class="display-pinned-heading">
+                <p class="display-eyebrow">Pinned article{pinnedArticles.length > 1 ? 's' : ''}</p>
+                <a href="/articles/">All articles</a>
+              </div>
+              <div class="display-pinned-article-list">
+                {pinnedArticles.map((article) => (
+                  <a class="display-pinned-article-card" href={`/articles/${article.slug}/`} data-fs-search-item data-search-text={`${article.title} ${article.description} ${article.tags.join(' ')}`}>
+                    <span class="meta">{article.pubDate} · pinned until {article.pinnedUntil}</span>
+                    <strong>{article.title}</strong>
+                    <span>{article.description}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
       </div>
     </section>
