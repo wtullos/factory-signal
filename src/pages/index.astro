@@ -1,4 +1,111 @@
 ---
-import HomePageDisplay from '../components/HomePageDisplay.astro';
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+import { getArticles, SITE_NAME } from '../lib/content.js';
+
+const articles = getArticles();
+const [leadArticle, ...remainingArticles] = articles;
+const topStories = remainingArticles.slice(0, 4);
+const latestArticles = remainingArticles.slice(4, 16);
+const sidebarArticles = remainingArticles.slice(16, 22);
+
+function articleUrl(article) {
+  return `/articles/${article.slug}/`;
+}
+
+function formatArticleDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || 'Factory Signal';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function tagLine(article) {
+  return article.tags?.slice(0, 2).join(' · ') || article.articleType || 'Factory Signal article';
+}
 ---
-<HomePageDisplay pathname="/" />
+<Base title={SITE_NAME} description="Original Factory Signal articles on manufacturing technology, automation, CNC, robotics, 3D printing, and industrial AI." pathname="/" bodyClass="editorial-home-page">
+  <main class="editorial-home" aria-labelledby="home-title">
+    <section class="editorial-masthead" aria-label="Factory Signal front page">
+      <p class="meta">Factory Signal articles</p>
+      <h1 id="home-title">Manufacturing intelligence, edited for operators and builders.</h1>
+      <p class="lede">Original Factory Signal analysis on advanced manufacturing, factory automation, CNC practice, robotics, additive manufacturing, and industrial AI.</p>
+    </section>
+
+    {leadArticle ? (
+      <section class="front-page-grid" aria-label="Featured Factory Signal articles">
+        <article class="front-lead-card">
+          <a class="front-lead-art" href={articleUrl(leadArticle)} aria-label={`Read article: ${leadArticle.title}`}>
+            <span class="front-art-mark" aria-hidden="true">FS</span>
+            <span class="front-art-topic">{tagLine(leadArticle)}</span>
+          </a>
+          <div class="front-lead-copy">
+            <p class="meta">Lead article · {formatArticleDate(leadArticle.pubDate || leadArticle.date)}</p>
+            <h2><a href={articleUrl(leadArticle)}>{leadArticle.title}</a></h2>
+            <p>{leadArticle.description}</p>
+            <a class="front-read-link" href={articleUrl(leadArticle)}>Read the lead analysis</a>
+          </div>
+        </article>
+
+        <div class="front-top-stack" aria-label="Top stories">
+          {topStories.map((article, index) => (
+            <article class:list={["front-stack-card", index === 0 && "front-stack-card-strong"]}>
+              <p class="meta">{tagLine(article)} · {formatArticleDate(article.pubDate || article.date)}</p>
+              <h3><a href={articleUrl(article)}>{article.title}</a></h3>
+              <p>{article.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    ) : (
+      <section class="panel empty-state">
+        <h2>No articles published yet</h2>
+        <p>Factory Signal articles will appear here as soon as they are published.</p>
+      </section>
+    )}
+
+    <AdSlot slot="leaderboard" />
+
+    {latestArticles.length > 0 && (
+      <section class="front-river-section" aria-labelledby="latest-articles-heading">
+        <div class="section-heading">
+          <div>
+            <p class="meta">Latest original reporting</p>
+            <h2 id="latest-articles-heading">More Factory Signal articles</h2>
+          </div>
+          <a href="/articles/">All articles</a>
+        </div>
+        <div class="front-river-layout">
+          <div class="front-article-river">
+            {latestArticles.map((article) => (
+              <article class="front-river-card">
+                <p class="meta">{formatArticleDate(article.pubDate || article.date)} · {article.author}</p>
+                <h3><a href={articleUrl(article)}>{article.title}</a></h3>
+                <p>{article.description}</p>
+                {article.tags?.length > 0 && (
+                  <div class="front-tag-row" aria-label="Article tags">
+                    {article.tags.slice(0, 3).map((tag) => <span>{tag}</span>)}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+
+          {sidebarArticles.length > 0 && (
+            <aside class="front-sidebar" aria-labelledby="sidebar-articles-heading">
+              <p class="meta">Article queue</p>
+              <h2 id="sidebar-articles-heading">Still worth reading</h2>
+              <div class="front-sidebar-list">
+                {sidebarArticles.map((article) => (
+                  <a href={articleUrl(article)}>
+                    <span>{formatArticleDate(article.pubDate || article.date)}</span>
+                    <strong>{article.title}</strong>
+                  </a>
+                ))}
+              </div>
+            </aside>
+          )}
+        </div>
+      </section>
+    )}
+  </main>
+</Base>
