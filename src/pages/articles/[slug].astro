@@ -7,6 +7,15 @@ export function getStaticPaths() {
   return getArticles().map((article) => ({ params: { slug: article.slug }, props: { article } }));
 }
 const { article } = Astro.props;
+const sourceUrls = Array.isArray(article.sourceUrls) ? article.sourceUrls.filter(Boolean) : [];
+function sourceLabel(sourceUrl, index) {
+  try {
+    const url = new URL(sourceUrl);
+    return url.hostname.replace(/^www\./, '') || `Source ${index + 1}`;
+  } catch {
+    return `Source ${index + 1}`;
+  }
+}
 ---
 <Base title={article.title} description={article.description} pathname={`/articles/${article.slug}/`} type="article">
   <main>
@@ -15,6 +24,20 @@ const { article } = Astro.props;
       <h1>{article.title}</h1>
       <ShareButton title={article.title} text={article.description} pathname={`/articles/${article.slug}/`} />
       <div set:html={article.html} />
+      {sourceUrls.length > 0 && (
+        <section class="article-sources" aria-labelledby="article-sources-heading">
+          <h2 id="article-sources-heading">Sources</h2>
+          <ul>
+            {sourceUrls.map((sourceUrl, index) => (
+              <li>
+                <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
+                  {sourceLabel(sourceUrl, index)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   </main>
 </Base>
