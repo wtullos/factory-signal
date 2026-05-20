@@ -22,18 +22,30 @@ function formatArticleDate(value) {
 function tagLine(article) {
   return article.tags?.slice(0, 2).join(' · ') || article.articleType || 'Factory Signal article';
 }
+
+function searchTextFor(article) {
+  return [
+    article?.title,
+    article?.description,
+    article?.author,
+    article?.articleType,
+    article?.date,
+    article?.pubDate,
+    ...(article?.tags || []),
+  ].filter(Boolean).join(' ');
+}
 ---
-<Base title={SITE_NAME} description="Original Factory Signal articles on manufacturing technology, automation, CNC, robotics, 3D printing, and industrial AI." pathname="/" bodyClass="editorial-home-page">
+<Base title={SITE_NAME} description="Today's industrial manufacturing news and Factory Signal analysis on automation, CNC, robotics, additive manufacturing, and industrial AI." pathname="/" bodyClass="editorial-home-page">
   <main class="editorial-home" aria-labelledby="home-title">
     <section class="editorial-masthead" aria-label="Factory Signal front page">
       <p class="meta">Factory Signal articles</p>
-      <h1 id="home-title">Manufacturing intelligence, edited for operators and builders.</h1>
-      <p class="lede">Original Factory Signal analysis on advanced manufacturing, factory automation, CNC practice, robotics, additive manufacturing, and industrial AI.</p>
+      <h1 id="home-title">Today’s industrial manufacturing news</h1>
+      <p class="lede">Factory Signal analysis for factory operators and builders.</p>
     </section>
 
     {leadArticle ? (
-      <section class="front-page-grid" aria-label="Featured Factory Signal articles">
-        <article class="front-lead-card">
+      <section class="front-page-grid" aria-label="Featured Factory Signal articles" data-fs-search-section>
+        <article class="front-lead-card" data-fs-search-item data-search-text={searchTextFor(leadArticle)}>
           <a class="front-lead-art" href={articleUrl(leadArticle)} aria-label={`Read article: ${leadArticle.title}`}>
             <span class="front-art-mark" aria-hidden="true">FS</span>
             <span class="front-art-topic">{tagLine(leadArticle)}</span>
@@ -48,7 +60,7 @@ function tagLine(article) {
 
         <div class="front-top-stack" aria-label="Top stories">
           {topStories.map((article, index) => (
-            <article class:list={["front-stack-card", index === 0 && "front-stack-card-strong"]}>
+            <article class:list={["front-stack-card", index === 0 && "front-stack-card-strong"]} data-fs-search-item data-search-text={searchTextFor(article)}>
               <p class="meta">{tagLine(article)} · {formatArticleDate(article.pubDate || article.date)}</p>
               <h3><a href={articleUrl(article)}>{article.title}</a></h3>
               <p>{article.description}</p>
@@ -66,7 +78,7 @@ function tagLine(article) {
     <AdSlot slot="leaderboard" />
 
     {latestArticles.length > 0 && (
-      <section class="front-river-section" aria-labelledby="latest-articles-heading">
+      <section class="front-river-section" aria-labelledby="latest-articles-heading" data-fs-search-section>
         <div class="section-heading">
           <div>
             <p class="meta">Latest original reporting</p>
@@ -77,7 +89,7 @@ function tagLine(article) {
         <div class="front-river-layout">
           <div class="front-article-river">
             {latestArticles.map((article) => (
-              <article class="front-river-card">
+              <article class="front-river-card" data-fs-search-item data-search-text={searchTextFor(article)}>
                 <p class="meta">{formatArticleDate(article.pubDate || article.date)} · {article.author}</p>
                 <h3><a href={articleUrl(article)}>{article.title}</a></h3>
                 <p>{article.description}</p>
@@ -96,7 +108,7 @@ function tagLine(article) {
               <h2 id="sidebar-articles-heading">Still worth reading</h2>
               <div class="front-sidebar-list">
                 {sidebarArticles.map((article) => (
-                  <a href={articleUrl(article)}>
+                  <a href={articleUrl(article)} data-fs-search-item data-search-text={searchTextFor(article)}>
                     <span>{formatArticleDate(article.pubDate || article.date)}</span>
                     <strong>{article.title}</strong>
                   </a>

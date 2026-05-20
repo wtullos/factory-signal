@@ -27,7 +27,11 @@ test('AdSense verification renders only on indexed public pages and ads.txt uses
   assert.ok(home.includes(adsenseScript));
   assert.ok(home.includes(adsenseMeta));
   assert.ok(home.includes('/dashboard/'));
-  assert.ok(!home.includes('site-search-dropdown'));
+  assert.ok(home.includes('site-search-dropdown'));
+  assert.ok(home.includes('aria-label="Open site search"'));
+  assert.ok(!home.includes('site-search-toggle-text'));
+  assert.ok(!home.includes('>Search</span>'));
+  assert.ok(home.includes('Today’s industrial manufacturing news'));
   assert.ok(!home.includes('Latest signals'));
   assert.ok(!home.includes('Whitepaper library'));
 
