@@ -140,6 +140,19 @@ export function applyPublishMetadata(raw, publishedAt = new Date()) {
   });
 }
 
+export function parseFeedDate(value, fallback = new Date()) {
+  if (value instanceof Date) return new Date(value.getTime());
+
+  const raw = String(value || '').trim();
+  const fallbackDate = fallback instanceof Date ? new Date(fallback.getTime()) : new Date(fallback);
+  const safeFallback = Number.isNaN(fallbackDate.getTime()) ? new Date() : fallbackDate;
+  if (!raw) return safeFallback;
+
+  const dateInput = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T12:00:00Z` : raw;
+  const parsed = new Date(dateInput);
+  return Number.isNaN(parsed.getTime()) ? safeFallback : parsed;
+}
+
 export function getAllStories() {
   return getBriefings()
     .flatMap((briefing) => briefing.sections.flatMap((section) => section.items.map((item, index) => ({

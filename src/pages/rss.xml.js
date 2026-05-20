@@ -1,17 +1,17 @@
 import rss from '@astrojs/rss';
-import { getBriefings, getArticles, SITE_NAME, TAGLINE, SITE_URL, formatDate } from '../lib/content.js';
+import { getBriefings, getArticles, SITE_NAME, TAGLINE, SITE_URL, formatDate, parseFeedDate } from '../lib/content.js';
 
 export function GET(context) {
   const briefingItems = getBriefings().map((briefing) => ({
     title: briefing.title.replace(/^Tech Briefing/, 'Factory Signal Briefing'),
     description: `${formatDate(briefing.date)} briefing: ${briefing.deck}`,
-    pubDate: new Date(`${briefing.date}T12:00:00Z`),
+    pubDate: parseFeedDate(briefing.date),
     link: `/briefings/${briefing.slug}/`,
   }));
   const articleItems = getArticles().map((article) => ({
     title: article.title,
     description: article.description,
-    pubDate: article.pubDate ? new Date(`${article.pubDate}T12:00:00Z`) : new Date(),
+    pubDate: parseFeedDate(article.pubDate),
     link: `/articles/${article.slug}/`,
   }));
 

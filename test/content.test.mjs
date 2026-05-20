@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, isVideoStory, parseArticleMarkdown, parseBriefing } from '../src/lib/content.js';
+import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, isVideoStory, parseArticleMarkdown, parseBriefing, parseFeedDate } from '../src/lib/content.js';
 
 test('applyPublishMetadata materializes published status, pubDate, and 24-hour pinnedUntil', () => {
   const raw = `---\ntitle: Sample Article\nslug: sample-article\nstatus: draft\n---\n\nBody.`;
@@ -19,6 +19,18 @@ test('getPinnedArticles includes only articles still inside their pinned window'
 
   assert.deepEqual(getPinnedArticles([expired, active], new Date('2026-05-20T12:00:00.000Z')).map((article) => article.title), ['Active']);
   assert.deepEqual(getPinnedArticles([active], new Date('2026-05-20T18:00:00.000Z')), []);
+});
+
+test('parseFeedDate preserves date-only noon UTC behavior and accepts full ISO timestamps', () => {
+  assert.equal(parseFeedDate('2026-05-19').toISOString(), '2026-05-19T12:00:00.000Z');
+  assert.equal(parseFeedDate('2026-05-20T14:36:39.239Z').toISOString(), '2026-05-20T14:36:39.239Z');
+});
+
+test('parseFeedDate falls back for missing or invalid dates', () => {
+  const fallback = new Date('2026-05-20T12:00:00.000Z');
+
+  assert.equal(parseFeedDate('', fallback).toISOString(), '2026-05-20T12:00:00.000Z');
+  assert.equal(parseFeedDate('not-a-date', fallback).toISOString(), '2026-05-20T12:00:00.000Z');
 });
 
 test('buildDailyTakeaway summarizes day-level concepts rather than individual story text', () => {
