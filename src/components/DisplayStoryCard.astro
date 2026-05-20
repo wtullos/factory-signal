@@ -1,7 +1,7 @@
 ---
-import { isAcceptableDisplayImage } from '../lib/image-rules.js';
+import { isAcceptableDisplayImage, isRenderableImageUrl } from '../lib/image-rules.js';
 
-const { item, variant = '' } = Astro.props;
+const { item, variant = '', forceImage = false } = Astro.props;
 const isLead = variant === 'lead';
 const label = [item.source, item.topic || item.sectionTitle].filter(Boolean).join(' · ');
 const stats = [item.views, item.duration, item.scoreCount ? `Score ${item.scoreCount}` : null, item.comments ? `${item.comments} comments` : null].filter(Boolean).join(' · ');
@@ -27,8 +27,9 @@ function truncate(value, maxLength = 165) {
 const excerpt = isLead ? truncate(item.body, 150) : '';
 const visualLabel = item.topic || item.sectionTitle || item.source || 'Factory Signal';
 const visualInitials = initials(visualLabel);
-const hasDisplayImage = isAcceptableDisplayImage(item.image);
+const hasDisplayImage = forceImage ? isRenderableImageUrl(item.image) : isAcceptableDisplayImage(item.image);
 const imageSrc = hasDisplayImage ? item.image.trim() : '';
+const isExternalLink = /^https?:\/\//i.test(item.url || '');
 const searchText = [
   item.title,
   item.source,
@@ -42,7 +43,7 @@ const searchText = [
 ].filter(Boolean).join(' ');
 ---
 <article class:list={["display-story-card", variant, hasDisplayImage && "has-image"]} data-fs-search-item data-search-text={searchText}>
-  <a class="display-card-link" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`Open story: ${item.title}`}>
+  <a class="display-card-link" href={item.url} target={isExternalLink ? '_blank' : undefined} rel={isExternalLink ? 'noopener noreferrer' : undefined} aria-label={`Open story: ${item.title}`}>
     <div class:list={["display-visual-block", !hasDisplayImage && "display-fallback-art"]} aria-hidden={!hasDisplayImage ? "true" : undefined}>
       {hasDisplayImage ? (
         <img

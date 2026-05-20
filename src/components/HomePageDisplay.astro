@@ -39,6 +39,7 @@ function searchTextFor(item) {
 const briefings = getBriefings();
 const articles = getArticles();
 const pinnedArticles = getPinnedArticles(articles);
+const logoImage = '/assets/factory-signal-logo.jpg';
 const stories = getNewsStories();
 const redditStories = getRedditStories();
 const whitepaperStories = getWhitepaperStories(4);
@@ -59,6 +60,20 @@ const supportFallbacks = stories.filter((item) => storyIdentity(item) !== leadSt
 const supportStories = [...supportCandidates, ...supportFallbacks]
   .filter((item, index, all) => item && item.sectionTitle !== 'Reddit' && all.findIndex((candidate) => storyIdentity(candidate) === storyIdentity(item) || candidate?.url === item?.url || candidate?.title === item?.title) === index)
   .slice(0, 3);
+const pinnedSignalCards = pinnedArticles.map((article) => ({
+  title: article.title,
+  body: article.description,
+  description: article.description,
+  source: SITE_NAME,
+  topic: 'Article',
+  date: article.date || article.pubDate,
+  dateLabel: article.pubDate,
+  image: logoImage,
+  url: `/articles/${article.slug}/`,
+  archiveKey: `article-${article.slug}`,
+  tags: article.tags,
+}));
+const signalStackItems = [...pinnedSignalCards, ...supportStories].slice(0, 3);
 const tickerItems = [
   ...stories,
 ].filter((item) => item && item.sectionTitle !== 'Reddit').slice(0, 6);
@@ -80,25 +95,8 @@ const archive = getStoryArchive(stories.filter((item) => item && item.sectionTit
             <h2>Today’s signal stack</h2>
           </div>
           <div class="display-support-grid">
-            {supportStories.map((item) => <DisplayStoryCard item={item} />)}
+            {signalStackItems.map((item) => <DisplayStoryCard item={item} forceImage={item.image === logoImage} />)}
           </div>
-          {pinnedArticles.length > 0 && (
-            <section class="display-pinned-articles" aria-label="Pinned articles">
-              <div class="display-pinned-heading">
-                <p class="display-eyebrow">Pinned article{pinnedArticles.length > 1 ? 's' : ''}</p>
-                <a href="/articles/">All articles</a>
-              </div>
-              <div class="display-pinned-article-list">
-                {pinnedArticles.map((article) => (
-                  <a class="display-pinned-article-card" href={`/articles/${article.slug}/`} data-fs-search-item data-search-text={`${article.title} ${article.description} ${article.tags.join(' ')}`}>
-                    <span class="meta">{article.pubDate} · pinned until {article.pinnedUntil}</span>
-                    <strong>{article.title}</strong>
-                    <span>{article.description}</span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
         </aside>
       </div>
     </section>
