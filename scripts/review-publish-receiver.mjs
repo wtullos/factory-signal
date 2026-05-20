@@ -129,9 +129,11 @@ export async function handleRequest(req, res, config) {
   if (requestRecord.action === 'schedule') {
     const scheduled = schedulePublish(config, requestRecord);
     updateIdempotencyRecord(config, idempotencyKey, { status: 'scheduled', scheduledFor: scheduled.publishAt });
+    notifyPublishRequestReceived(config, requestRecord, 'scheduled');
     return sendJson(res, 202, { ok: true, scheduled: true, execute: config.execute, idempotencyKey, publishAt: scheduled.publishAt });
   }
 
+  notifyPublishRequestReceived(config, requestRecord, 'accepted');
   runPublishWorkflow(config, requestRecord, idempotencyKey).catch((error) => {
     config.log.error(`[receiver] workflow_failed idempotencyKey=${idempotencyKey}`, error);
   });
@@ -354,7 +356,8 @@ function armScheduledJob(config, job, delayMs) {
   }, Math.min(delayMs, maxDelay)).unref();
 }
 
-function readConfig({ env = process.env, cwd = process.cwd(), log = console } = {}) {
+function readConfig(options = {}) {
+  const { env = process.env, cwd = process.cwd(), log = console } = options;
   return {
     cwd,
     log,
@@ -371,7 +374,55 @@ function readConfig({ env = process.env, cwd = process.cwd(), log = console } = 
     aiRewriteTimeoutMs: Number.parseInt(env.FS_REVIEW_AI_REWRITE_TIMEOUT_MS || `${DEFAULT_AI_REWRITE_TIMEOUT_MS}`, 10),
     aiPersonalDenylist: parseDenylist(env.FS_REVIEW_AI_PERSONAL_DENYLIST || ''),
     aiInheritEnv: env.FS_REVIEW_AI_INHERIT_ENV === 'true',
+    telegramNotify: env.FS_REVIEW_TELEGRAM_NOTIFY === 'true',
+    telegramBotToken: env.FS_REVIEW_TELEGRAM_BOT_TOKEN || '',
+    telegramChatId: env.FS_REVIEW_TELEGRAM_CHAT_ID || '',
+    fetch: options.fetch || globalThis.fetch,
   };
+}
+
+function notifyPublishRequestReceived(config, requestRecord, status) {
+  if (!config.telegramNotify) return;
+  if (!config.telegramBotToken || !config.telegramChatId) {
+    config.log.warn?.('[receiver] telegram_notification_skipped missing bot token or chat id');
+    return;
+  }
+  if (typeof config.fetch !== 'function') {
+    config.log.warn?.('[receiver] telegram_notification_skipped fetch is unavailable');
+    return;
+  }
+
+  const text = formatTelegramPublishNotification(requestRecord, status);
+  config.fetch(`https://api.telegram.org/bot${config.telegramBotToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: config.telegramChatId,
+      text,
+      disable_web_page_preview: true,
+    }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      let detail = '';
+      try { detail = await response.text(); } catch {}
+      throw new Error(`Telegram sendMessage failed with HTTP ${response.status}${detail ? `: ${detail.slice(0, 500)}` : ''}`);
+    }
+  }).catch((error) => {
+    config.log.warn?.('[receiver] telegram_notification_failed', error);
+  });
+}
+
+function formatTelegramPublishNotification(requestRecord, status) {
+  const lines = [
+    'Factory Signal publish request received',
+    `Draft: ${requestRecord.draft}`,
+  ];
+  if (requestRecord.title) lines.push(`Title: ${requestRecord.title}`);
+  lines.push(`Action: ${requestRecord.action}`);
+  if (requestRecord.publishAt) lines.push(`Scheduled time: ${requestRecord.publishAt}`);
+  lines.push(`Idempotency key: ${requestRecord.idempotencyKey}`);
+  lines.push(`Status: ${status}`);
+  return lines.join('\n');
 }
 
 function ensureState(config) {

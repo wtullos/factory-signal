@@ -43,6 +43,86 @@ test('accepts a signed publish_now webhook in dry-run mode and persists idempote
   }
 });
 
+test('sends a Telegram notification when a publish request is accepted', async () => {
+  const fetchCalls = [];
+  const fixture = await createServerFixture({
+    env: {
+      FS_REVIEW_TELEGRAM_NOTIFY: 'true',
+      FS_REVIEW_TELEGRAM_BOT_TOKEN: 'unit-test-bot-token',
+      FS_REVIEW_TELEGRAM_CHAT_ID: 'unit-test-chat-id',
+    },
+    fetch(url, options) {
+      fetchCalls.push({ url, options });
+      return Promise.resolve({ ok: true, status: 200, text: async () => '' });
+    },
+  });
+  try {
+    const payload = {
+      event: EVENT_NAME,
+      action: 'publish_now',
+      draft: 'telegram-draft',
+      title: 'Telegram notification test',
+      requestedAt: new Date().toISOString(),
+      idempotencyKey: 'telegram-draft-publish-now-0001',
+    };
+
+    const response = await postSigned(fixture.url, payload, payload.idempotencyKey);
+    assert.equal(response.status, 202);
+    assert.equal((await response.json()).accepted, true);
+
+    assert.equal(fetchCalls.length, 1);
+    assert.equal(fetchCalls[0].url, 'https://api.telegram.org/botunit-test-bot-token/sendMessage');
+    assert.equal(fetchCalls[0].options.method, 'POST');
+    const body = JSON.parse(fetchCalls[0].options.body);
+    assert.equal(body.chat_id, 'unit-test-chat-id');
+    assert.match(body.text, /Factory Signal publish request received/);
+    assert.match(body.text, /Draft: telegram-draft/);
+    assert.match(body.text, /Title: Telegram notification test/);
+    assert.match(body.text, /Action: publish_now/);
+    assert.match(body.text, /Idempotency key: telegram-draft-publish-now-0001/);
+    assert.match(body.text, /Status: accepted/);
+  } finally {
+    await closeServer(fixture.server);
+    fs.rmSync(fixture.tmp, { recursive: true, force: true });
+  }
+});
+
+test('Telegram notification failure does not block accepting a publish request', async () => {
+  const warnings = [];
+  const fixture = await createServerFixture({
+    env: {
+      FS_REVIEW_TELEGRAM_NOTIFY: 'true',
+      FS_REVIEW_TELEGRAM_BOT_TOKEN: 'unit-test-bot-token',
+      FS_REVIEW_TELEGRAM_CHAT_ID: 'unit-test-chat-id',
+    },
+    log: { info() {}, error() {}, warn(...args) { warnings.push(args); } },
+    fetch() {
+      return Promise.reject(new Error('simulated telegram outage'));
+    },
+  });
+  try {
+    const payload = {
+      event: EVENT_NAME,
+      action: 'publish_now',
+      draft: 'telegram-failure-draft',
+      idempotencyKey: 'telegram-draft-publish-now-0002',
+    };
+
+    const response = await postSigned(fixture.url, payload, payload.idempotencyKey);
+    assert.equal(response.status, 202);
+    const json = await response.json();
+    assert.equal(json.ok, true);
+    assert.equal(json.accepted, true);
+
+    const record = await waitForStatus(fixture.stateDir, 'dry_run_complete');
+    assert.equal(record.payload.draft, payload.draft);
+    await waitFor(() => warnings.some(([message]) => message === '[receiver] telegram_notification_failed'));
+  } finally {
+    await closeServer(fixture.server);
+    fs.rmSync(fixture.tmp, { recursive: true, force: true });
+  }
+});
+
 test('rejects bad signatures before accepting a webhook', async () => {
   const fixture = await createServerFixture();
   try {
@@ -250,7 +330,7 @@ test('AI rewrite validation rejects frontmatter and private-info leakage', () =>
   assert.throws(() => validateAiRevisedBody('This has the forbidden plant.', { denylist: ['forbidden plant'] }), /denylist/);
 });
 
-async function createServerFixture() {
+async function createServerFixture(options = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-review-receiver-'));
   const stateDir = path.join(tmp, 'state');
   const server = startReceiver({
@@ -261,8 +341,10 @@ async function createServerFixture() {
       FS_REVIEW_RECEIVER_STATE_DIR: stateDir,
       FS_REVIEW_PUBLISH_WEBHOOK_SECRET: secret,
       FS_REVIEW_RECEIVER_FRESHNESS_SECONDS: '5',
+      ...(options.env || {}),
     },
-    log: { info() {}, error() {} },
+    log: options.log || { info() {}, error() {}, warn() {} },
+    fetch: options.fetch,
   });
   await new Promise((resolve) => server.once('listening', resolve));
   const { port } = server.address();
@@ -296,6 +378,15 @@ async function waitForStatus(stateDir, expected) {
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   assert.fail(`Timed out waiting for idempotency status ${expected}`);
+}
+
+async function waitFor(predicate) {
+  const deadline = Date.now() + 2000;
+  while (Date.now() < deadline) {
+    if (predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.fail('Timed out waiting for condition');
 }
 
 function closeServer(server) {

@@ -26,6 +26,9 @@ if [[ -z "${prompt}" ]]; then
   exit 64
 fi
 
+export HOME=/home/wtullos
+export HERMES_HOME=/home/wtullos/.hermes
+
 hermes_bin=/home/wtullos/.local/bin/hermes
 if [[ ! -x "${hermes_bin}" ]]; then
   printf 'factory-signal-ai-rewrite-hermes: Hermes executable not found: %s\n' "${hermes_bin}" >&2
