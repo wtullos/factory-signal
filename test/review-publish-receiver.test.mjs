@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown, applyDraftEditsToMarkdown } from '../scripts/review-publish-receiver.mjs';
+import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown, applyDraftEditsToMarkdown, applyAiReviewEditsToMarkdown, validateAiRevisedBody } from '../scripts/review-publish-receiver.mjs';
 
 const secret = 'unit-test-secret';
 
@@ -218,6 +218,34 @@ test('deterministic natural cleanup strips labels and adds punctuation', () => {
   assert.match(updated, /final check\./);
   assert.equal(updated.includes('Opening:'), false);
   assert.equal(updated.includes('>'), false);
+});
+
+test('AI review rewrite preserves frontmatter and validates body-only output', async () => {
+  const raw = `---\ntitle: AI draft\nauthor: Factory Signal\n---\n\nIntro paragraph.\n\n## Quality\n\nOriginal quality paragraph.\n`;
+  const updated = await applyAiReviewEditsToMarkdown(raw, {
+    opening: 'Add operator context near the intro.',
+    middle: 'Connect this to quality escapes.',
+    closing: 'End with a shop-floor check.',
+  }, {
+    runAiRewrite(prompt) {
+      const request = JSON.parse(prompt);
+      assert.equal(request.metadata.title, 'AI draft');
+      assert.match(request.hard_rules.join('\n'), /Do not use, infer, reveal, or mention Hermes memory/);
+      assert.match(request.article_body_markdown, /Original quality paragraph/);
+      return `${request.article_body_markdown.trim()}\n\nOperators need the context before the shift starts.\n\nThat matters because quality escapes often hide at handoffs.\n\nEnd with one boring check the floor can actually repeat.`;
+    },
+  });
+
+  assert.match(updated, /^---\ntitle: AI draft\nauthor: Factory Signal\n---\nIntro paragraph\./);
+  assert.match(updated, /Operators need the context/);
+  assert.match(updated, /quality escapes/);
+  assert.match(updated, /repeat\.\n$/);
+});
+
+test('AI rewrite validation rejects frontmatter and private-info leakage', () => {
+  assert.throws(() => validateAiRevisedBody('---\ntitle: nope\n---\nBody'), /frontmatter/);
+  assert.throws(() => validateAiRevisedBody('This came from Hermes memory.'), /denylist/);
+  assert.throws(() => validateAiRevisedBody('This has the forbidden plant.', { denylist: ['forbidden plant'] }), /denylist/);
 });
 
 async function createServerFixture() {
