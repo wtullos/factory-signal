@@ -77,9 +77,17 @@ test('review publish retries transient webhook 5xx before succeeding', async () 
 });
 
 test('review sources load/save use signed receiver webhook and fail closed without config', async () => {
+  const html = await onSourcesRequest({
+    env: {},
+    request: new Request('https://factory-signal.example/review/sources/', { method: 'GET', headers: { Accept: 'text/html,application/xhtml+xml' } }),
+    next: () => new Response('<!doctype html><title>Watched sources</title>', { status: 200, headers: { 'Content-Type': 'text/html' } }),
+  });
+  assert.equal(html.status, 200);
+  assert.match(await html.text(), /Watched sources/);
+
   const missing = await onSourcesRequest({
     env: {},
-    request: new Request('https://factory-signal.example/review/sources', { method: 'GET' }),
+    request: new Request('https://factory-signal.example/review/sources', { method: 'GET', headers: { Accept: 'application/json' } }),
   });
   assert.equal(missing.status, 503);
   assert.equal((await missing.json()).error, 'sources_receiver_not_configured');

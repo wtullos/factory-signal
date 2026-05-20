@@ -193,6 +193,13 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
     }
 
+    if (window.location.hostname === 'robot.thefactorysignal.com') {
+      document.querySelectorAll('.review-tabs a[href^="/review/"]').forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) return;
+        link.href = link.getAttribute('href')?.replace(/^\/review\/?/, '/') || link.href;
+      });
+    }
+
     const publishForms = document.querySelectorAll('[data-publish-actions] form');
 
     const collectReviewEdits = (draftCard) => {

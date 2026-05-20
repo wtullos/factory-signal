@@ -8,6 +8,10 @@ const MAX_FIELD_LENGTH = 500;
 const WEBHOOK_RETRY_DELAYS_MS = [100, 300];
 
 export async function onRequest(context) {
+  if (context.request.method === 'GET' && isHtmlNavigationRequest(context.request) && typeof context.next === 'function') {
+    return context.next();
+  }
+
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: jsonHeaders({ Allow: 'GET, POST, OPTIONS' }) });
   }
@@ -85,6 +89,11 @@ export async function onRequest(context) {
   }
 
   return jsonResponse({ ok: true, message: action === 'load' ? 'Sources loaded.' : 'Sources saved.', idempotencyKey, sources: Array.isArray(result.sources) ? normalizeSources(result.sources) : undefined, savedAt: result.savedAt || undefined });
+}
+
+function isHtmlNavigationRequest(request) {
+  const accept = request.headers.get('Accept') || '';
+  return accept.includes('text/html') && !accept.includes('application/json');
 }
 
 async function fetchWebhookWithRetry(url, options) {

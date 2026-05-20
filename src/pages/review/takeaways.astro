@@ -26,6 +26,40 @@ function displayLessons(day, limit = Infinity) {
     .filter((lesson) => lesson.concept || lesson.takeaway)
     .slice(0, limit);
 }
+
+function strongestTitles(day, limit = 3) {
+  return (day?.strongestStories || [])
+    .map((story) => String(story?.title || '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function sentenceJoin(items) {
+  if (items.length <= 1) return items[0] || '';
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
+}
+
+function dailySummaryParagraphs(day, limit = Infinity) {
+  const lessons = displayLessons(day, limit);
+  const topics = (day?.topTopics || []).slice(0, 4).join(', ');
+  const sourceMix = day?.communityCount > 0
+    ? `${day.newsCount} news/video signals and ${day.communityCount} community signals`
+    : `${day.newsCount} news/video signals`;
+  const headlines = strongestTitles(day);
+  const highPointText = headlines.length
+    ? `The strongest individual signals included ${sentenceJoin(headlines)}.`
+    : 'The useful signal was less about one headline and more about the pattern across sources.';
+  const lessonText = lessons
+    .map((lesson) => lesson.takeaway || lesson.concept)
+    .filter(Boolean)
+    .join(' ');
+  const topicText = topics ? `The day centered on ${topics} across ${day.storyCount} total signals, with ${sourceMix}.` : `The day gathered ${day.storyCount} total signals, with ${sourceMix}.`;
+  return [
+    `${topicText} ${highPointText}`.replace(/\s+/g, ' ').trim(),
+    lessonText || 'The practical read is to turn the day into one testable question: what should be inspected, measured, prototyped, or asked of an operator next?',
+  ];
+}
 ---
 <Base title="Daily takeaways" description="Private Factory Signal learning takeaways for the robot backend." pathname="/review/takeaways/" noindex={true} bodyClass="review-backend">
   <a class="review-logout-button" href="/review/logout" data-review-logout>Logout</a>
@@ -68,14 +102,9 @@ function displayLessons(day, limit = Infinity) {
               <div><dt>Community</dt><dd>{latest.communityCount}</dd></div>
               <div><dt>Top topics</dt><dd>{latest.topTopics.join(', ') || 'None'}</dd></div>
             </dl>
-            <ol class="takeaway-list">
-              {displayLessons(latest).map((lesson) => (
-                <li>
-                  {lesson.concept && <strong>{lesson.concept}</strong>}
-                  <p>{lesson.takeaway}</p>
-                </li>
-              ))}
-            </ol>
+            <div class="takeaway-summary" aria-label="Narrative daily summary">
+              {dailySummaryParagraphs(latest).map((paragraph) => <p>{paragraph}</p>)}
+            </div>
             <p><a class="button secondary" href={`/briefings/${latest.slug}/`}>Open source briefing</a></p>
           </article>
         )}
@@ -86,14 +115,9 @@ function displayLessons(day, limit = Infinity) {
               <p class="meta">{day.dateLabel} · {day.storyCount} signals</p>
               <h2>{day.title}</h2>
               <p><strong>Concept mix:</strong> {day.topTopics.slice(0, 4).join(', ') || 'No topics parsed'}</p>
-              <ul class="takeaway-list compact-takeaway-list">
-                {displayLessons(day, 3).map((lesson) => (
-                  <li>
-                    {lesson.concept && <strong>{lesson.concept}</strong>}
-                    <p>{lesson.takeaway}</p>
-                  </li>
-                ))}
-              </ul>
+              <div class="takeaway-summary compact-takeaway-summary" aria-label="Narrative daily summary">
+                {dailySummaryParagraphs(day, 3).map((paragraph) => <p>{paragraph}</p>)}
+              </div>
               <p><a href={`/briefings/${day.slug}/`}>Open source briefing</a></p>
             </article>
           ))}
@@ -106,6 +130,13 @@ function displayLessons(day, limit = Infinity) {
     const logoutButton = document.querySelector('[data-review-logout]');
     if (logoutButton instanceof HTMLAnchorElement) {
       logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
+    }
+
+    if (window.location.hostname === 'robot.thefactorysignal.com') {
+      document.querySelectorAll('.review-tabs a[href^="/review/"]').forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) return;
+        link.href = link.getAttribute('href')?.replace(/^\/review\/?/, '/') || link.href;
+      });
     }
   </script>
 </Base>

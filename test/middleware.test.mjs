@@ -49,6 +49,29 @@ test('authenticated robot non-pass-through page still rewrites to /review/', asy
   assert.equal(new URL(nextRequest.url).pathname, '/review/');
 });
 
+test('authenticated robot clean review tabs rewrite to their protected review pages', async () => {
+  const cookie = await loginCookie('https://robot.thefactorysignal.com/login', '/sources/');
+
+  for (const [path, expectedPath] of [['/sources/', '/review/sources/'], ['/takeaways/', '/review/takeaways/']]) {
+    let nextRequest;
+    const response = await onRequest({
+      env,
+      request: new Request(`https://robot.thefactorysignal.com${path}`, {
+        headers: { Cookie: cookie, Accept: 'text/html' },
+      }),
+      next: (request) => {
+        nextRequest = request;
+        return new Response(`${expectedPath} ok`, { headers: { 'Content-Type': 'text/html' } });
+      },
+    });
+
+    assert.equal(response.status, 200);
+    assert.ok(nextRequest instanceof Request);
+    assert.equal(new URL(nextRequest.url).pathname, expectedPath);
+    assert.equal(await response.text(), `${expectedPath} ok`);
+  }
+});
+
 test('unauthenticated robot /testpage shows protected login', async () => {
   const response = await onRequest({
     env,

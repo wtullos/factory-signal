@@ -427,6 +427,9 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 .takeaway-history { display: grid; gap: 18px; }
 .takeaway-card { display: grid; gap: 14px; }
 .takeaway-card-latest { border-left: 4px solid var(--accent); }
+.takeaway-summary { display: grid; gap: 12px; margin: 0; color: #303844; font-size: 1.02rem; line-height: 1.7; }
+.takeaway-summary p { margin: 0; }
+.compact-takeaway-summary { font-size: 1rem; }
 .takeaway-list { display: grid; gap: 12px; margin: 0; padding-left: 24px; }
 .takeaway-list li { padding-left: 4px; }
 .takeaway-list strong { color: var(--ink-strong); font-size: 1.02rem; }

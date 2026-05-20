@@ -100,9 +100,15 @@ async function nextReviewResponse(context, url, isRobotHost) {
   }
 
   const reviewUrl = new URL(context.request.url);
-  reviewUrl.pathname = '/review/';
+  reviewUrl.pathname = robotReviewPath(url.pathname);
   reviewUrl.search = '';
   return context.next(new Request(reviewUrl.toString(), context.request));
+}
+
+function robotReviewPath(pathname) {
+  if (pathname === '/sources' || pathname === '/sources/') return '/review/sources/';
+  if (pathname === '/takeaways' || pathname === '/takeaways/') return '/review/takeaways/';
+  return '/review/';
 }
 
 function isReviewPath(pathname) {

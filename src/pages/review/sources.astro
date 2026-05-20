@@ -125,6 +125,13 @@ const sourcesJson = JSON.stringify(sources).replace(/</g, '\\u003c');
       logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
     }
 
+    if (window.location.hostname === 'robot.thefactorysignal.com') {
+      document.querySelectorAll('.review-tabs a[href^="/review/"]').forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) return;
+        link.href = link.getAttribute('href')?.replace(/^\/review\/?/, '/') || link.href;
+      });
+    }
+
     const initialSources = JSON.parse(sourcesJson);
     const editor = document.querySelector('[data-sources-editor]');
     const list = editor?.querySelector('[data-source-list]');

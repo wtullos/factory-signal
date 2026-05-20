@@ -58,3 +58,14 @@ test('review backend has a protected editable sources tab in nav', async () => {
   assert.match(sourcesSource, /data-save-sources/);
   assert.match(sourcesSource, /\/review\/sources/);
 });
+
+test('daily takeaways render paragraph summaries instead of lesson bullets', async () => {
+  const source = await readFile(takeawaysPagePath, 'utf8');
+
+  assert.match(source, /function dailySummaryParagraphs\(day, limit = Infinity\)/);
+  assert.match(source, /Narrative daily summary/);
+  assert.match(source, /dailySummaryParagraphs\(latest\)\.map\(\(paragraph\) => <p>\{paragraph\}<\/p>\)/);
+  assert.match(source, /dailySummaryParagraphs\(day, 3\)\.map\(\(paragraph\) => <p>\{paragraph\}<\/p>\)/);
+  assert.doesNotMatch(source, /<ol class="takeaway-list">/);
+  assert.doesNotMatch(source, /<ul class="takeaway-list compact-takeaway-list">/);
+});
