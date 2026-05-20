@@ -1,9 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
-import { getArticles, SITE_NAME } from '../lib/content.js';
+import { getArticles, getWhitepaperStories, SITE_NAME } from '../lib/content.js';
 
 const articles = getArticles();
+const whitepaperStories = getWhitepaperStories(6);
 const [leadArticle, ...remainingArticles] = articles;
 const topStories = remainingArticles.slice(0, 4);
 const latestArticles = remainingArticles.slice(4, 16);
@@ -38,17 +39,24 @@ function searchTextFor(article) {
 <Base title={SITE_NAME} description="Today's industrial manufacturing news and Factory Signal analysis on automation, CNC, robotics, additive manufacturing, and industrial AI." pathname="/" bodyClass="editorial-home-page">
   <main class="editorial-home" aria-labelledby="home-title">
     <section class="editorial-masthead" aria-label="Factory Signal front page">
-      <p class="meta">Factory Signal articles</p>
       <h1 id="home-title">Today’s industrial manufacturing news</h1>
-      <p class="lede">Factory Signal analysis for factory operators and builders.</p>
     </section>
 
     {leadArticle ? (
       <section class="front-page-grid" aria-label="Featured Factory Signal articles" data-fs-search-section>
         <article class="front-lead-card" data-fs-search-item data-search-text={searchTextFor(leadArticle)}>
           <a class="front-lead-art" href={articleUrl(leadArticle)} aria-label={`Read article: ${leadArticle.title}`}>
-            <span class="front-art-mark" aria-hidden="true">FS</span>
-            <span class="front-art-topic">{tagLine(leadArticle)}</span>
+            {leadArticle.imageUrl ? (
+              <>
+                <img src={leadArticle.imageUrl} alt={leadArticle.imageAlt || ''} loading="eager" decoding="async" />
+                <span class="front-art-topic front-art-topic-overlay">{tagLine(leadArticle)}</span>
+              </>
+            ) : (
+              <>
+                <span class="front-art-mark" aria-hidden="true">FS</span>
+                <span class="front-art-topic">{tagLine(leadArticle)}</span>
+              </>
+            )}
           </a>
           <div class="front-lead-copy">
             <p class="meta">Lead article · {formatArticleDate(leadArticle.pubDate || leadArticle.date)}</p>
@@ -61,6 +69,11 @@ function searchTextFor(article) {
         <div class="front-top-stack" aria-label="Top stories">
           {topStories.map((article, index) => (
             <article class:list={["front-stack-card", index === 0 && "front-stack-card-strong"]} data-fs-search-item data-search-text={searchTextFor(article)}>
+              {article.imageUrl && (
+                <a class="front-stack-image" href={articleUrl(article)} aria-label={`Read article: ${article.title}`}>
+                  <img src={article.imageUrl} alt={article.imageAlt || ''} loading="lazy" decoding="async" />
+                </a>
+              )}
               <p class="meta">{tagLine(article)} · {formatArticleDate(article.pubDate || article.date)}</p>
               <h3><a href={articleUrl(article)}>{article.title}</a></h3>
               <p>{article.description}</p>
@@ -77,6 +90,27 @@ function searchTextFor(article) {
 
     <AdSlot slot="leaderboard" />
 
+    {whitepaperStories.length > 0 && (
+      <section class="display-whitepapers front-resource-dock" aria-labelledby="whitepaper-stories-heading" data-fs-search-section>
+        <div class="section-heading">
+          <div>
+            <p class="meta">Derived resources</p>
+            <h2 id="whitepaper-stories-heading">Papers & whitepapers</h2>
+          </div>
+          <a href="/display/#whitepapers">Resource dock</a>
+        </div>
+        <div class="whitepaper-grid">
+          {whitepaperStories.map((story) => (
+            <a class="whitepaper-card" href={story.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={[story.title, story.source, story.topic, story.dateLabel].filter(Boolean).join(' ')}>
+              <p class="meta">{story.source || story.topic || 'Resource'} · {story.dateLabel || story.date}</p>
+              <strong>{story.title}</strong>
+              {story.body && <p>{story.body}</p>}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
     {latestArticles.length > 0 && (
       <section class="front-river-section" aria-labelledby="latest-articles-heading" data-fs-search-section>
         <div class="section-heading">
@@ -90,6 +124,11 @@ function searchTextFor(article) {
           <div class="front-article-river">
             {latestArticles.map((article) => (
               <article class="front-river-card" data-fs-search-item data-search-text={searchTextFor(article)}>
+                {article.imageUrl && (
+                  <a class="front-river-image" href={articleUrl(article)} aria-label={`Read article: ${article.title}`}>
+                    <img src={article.imageUrl} alt={article.imageAlt || ''} loading="lazy" decoding="async" />
+                  </a>
+                )}
                 <p class="meta">{formatArticleDate(article.pubDate || article.date)} · {article.author}</p>
                 <h3><a href={articleUrl(article)}>{article.title}</a></h3>
                 <p>{article.description}</p>

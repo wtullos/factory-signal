@@ -23,6 +23,12 @@ function sourceLabel(sourceUrl, index) {
       <p class="meta">{article.pubDate} · {article.author}</p>
       <h1>{article.title}</h1>
       <ShareButton title={article.title} text={article.description} pathname={`/articles/${article.slug}/`} />
+      {article.imageUrl && (
+        <figure class="article-hero-image">
+          <img src={article.imageUrl} alt={article.imageAlt || ''} loading="eager" decoding="async" />
+          {article.imageAlt && <figcaption>{article.imageAlt}</figcaption>}
+        </figure>
+      )}
       <div set:html={article.html} />
       {sourceUrls.length > 0 && (
         <section class="article-sources" aria-labelledby="article-sources-heading">

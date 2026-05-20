@@ -5,6 +5,8 @@ pubDate: "2026-05-20T15:40:00.000Z"
 author: "Factory Signal Editorial"
 tags: ["AI vision", "inspection", "metrology", "quality"]
 status: "published"
+imageUrl: "/assets/images/kuka-industrial-robots-welding-body-in-white.png"
+imageAlt: "KUKA industrial robots welding a vehicle body-in-white on an automotive factory line"
 sourceUrls: ["https://www.nist.gov/programs-projects/smart-manufacturing-systems-sms", "https://www.nist.gov/metrology", "https://www.automate.org/vision/industry-insights"]
 ---
 

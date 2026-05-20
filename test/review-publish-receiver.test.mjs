@@ -192,7 +192,7 @@ test('accepts a signed future schedule request without executing immediately', a
       draft: 'sample-draft',
       publishAt: new Date(Date.now() + 3_600_000).toISOString(),
       reviewEdits: { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' },
-      draftEdits: { title: 'Scheduled title', author: 'Factory Signal Test', body: 'Scheduled body.' },
+      draftEdits: { title: 'Scheduled title', author: 'Factory Signal Test', imageUrl: '/assets/images/test.png', imageAlt: 'Test image', body: 'Scheduled body.' },
       idempotencyKey: 'sample-draft-schedule-0001',
     };
 
@@ -206,7 +206,7 @@ test('accepts a signed future schedule request without executing immediately', a
     const [scheduledFile] = fs.readdirSync(scheduledDir);
     const scheduledJob = JSON.parse(fs.readFileSync(path.join(scheduledDir, scheduledFile), 'utf8'));
     assert.deepEqual(scheduledJob.reviewEdits, { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' });
-    assert.deepEqual(scheduledJob.draftEdits, { title: 'Scheduled title', author: 'Factory Signal Test', body: 'Scheduled body.' });
+    assert.deepEqual(scheduledJob.draftEdits, { title: 'Scheduled title', author: 'Factory Signal Test', imageUrl: '/assets/images/test.png', imageAlt: 'Test image', body: 'Scheduled body.' });
   } finally {
     await closeServer(fixture.server);
     fs.rmSync(fixture.tmp, { recursive: true, force: true });
@@ -240,15 +240,17 @@ test('normalizes and applies Wes review edits as natural markdown paragraphs', (
   assert.ok(updated.indexOf('Use this on the floor.') < updated.indexOf('## Later section'));
 });
 
-test('applies draft title, author, and markdown body edits to frontmatter and body', () => {
+test('applies draft title, author, image, and markdown body edits to frontmatter and body', () => {
   const raw = `---\ntitle: Original title\nauthor: Old Author\nslug: sample\n---\n\nOld body.\n\n## Old section\n`;
   const updated = applyDraftEditsToMarkdown(raw, {
     title: 'Edited title: standard work wins',
     author: 'Factory Signal Editorial, Wes',
+    imageUrl: '/assets/images/edited.png',
+    imageAlt: 'Edited factory image',
     body: 'New opening paragraph.\n\n## New section\n\nNew body.',
   });
 
-  assert.match(updated, /^---\ntitle: "Edited title: standard work wins"\nauthor: "Factory Signal Editorial, Wes"\nslug: sample\n---\n/);
+  assert.match(updated, /^---\ntitle: "Edited title: standard work wins"\nauthor: "Factory Signal Editorial, Wes"\nslug: sample\nimageUrl: "\/assets\/images\/edited\.png"\nimageAlt: "Edited factory image"\n---\n/);
   assert.match(updated, /---\nNew opening paragraph\.\n\n## New section\n\nNew body\.\n$/);
   assert.equal(updated.includes('Original title'), false);
   assert.equal(updated.includes('Old Author'), false);
@@ -263,7 +265,7 @@ test('saves and loads review edits through signed receiver event', async () => {
       action: 'save',
       draft: 'sample-draft',
       reviewEdits: { opening: 'Opening: real plant context', middle: 'Middle: watch the handoff', closing: 'Closing: do the boring check' },
-      draftEdits: { title: 'Edited title', author: 'Factory Signal Editorial, Wes', body: 'Edited **markdown** body.' },
+      draftEdits: { title: 'Edited title', author: 'Factory Signal Editorial, Wes', imageUrl: '/assets/images/review.png', imageAlt: 'Review image', body: 'Edited **markdown** body.' },
       idempotencyKey: 'sample-draft-save-0001',
     };
     const save = await postSigned(fixture.url, savePayload, savePayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
@@ -298,7 +300,7 @@ test('loads saved review draft without blank draft edit fields that would wipe t
       event: SAVE_EVENT_NAME,
       action: 'save',
       draft: 'blank-draft-edits',
-      draftEdits: { title: '', author: '  ', body: '\n\t  ' },
+      draftEdits: { title: '', author: '  ', imageUrl: ' ', imageAlt: '\n', body: '\n\t  ' },
       reviewEdits: { opening: '', middle: '', closing: '' },
       idempotencyKey: 'blank-draft-edits-save-0001',
     };
@@ -329,7 +331,7 @@ test('loads non-empty saved draft edits for the review editor', async () => {
       event: SAVE_EVENT_NAME,
       action: 'save',
       draft: 'non-empty-draft-edits',
-      draftEdits: { title: 'Saved title', author: '', body: 'Saved body.' },
+      draftEdits: { title: 'Saved title', author: '', imageUrl: '/assets/images/saved.png', imageAlt: '', body: 'Saved body.' },
       reviewEdits: { opening: '', middle: '', closing: '' },
       idempotencyKey: 'non-empty-draft-edits-save-0001',
     };
@@ -346,7 +348,7 @@ test('loads non-empty saved draft edits for the review editor', async () => {
     assert.equal(load.status, 200);
     const loadJson = await load.json();
     assert.equal(loadJson.ok, true);
-    assert.deepEqual(loadJson.draftEdits, { title: 'Saved title', body: 'Saved body.' });
+    assert.deepEqual(loadJson.draftEdits, { title: 'Saved title', imageUrl: '/assets/images/saved.png', body: 'Saved body.' });
   } finally {
     await closeServer(fixture.server);
     fs.rmSync(fixture.tmp, { recursive: true, force: true });

@@ -77,6 +77,24 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 </dd>
               </div>
               <div><dt>File</dt><dd><code>{draft.path}</code></dd></div>
+              <div>
+                <dt>Image URL</dt>
+                <dd>
+                  <label class="inline-draft-field inline-image-field">
+                    <span class="visually-hidden">Hero image URL</span>
+                    <input type="url" value={draft.imageUrl || ''} maxlength="1000" placeholder="https://…" data-draft-edit="imageUrl" aria-label={`Hero image URL for ${draft.slug || draft.filename}`} />
+                  </label>
+                </dd>
+              </div>
+              <div>
+                <dt>Image alt</dt>
+                <dd>
+                  <label class="inline-draft-field inline-image-field">
+                    <span class="visually-hidden">Hero image alt text</span>
+                    <input type="text" value={draft.imageAlt || ''} maxlength="320" data-draft-edit="imageAlt" aria-label={`Hero image alt text for ${draft.slug || draft.filename}`} />
+                  </label>
+                </dd>
+              </div>
               <div><dt>Updated</dt><dd>{draft.updatedAt || 'Unknown'}</dd></div>
             </dl>
 
@@ -215,7 +233,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
     };
 
     const collectDraftEdits = (draftCard) => {
-      const draftEdits = { title: '', author: '', body: '' };
+      const draftEdits = { title: '', author: '', imageUrl: '', imageAlt: '', body: '' };
       draftCard?.querySelectorAll('[data-draft-edit]').forEach((field) => {
         if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
           const key = field.dataset.draftEdit;

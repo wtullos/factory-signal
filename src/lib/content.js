@@ -80,6 +80,8 @@ export function parseArticleMarkdown(filename, raw, options = {}) {
   const fallbackSlug = filename.replace(/\.md$/, '');
   const slug = slugify(data.slug || fallbackSlug) || fallbackSlug;
   const pubDate = data.pubDate || data.date || '';
+  const imageUrl = normalizeText(data.imageUrl || data.image || data.heroImage || data.featuredImage);
+  const imageAlt = imageUrl ? normalizeText(data.imageAlt || data.heroImageAlt || data.featuredImageAlt || data.alt) : '';
   return {
     slug,
     title: data.title || titleFromMarkdown(body) || slug,
@@ -92,6 +94,8 @@ export function parseArticleMarkdown(filename, raw, options = {}) {
     articleType: data.articleType || data.type || '',
     sourceUrls: normalizeList(data.sourceUrls || data.sources || data.sourceUrl),
     pinnedUntil: data.pinnedUntil || data.pinned_until || '',
+    imageUrl,
+    imageAlt,
     body,
     html: marked.parse(body),
     filename,
@@ -192,10 +196,12 @@ export function getRedditStories() {
   return getStoriesBySection('Reddit');
 }
 
-const WHITEPAPER_ASSET_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|research paper|technical paper|working paper|conference paper|study|survey|report|pdf)\b/i;
-const WHITEPAPER_TITLE_URL_TERMS = WHITEPAPER_ASSET_TERMS;
-const WHITEPAPER_SOURCE_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|journal|arxiv)\b/i;
-const WHITEPAPER_BODY_TERMS = /\b(white\s*paper|whitepaper|e-?book|case stud(?:y|ies)|research paper|technical paper|working paper|conference paper|peer[-\s]?reviewed paper|journal (?:article|paper|study)|(?:new|published|released|download(?:ed)?) (?:a |an |the )?(?:paper|report|study|white\s*paper|whitepaper|e-?book|case study|pdf)|study (?:published|appearing) in (?:a |an |the )?(?:journal|proceedings))\b/i;
+const WHITEPAPER_ASSET_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf)\b/i;
+const EXPLICIT_PAPER_PUBLICATION_TERMS = /\b(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\bjournal\s+(?:article|paper|publication|study)\b|\bproceedings\s+(?:article|paper|publication)\b|\b(?:paper|article|study)\s+(?:published|appearing)\s+in\s+(?:a |an |the )?(?:journal|proceedings)\b|\bpublished\s+(?:a |an |the )?study\s+in\s+(?:a |an |the )?journal\b/i;
+const PAPER_RESOURCE_ACTION_TERMS = /\b(?:list(?:s|ed|ing)?|catalog(?:s|ed|ing)?|feature(?:s|d|ing)?|publish(?:es|ed|ing)?|release(?:s|d|ing)?|download(?:s|ed|ing|able)?|offer(?:s|ed|ing)?|introduce(?:s|d|ing)?|launch(?:es|ed|ing)?)\b(?:[\s:–—-]+\S+){0,10}[\s:–—-]+paper\b(?!\s+(?:products?|mill|machine|packaging|supplier|company|factory|plant)\b)/i;
+const WHITEPAPER_TITLE_URL_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf|research paper|technical paper|working paper|conference paper|peer[-\s]?reviewed paper|journal article|proceedings paper)\b/i;
+const WHITEPAPER_SOURCE_TERMS = /\b(white\s*paper|whitepaper|e-?book|journal|arxiv|proceedings)\b/i;
+const WHITEPAPER_BODY_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf)\b|\b(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\bjournal\s+(?:article|paper|publication|study)\b|\bproceedings\s+(?:article|paper|publication)\b|\b(?:new|published|released|download(?:ed)?)\s+(?:a |an |the )?(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\b(?:paper|article|study)\s+(?:published|appearing)\s+in\s+(?:a |an |the )?(?:journal|proceedings)\b|\bpublished\s+(?:a |an |the )?study\s+in\s+(?:a |an |the )?journal\b/i;
 
 export function isWhitepaperStory(story) {
   if (!story || story.sectionTitle === 'Reddit') return false;
@@ -204,6 +210,8 @@ export function isWhitepaperStory(story) {
   const body = story.body || '';
 
   return WHITEPAPER_TITLE_URL_TERMS.test(titleAndUrl)
+    || EXPLICIT_PAPER_PUBLICATION_TERMS.test(titleAndUrl)
+    || PAPER_RESOURCE_ACTION_TERMS.test(titleAndUrl)
     || WHITEPAPER_SOURCE_TERMS.test(source)
     || WHITEPAPER_BODY_TERMS.test(body);
 }
@@ -242,6 +250,7 @@ export function getWhitepaperStories(limit) {
 function whitepaperScore(story) {
   let score = 0;
   if (WHITEPAPER_ASSET_TERMS.test(story.title || '')) score += 6;
+  if (PAPER_RESOURCE_ACTION_TERMS.test(story.title || '')) score += 6;
   if (WHITEPAPER_ASSET_TERMS.test(story.url || '')) score += 5;
   if (WHITEPAPER_TITLE_URL_TERMS.test(story.title || '')) score += 4;
   if (WHITEPAPER_TITLE_URL_TERMS.test(story.url || '')) score += 3;
@@ -438,6 +447,10 @@ function normalizeList(value) {
   if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
   if (!value) return [];
   return String(value).split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function normalizeText(value) {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function upsertFrontmatter(raw, patch) {

@@ -18,9 +18,11 @@ const DEFAULT_MAX_BODY_BYTES = 256 * 1024;
 const DEFAULT_STATE_DIR = path.join('.hermes', 'review-publish-receiver');
 const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
 const MAX_REVIEW_EDIT_LENGTH = 1200;
-const DRAFT_EDIT_KEYS = ['title', 'author', 'body'];
+const DRAFT_EDIT_KEYS = ['title', 'author', 'imageUrl', 'imageAlt', 'body'];
 const MAX_DRAFT_TITLE_LENGTH = 220;
 const MAX_DRAFT_AUTHOR_LENGTH = 320;
+const MAX_DRAFT_IMAGE_URL_LENGTH = 1000;
+const MAX_DRAFT_IMAGE_ALT_LENGTH = 320;
 const MAX_DRAFT_BODY_LENGTH = 200000;
 const MAX_SOURCES = 100;
 const MAX_SOURCE_FIELD_LENGTH = 500;
@@ -609,6 +611,8 @@ export function normalizeDraftEdits(value = {}) {
   return {
     title: normalizeDraftEditText(source.title, MAX_DRAFT_TITLE_LENGTH),
     author: normalizeDraftEditText(source.author ?? source.authors, MAX_DRAFT_AUTHOR_LENGTH),
+    imageUrl: normalizeDraftEditText(source.imageUrl ?? source.image ?? source.heroImage ?? source.featuredImage, MAX_DRAFT_IMAGE_URL_LENGTH),
+    imageAlt: normalizeDraftEditText(source.imageAlt ?? source.heroImageAlt ?? source.featuredImageAlt ?? source.alt, MAX_DRAFT_IMAGE_ALT_LENGTH),
     body: normalizeDraftBody(source.body ?? source.markdownBody),
   };
 }
@@ -690,6 +694,8 @@ export function applyDraftEditsToMarkdown(raw, draftEdits = {}) {
   const frontmatterPatch = {};
   if (normalized.title) frontmatterPatch.title = normalized.title;
   if (normalized.author) frontmatterPatch.author = normalized.author;
+  if (normalized.imageUrl) frontmatterPatch.imageUrl = normalized.imageUrl;
+  if (normalized.imageAlt) frontmatterPatch.imageAlt = normalized.imageAlt;
   const nextFrontmatter = Object.keys(frontmatterPatch).length > 0
     ? upsertFrontmatterValues(frontmatter || '---\n---', frontmatterPatch)
     : frontmatter;

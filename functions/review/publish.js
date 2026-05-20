@@ -6,6 +6,8 @@ const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
 const MAX_REVIEW_EDIT_LENGTH = 1200;
 const MAX_DRAFT_TITLE_LENGTH = 220;
 const MAX_DRAFT_AUTHOR_LENGTH = 320;
+const MAX_DRAFT_IMAGE_URL_LENGTH = 1000;
+const MAX_DRAFT_IMAGE_ALT_LENGTH = 320;
 const MAX_DRAFT_BODY_LENGTH = 200000;
 const WEBHOOK_RETRY_DELAYS_MS = [100, 300];
 
@@ -206,6 +208,8 @@ function normalizeDraftEdits(input) {
   return {
     title: normalizeDraftEditText(source.title ?? source['draftEdits.title'], MAX_DRAFT_TITLE_LENGTH),
     author: normalizeDraftEditText(source.author ?? source.authors ?? source['draftEdits.author'] ?? source['draftEdits.authors'], MAX_DRAFT_AUTHOR_LENGTH),
+    imageUrl: normalizeDraftEditText(source.imageUrl ?? source.image ?? source.heroImage ?? source.featuredImage ?? source['draftEdits.imageUrl'], MAX_DRAFT_IMAGE_URL_LENGTH),
+    imageAlt: normalizeDraftEditText(source.imageAlt ?? source.heroImageAlt ?? source.featuredImageAlt ?? source.alt ?? source['draftEdits.imageAlt'], MAX_DRAFT_IMAGE_ALT_LENGTH),
     body: normalizeDraftBody(source.body ?? source.markdownBody ?? source['draftEdits.body']),
   };
 }
@@ -258,6 +262,8 @@ function pickDraftEdits(draftEdits = {}) {
   return {
     title: typeof draftEdits.title === 'string' ? draftEdits.title : '',
     author: typeof draftEdits.author === 'string' ? draftEdits.author : '',
+    imageUrl: typeof draftEdits.imageUrl === 'string' ? draftEdits.imageUrl : '',
+    imageAlt: typeof draftEdits.imageAlt === 'string' ? draftEdits.imageAlt : '',
     body: typeof draftEdits.body === 'string' ? draftEdits.body : '',
   };
 }
