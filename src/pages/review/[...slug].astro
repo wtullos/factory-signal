@@ -107,13 +107,28 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
 
               <section class="personal-additions" aria-labelledby={`personal-additions-${draft.slug || draft.filename}`} data-personal-additions data-draft-id={draft.slug || draft.filename} data-draft-title={draft.title}>
                 <div class="personal-additions-heading">
-                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Wes review edits</h4>
-                  <p>Add optional Wes-authored input. It is saved through the signed receiver and, on publish, cleaned up and blended into the article instead of pasted as labeled callouts.</p>
+                  <h4 id={`personal-additions-${draft.slug || draft.filename}`}>Draft edits and Wes review edits</h4>
+                  <p>Edit the publish title, author, and full Markdown body here. Optional Wes-authored input is saved through the signed receiver and, on publish, cleaned up and blended into the article instead of pasted as labeled callouts.</p>
                   <ul class="personal-recommendations" aria-label="Recommended personal additions">
                     <li><strong>Opening:</strong> {personalPrompts.opening}</li>
                     <li><strong>Mid-article:</strong> {personalPrompts.middle}</li>
                     <li><strong>Closing:</strong> {personalPrompts.closing}</li>
                   </ul>
+                </div>
+                <div class="draft-edit-grid">
+                  <label>
+                    <span>Publish title</span>
+                    <input type="text" value={draft.title} maxlength="220" data-draft-edit="title" />
+                  </label>
+                  <label>
+                    <span>Author(s)</span>
+                    <input type="text" value={draft.author} maxlength="320" data-draft-edit="author" />
+                  </label>
+                  <label>
+                    <span>Full Markdown body</span>
+                    <small>Edit Markdown, not rendered HTML. Frontmatter stays managed by the receiver.</small>
+                    <textarea rows="24" data-draft-edit="body">{draft.body}</textarea>
+                  </label>
                 </div>
                 <div class="personal-addition-grid">
                   <label>
@@ -195,11 +210,31 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       return reviewEdits;
     };
 
+    const collectDraftEdits = (draftCard) => {
+      const draftEdits = { title: '', author: '', body: '' };
+      draftCard?.querySelectorAll('[data-draft-edit]').forEach((field) => {
+        if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+          const key = field.dataset.draftEdit;
+          if (key && Object.prototype.hasOwnProperty.call(draftEdits, key)) draftEdits[key] = field.value;
+        }
+      });
+      return draftEdits;
+    };
+
     const applyReviewEdits = (draftCard, reviewEdits = {}) => {
       draftCard?.querySelectorAll('[data-review-edit]').forEach((field) => {
         if (field instanceof HTMLTextAreaElement) {
           const key = field.dataset.reviewEdit;
           if (key && typeof reviewEdits[key] === 'string') field.value = reviewEdits[key];
+        }
+      });
+    };
+
+    const applyDraftEdits = (draftCard, draftEdits = {}) => {
+      draftCard?.querySelectorAll('[data-draft-edit]').forEach((field) => {
+        if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+          const key = field.dataset.draftEdit;
+          if (key && typeof draftEdits[key] === 'string') field.value = draftEdits[key];
         }
       });
     };
@@ -227,6 +262,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           const result = await response.json().catch(() => ({}));
           if (!response.ok || !result.ok) throw new Error(result.message || `Review draft load failed with HTTP ${response.status}.`);
           if (result.reviewEdits) applyReviewEdits(draftCard, result.reviewEdits);
+          if (result.draftEdits) applyDraftEdits(draftCard, result.draftEdits);
           setSaveStatus(section, result.savedAt ? `Loaded saved edits from ${new Date(result.savedAt).toLocaleString()}.` : 'No saved review edits yet.', 'success');
         } catch (error) {
           setSaveStatus(section, error instanceof Error ? error.message : 'Review draft load failed.', 'error');
@@ -243,7 +279,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           const response = await fetch(new URL('/review/save', window.location.href).href, {
             method: 'POST',
             headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'save', draft, title, reviewEdits: collectReviewEdits(draftCard) }),
+            body: JSON.stringify({ action: 'save', draft, title, draftEdits: collectDraftEdits(draftCard), reviewEdits: collectReviewEdits(draftCard) }),
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok || !result.ok) throw new Error(result.message || `Review draft save failed with HTTP ${response.status}.`);
@@ -283,7 +319,10 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           const publishEndpoint = new URL(actionPath, window.location.href).href;
           const formData = new FormData(form);
           const draftCard = form.closest('.draft-card');
+          const draftEdits = collectDraftEdits(draftCard);
           const reviewEdits = collectReviewEdits(draftCard);
+          Object.entries(draftEdits).forEach(([key, value]) => formData.set(`draftEdits.${key}`, value));
+          if (draftEdits.title) formData.set('title', draftEdits.title);
           Object.entries(reviewEdits).forEach(([key, value]) => formData.set(`reviewEdits.${key}`, value));
           // Compatibility for older receiver/function deployments.
           formData.set('additionOpening', reviewEdits.opening);

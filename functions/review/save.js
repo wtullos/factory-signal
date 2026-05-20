@@ -5,6 +5,9 @@ const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
 const ALLOWED_ACTIONS = new Set(['save', 'load']);
 const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
 const MAX_REVIEW_EDIT_LENGTH = 1200;
+const MAX_DRAFT_TITLE_LENGTH = 220;
+const MAX_DRAFT_AUTHOR_LENGTH = 320;
+const MAX_DRAFT_BODY_LENGTH = 200000;
 
 export async function onRequest(context) {
   if (context.request.method === 'OPTIONS') {
@@ -45,17 +48,20 @@ export async function onRequest(context) {
 
   const timestamp = new Date().toISOString();
   const reviewEdits = action === 'save' ? normalizeReviewEdits(input) : undefined;
-  const idempotencyKey = await createIdempotencyKey(draft, action, reviewEdits);
+  const draftEdits = action === 'save' ? normalizeDraftEdits(input) : undefined;
+  const idempotencyKey = await createIdempotencyKey(draft, action, reviewEdits, draftEdits);
   const webhookPayload = {
     event: EVENT_NAME,
     action,
     draft,
     title: typeof input.title === 'string' ? input.title.trim() || undefined : undefined,
+    draftEdits,
     reviewEdits,
     requestedAt: timestamp,
     idempotencyKey,
     source: { url: context.request.url, userAgent: context.request.headers.get('User-Agent') || undefined },
   };
+  if (!draftEdits) delete webhookPayload.draftEdits;
   if (!reviewEdits) delete webhookPayload.reviewEdits;
 
   const body = JSON.stringify(webhookPayload);
@@ -83,7 +89,7 @@ export async function onRequest(context) {
     return jsonResponse({ ok: false, error: 'webhook_rejected', message: result.message || `Review draft receiver returned HTTP ${webhookResponse.status}.`, status: webhookResponse.status }, 502);
   }
 
-  return jsonResponse({ ok: true, message: action === 'load' ? 'Review draft loaded.' : 'Review draft saved.', idempotencyKey, reviewEdits: result.reviewEdits || undefined, savedAt: result.savedAt || undefined });
+  return jsonResponse({ ok: true, message: action === 'load' ? 'Review draft loaded.' : 'Review draft saved.', idempotencyKey, draftEdits: result.draftEdits || undefined, reviewEdits: result.reviewEdits || undefined, savedAt: result.savedAt || undefined });
 }
 
 async function readPayload(request) {
@@ -117,6 +123,25 @@ function normalizeReviewEditText(value) {
   return value.replace(/\r\n?/g, '\n').replace(/[\t ]+$/gm, '').trim().slice(0, MAX_REVIEW_EDIT_LENGTH);
 }
 
+function normalizeDraftEdits(input) {
+  const source = input.draftEdits && typeof input.draftEdits === 'object' && !Array.isArray(input.draftEdits) ? input.draftEdits : input;
+  return {
+    title: normalizeDraftEditText(source.title ?? source['draftEdits.title'], MAX_DRAFT_TITLE_LENGTH),
+    author: normalizeDraftEditText(source.author ?? source.authors ?? source['draftEdits.author'] ?? source['draftEdits.authors'], MAX_DRAFT_AUTHOR_LENGTH),
+    body: normalizeDraftBody(source.body ?? source.markdownBody ?? source['draftEdits.body']),
+  };
+}
+
+function normalizeDraftEditText(value, maxLength) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/\r\n?/g, '\n').replace(/[\t ]+$/gm, '').trim().slice(0, maxLength);
+}
+
+function normalizeDraftBody(value) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/\r\n?/g, '\n').replace(/[\t ]+$/gm, '').trim().slice(0, MAX_DRAFT_BODY_LENGTH);
+}
+
 function parseHttpsWebhookUrl(value) {
   let parsed;
   try { parsed = new URL(value); } catch { throw new Error(`${WEBHOOK_URL} must be a valid HTTPS URL.`); }
@@ -124,9 +149,18 @@ function parseHttpsWebhookUrl(value) {
   return parsed;
 }
 
-async function createIdempotencyKey(draft, action, reviewEdits = {}) {
-  const digest = await sha256Hex(`factory-signal.review_save:${JSON.stringify({ draft, action, reviewEdits: pickReviewEdits(reviewEdits) })}`);
+async function createIdempotencyKey(draft, action, reviewEdits = {}, draftEdits = {}) {
+  const operation = JSON.stringify({ draft, action, draftEdits: pickDraftEdits(draftEdits), reviewEdits: pickReviewEdits(reviewEdits) });
+  const digest = await sha256Hex(`factory-signal.review_save:${operation}`);
   return `${draft}-${action}-${digest.slice(0, 32)}`.slice(0, 220);
+}
+
+function pickDraftEdits(draftEdits = {}) {
+  return {
+    title: typeof draftEdits.title === 'string' ? draftEdits.title : '',
+    author: typeof draftEdits.author === 'string' ? draftEdits.author : '',
+    body: typeof draftEdits.body === 'string' ? draftEdits.body : '',
+  };
 }
 
 function pickReviewEdits(reviewEdits = {}) {

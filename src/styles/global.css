@@ -192,10 +192,15 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
 }
 .personal-additions h4 { margin: 0 0 4px; color: var(--ink-strong); font-size: 1rem; }
 .personal-additions p { margin: 0; color: var(--muted); }
-.personal-addition-grid { display: grid; gap: 12px; margin-top: 12px; }
-.personal-addition-grid label { display: grid; gap: 4px; font-weight: 850; }
-.personal-addition-grid small { color: var(--muted); font-weight: 650; line-height: 1.35; }
-.personal-addition-grid textarea {
+.personal-addition-grid,
+.draft-edit-grid { display: grid; gap: 12px; margin-top: 12px; }
+.personal-addition-grid label,
+.draft-edit-grid label { display: grid; gap: 4px; font-weight: 850; }
+.personal-addition-grid small,
+.draft-edit-grid small { color: var(--muted); font-weight: 650; line-height: 1.35; }
+.personal-addition-grid textarea,
+.draft-edit-grid textarea,
+.draft-edit-grid input {
   width: 100%;
   min-height: 86px;
   resize: vertical;
@@ -206,7 +211,15 @@ h3 { margin: 0 0 8px; font-size: 1.08rem; letter-spacing: -.01em; line-height: 1
   background: rgba(255,255,255,.94);
   font: inherit;
 }
-.personal-addition-grid textarea:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
+.draft-edit-grid input { min-height: 42px; resize: none; }
+.draft-edit-grid textarea[data-draft-edit="body"] {
+  min-height: 520px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  line-height: 1.5;
+}
+.personal-addition-grid textarea:focus,
+.draft-edit-grid textarea:focus,
+.draft-edit-grid input:focus { outline: 2px solid rgba(57,169,53,.28); border-color: var(--accent); }
 .panel { padding: 16px; }
 .panel h2, .panel h3 { position: relative; padding-top: 12px; }
 .panel h2::before, .panel h3::before {

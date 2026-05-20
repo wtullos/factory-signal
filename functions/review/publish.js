@@ -4,6 +4,9 @@ const ALLOWED_ACTIONS = new Set(['publish_now', 'schedule']);
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
 const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
 const MAX_REVIEW_EDIT_LENGTH = 1200;
+const MAX_DRAFT_TITLE_LENGTH = 220;
+const MAX_DRAFT_AUTHOR_LENGTH = 320;
+const MAX_DRAFT_BODY_LENGTH = 200000;
 
 async function handlePost(context) {
   const receiverUrl = context.env?.[WEBHOOK_URL];
@@ -39,6 +42,7 @@ async function handlePost(context) {
   const action = String(input.action || '').trim();
   const title = String(input.title || '').trim();
   const publishAt = String(input.publishAt || input.publish_at || '').trim();
+  const draftEdits = normalizeDraftEdits(input);
   const reviewEdits = normalizeReviewEdits(input);
 
   if (!draft) {
@@ -63,13 +67,14 @@ async function handlePost(context) {
 
   const effectivePublishAt = action === 'schedule' ? publishAt : '';
   const timestamp = new Date().toISOString();
-  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt, reviewEdits);
+  const idempotencyKey = await createIdempotencyKey(draft, action, effectivePublishAt, reviewEdits, draftEdits);
   const webhookPayload = {
     event: 'factory_signal.review_publish_request',
     action,
     draft,
     title: title || undefined,
     publishAt: effectivePublishAt || undefined,
+    draftEdits,
     reviewEdits,
     // Backward-compatible receiver field. New receivers should read reviewEdits.
     additions: reviewEdits,
@@ -174,6 +179,35 @@ function normalizeReviewEditText(value) {
     .slice(0, MAX_REVIEW_EDIT_LENGTH);
 }
 
+function normalizeDraftEdits(input) {
+  const source = input.draftEdits && typeof input.draftEdits === 'object' && !Array.isArray(input.draftEdits)
+    ? input.draftEdits
+    : input;
+  return {
+    title: normalizeDraftEditText(source.title ?? source['draftEdits.title'], MAX_DRAFT_TITLE_LENGTH),
+    author: normalizeDraftEditText(source.author ?? source.authors ?? source['draftEdits.author'] ?? source['draftEdits.authors'], MAX_DRAFT_AUTHOR_LENGTH),
+    body: normalizeDraftBody(source.body ?? source.markdownBody ?? source['draftEdits.body']),
+  };
+}
+
+function normalizeDraftEditText(value, maxLength) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function normalizeDraftBody(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, MAX_DRAFT_BODY_LENGTH);
+}
+
 function isPlausibleDateTime(value) {
   // Accept datetime-local values (YYYY-MM-DDTHH:mm) and ISO-ish strings with timezone/seconds.
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})?$/.test(value);
@@ -194,10 +228,18 @@ function parseHttpsWebhookUrl(value) {
   return parsed;
 }
 
-async function createIdempotencyKey(draft, action, publishAt, reviewEdits = {}) {
-  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now', reviewEdits: pickReviewEdits(reviewEdits) });
+async function createIdempotencyKey(draft, action, publishAt, reviewEdits = {}, draftEdits = {}) {
+  const operation = JSON.stringify({ draft, action, publishAt: publishAt || 'now', draftEdits: pickDraftEdits(draftEdits), reviewEdits: pickReviewEdits(reviewEdits) });
   const digest = await sha256Hex(`factory-signal.review_publish:${operation}`);
   return `${draft}-${action}-${digest.slice(0, 32)}`.slice(0, 220);
+}
+
+function pickDraftEdits(draftEdits = {}) {
+  return {
+    title: typeof draftEdits.title === 'string' ? draftEdits.title : '',
+    author: typeof draftEdits.author === 'string' ? draftEdits.author : '',
+    body: typeof draftEdits.body === 'string' ? draftEdits.body : '',
+  };
 }
 
 function pickReviewEdits(reviewEdits) {

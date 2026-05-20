@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown } from '../scripts/review-publish-receiver.mjs';
+import { startReceiver, DEFAULT_ROUTE, EVENT_NAME, SAVE_EVENT_NAME, normalizeAdditions, applyPersonalAdditionsToMarkdown, applyReviewEditsToMarkdown, applyDraftEditsToMarkdown } from '../scripts/review-publish-receiver.mjs';
 
 const secret = 'unit-test-secret';
 
@@ -112,6 +112,7 @@ test('accepts a signed future schedule request without executing immediately', a
       draft: 'sample-draft',
       publishAt: new Date(Date.now() + 3_600_000).toISOString(),
       reviewEdits: { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' },
+      draftEdits: { title: 'Scheduled title', author: 'Factory Signal Test', body: 'Scheduled body.' },
       idempotencyKey: 'sample-draft-schedule-0001',
     };
 
@@ -125,6 +126,7 @@ test('accepts a signed future schedule request without executing immediately', a
     const [scheduledFile] = fs.readdirSync(scheduledDir);
     const scheduledJob = JSON.parse(fs.readFileSync(path.join(scheduledDir, scheduledFile), 'utf8'));
     assert.deepEqual(scheduledJob.reviewEdits, { opening: 'Scheduled opener', middle: '', closing: 'Scheduled closer' });
+    assert.deepEqual(scheduledJob.draftEdits, { title: 'Scheduled title', author: 'Factory Signal Test', body: 'Scheduled body.' });
   } finally {
     await closeServer(fixture.server);
     fs.rmSync(fixture.tmp, { recursive: true, force: true });
@@ -158,6 +160,21 @@ test('normalizes and applies Wes review edits as natural markdown paragraphs', (
   assert.ok(updated.indexOf('Use this on the floor.') < updated.indexOf('## Later section'));
 });
 
+test('applies draft title, author, and markdown body edits to frontmatter and body', () => {
+  const raw = `---\ntitle: Original title\nauthor: Old Author\nslug: sample\n---\n\nOld body.\n\n## Old section\n`;
+  const updated = applyDraftEditsToMarkdown(raw, {
+    title: 'Edited title: standard work wins',
+    author: 'Factory Signal Editorial, Wes',
+    body: 'New opening paragraph.\n\n## New section\n\nNew body.',
+  });
+
+  assert.match(updated, /^---\ntitle: "Edited title: standard work wins"\nauthor: "Factory Signal Editorial, Wes"\nslug: sample\n---\n/);
+  assert.match(updated, /---\nNew opening paragraph\.\n\n## New section\n\nNew body\.\n$/);
+  assert.equal(updated.includes('Original title'), false);
+  assert.equal(updated.includes('Old Author'), false);
+  assert.equal(updated.includes('Old body.'), false);
+});
+
 test('saves and loads review edits through signed receiver event', async () => {
   const fixture = await createServerFixture();
   try {
@@ -166,12 +183,14 @@ test('saves and loads review edits through signed receiver event', async () => {
       action: 'save',
       draft: 'sample-draft',
       reviewEdits: { opening: 'Opening: real plant context', middle: 'Middle: watch the handoff', closing: 'Closing: do the boring check' },
+      draftEdits: { title: 'Edited title', author: 'Factory Signal Editorial, Wes', body: 'Edited **markdown** body.' },
       idempotencyKey: 'sample-draft-save-0001',
     };
     const save = await postSigned(fixture.url, savePayload, savePayload.idempotencyKey, new Date().toISOString(), SAVE_EVENT_NAME);
     assert.equal(save.status, 200);
     const saveJson = await save.json();
     assert.equal(saveJson.ok, true);
+    assert.deepEqual(saveJson.draftEdits, savePayload.draftEdits);
     assert.deepEqual(saveJson.reviewEdits, savePayload.reviewEdits);
 
     const loadPayload = {
@@ -184,6 +203,7 @@ test('saves and loads review edits through signed receiver event', async () => {
     assert.equal(load.status, 200);
     const loadJson = await load.json();
     assert.equal(loadJson.ok, true);
+    assert.deepEqual(loadJson.draftEdits, savePayload.draftEdits);
     assert.deepEqual(loadJson.reviewEdits, savePayload.reviewEdits);
   } finally {
     await closeServer(fixture.server);

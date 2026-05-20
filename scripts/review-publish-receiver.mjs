@@ -13,10 +13,14 @@ export const SAVE_EVENT_NAME = 'factory_signal.review_save_request';
 const DRAFT_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}(?:\.md)?$/;
 const DEFAULT_PORT = 8765;
 const DEFAULT_FRESHNESS_SECONDS = 300;
-const DEFAULT_MAX_BODY_BYTES = 64 * 1024;
+const DEFAULT_MAX_BODY_BYTES = 256 * 1024;
 const DEFAULT_STATE_DIR = path.join('.hermes', 'review-publish-receiver');
 const REVIEW_EDIT_KEYS = ['opening', 'middle', 'closing'];
 const MAX_REVIEW_EDIT_LENGTH = 1200;
+const DRAFT_EDIT_KEYS = ['title', 'author', 'body'];
+const MAX_DRAFT_TITLE_LENGTH = 220;
+const MAX_DRAFT_AUTHOR_LENGTH = 320;
+const MAX_DRAFT_BODY_LENGTH = 200000;
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = startReceiver({ env: process.env, cwd: process.cwd() });
@@ -188,6 +192,7 @@ export function normalizePayload(payload, headers = {}) {
       draft,
       title: stringOrEmpty(payload.title),
       publishAt,
+      draftEdits: normalizeDraftEdits(payload.draftEdits || payload.edits),
       reviewEdits: normalizeReviewEdits(payload.reviewEdits || payload.additions),
       additions: normalizeReviewEdits(payload.reviewEdits || payload.additions),
       requestedAt: stringOrEmpty(payload.requestedAt),
@@ -222,6 +227,7 @@ export function normalizeSavePayload(payload, headers = {}) {
       action,
       draft,
       title: stringOrEmpty(payload.title),
+      draftEdits: normalizeDraftEdits(payload.draftEdits || payload.edits),
       reviewEdits: normalizeReviewEdits(payload.reviewEdits),
       requestedAt: stringOrEmpty(payload.requestedAt),
       idempotencyKey,
@@ -238,6 +244,7 @@ export function handleReviewSaveRequest(config, requestRecord) {
       payload: {
         ok: true,
         draft: requestRecord.draft,
+        draftEdits: record.draftEdits,
         reviewEdits: record.reviewEdits,
         savedAt: record.savedAt || undefined,
       },
@@ -249,6 +256,7 @@ export function handleReviewSaveRequest(config, requestRecord) {
     event: SAVE_EVENT_NAME,
     draft: requestRecord.draft,
     title: requestRecord.title || undefined,
+    draftEdits: normalizeDraftEdits(requestRecord.draftEdits),
     reviewEdits: normalizeReviewEdits(requestRecord.reviewEdits),
     savedAt,
     requestedAt: requestRecord.requestedAt || undefined,
@@ -256,7 +264,7 @@ export function handleReviewSaveRequest(config, requestRecord) {
   };
   writeJsonAtomic(reviewDraftPath(config, requestRecord.draft), record);
   config.log.info(`[receiver] saved_review_draft draft=${requestRecord.draft}`);
-  return { status: 200, payload: { ok: true, draft: requestRecord.draft, reviewEdits: record.reviewEdits, savedAt } };
+  return { status: 200, payload: { ok: true, draft: requestRecord.draft, draftEdits: record.draftEdits, reviewEdits: record.reviewEdits, savedAt } };
 }
 
 export async function runPublishWorkflow(config, requestRecord, idempotencyKey) {
@@ -269,7 +277,12 @@ export async function runPublishWorkflow(config, requestRecord, idempotencyKey) 
       return;
     }
 
-    const reviewEdits = requestRecord.reviewEdits || requestRecord.additions;
+    const savedDraft = readReviewDraft(config, requestRecord.draft);
+    const draftEdits = mergeDraftEdits(savedDraft.draftEdits, requestRecord.draftEdits);
+    if (hasDraftEdits(draftEdits)) {
+      applyDraftEditsToDraft(config.cwd, requestRecord.draft, draftEdits);
+    }
+    const reviewEdits = mergeReviewEdits(savedDraft.reviewEdits, requestRecord.reviewEdits || requestRecord.additions);
     if (hasReviewEdits(reviewEdits)) {
       applyPersonalAdditionsToDraft(config.cwd, requestRecord.draft, reviewEdits);
     }
@@ -392,10 +405,10 @@ function reviewDraftPath(config, draft) {
 function readReviewDraft(config, draft) {
   const file = reviewDraftPath(config, draft);
   if (!fs.existsSync(file)) {
-    return { draft, reviewEdits: normalizeReviewEdits({}) };
+    return { draft, draftEdits: normalizeDraftEdits({}), reviewEdits: normalizeReviewEdits({}) };
   }
   const record = JSON.parse(fs.readFileSync(file, 'utf8'));
-  return { ...record, reviewEdits: normalizeReviewEdits(record.reviewEdits) };
+  return { ...record, draftEdits: normalizeDraftEdits(record.draftEdits), reviewEdits: normalizeReviewEdits(record.reviewEdits) };
 }
 
 function hashName(value) {
@@ -428,6 +441,15 @@ export function normalizeAdditions(value = {}) {
   return normalizeReviewEdits(value);
 }
 
+export function normalizeDraftEdits(value = {}) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    title: normalizeDraftEditText(source.title, MAX_DRAFT_TITLE_LENGTH),
+    author: normalizeDraftEditText(source.author ?? source.authors, MAX_DRAFT_AUTHOR_LENGTH),
+    body: normalizeDraftBody(source.body ?? source.markdownBody),
+  };
+}
+
 export function normalizeReviewEdits(value = {}) {
   const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   return Object.fromEntries(REVIEW_EDIT_KEYS.map((key) => [key, normalizeReviewEditText(source[key])]));
@@ -442,12 +464,61 @@ function normalizeReviewEditText(value) {
     .slice(0, MAX_REVIEW_EDIT_LENGTH);
 }
 
+function normalizeDraftEditText(value, maxLength) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function normalizeDraftBody(value) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\t ]+$/gm, '')
+    .trim()
+    .slice(0, MAX_DRAFT_BODY_LENGTH);
+}
+
+function hasDraftEdits(draftEdits = {}) {
+  return DRAFT_EDIT_KEYS.some((key) => typeof draftEdits[key] === 'string' && draftEdits[key].trim());
+}
+
+function mergeDraftEdits(saved = {}, submitted = {}) {
+  const savedEdits = normalizeDraftEdits(saved);
+  const submittedEdits = normalizeDraftEdits(submitted);
+  return Object.fromEntries(DRAFT_EDIT_KEYS.map((key) => [key, submittedEdits[key] || savedEdits[key] || '']));
+}
+
+function mergeReviewEdits(saved = {}, submitted = {}) {
+  const savedEdits = normalizeReviewEdits(saved);
+  const submittedEdits = normalizeReviewEdits(submitted);
+  return Object.fromEntries(REVIEW_EDIT_KEYS.map((key) => [key, submittedEdits[key] || savedEdits[key] || '']));
+}
+
 function hasReviewEdits(reviewEdits = {}) {
   return REVIEW_EDIT_KEYS.some((key) => typeof reviewEdits[key] === 'string' && reviewEdits[key].trim());
 }
 
 export function applyPersonalAdditionsToMarkdown(raw, additions = {}) {
   return applyReviewEditsToMarkdown(raw, additions);
+}
+
+export function applyDraftEditsToMarkdown(raw, draftEdits = {}) {
+  const normalized = normalizeDraftEdits(draftEdits);
+  if (!hasDraftEdits(normalized)) return raw;
+
+  const { frontmatter, body } = splitFrontmatter(raw);
+  const frontmatterPatch = {};
+  if (normalized.title) frontmatterPatch.title = normalized.title;
+  if (normalized.author) frontmatterPatch.author = normalized.author;
+  const nextFrontmatter = Object.keys(frontmatterPatch).length > 0
+    ? upsertFrontmatterValues(frontmatter || '---\n---', frontmatterPatch)
+    : frontmatter;
+  const nextBody = normalized.body || body;
+  return `${nextFrontmatter}${nextFrontmatter && nextBody ? '\n' : ''}${nextBody.trim()}\n`;
 }
 
 export function applyReviewEditsToMarkdown(raw, reviewEdits = {}) {
@@ -479,6 +550,12 @@ function applyPersonalAdditionsToDraft(cwd, draft, additions) {
   fs.writeFileSync(draftPath, applyPersonalAdditionsToMarkdown(raw, additions));
 }
 
+function applyDraftEditsToDraft(cwd, draft, draftEdits) {
+  const draftPath = findDraftPath(cwd, draft);
+  const raw = fs.readFileSync(draftPath, 'utf8');
+  fs.writeFileSync(draftPath, applyDraftEditsToMarkdown(raw, draftEdits));
+}
+
 function splitFrontmatter(raw) {
   if (!raw.startsWith('---')) return { frontmatter: '', body: raw };
   const end = raw.indexOf('\n---', 3);
@@ -486,6 +563,22 @@ function splitFrontmatter(raw) {
   const afterFence = raw.indexOf('\n', end + 4);
   if (afterFence === -1) return { frontmatter: raw, body: '' };
   return { frontmatter: raw.slice(0, afterFence).trimEnd(), body: raw.slice(afterFence + 1) };
+}
+
+function upsertFrontmatterValues(frontmatter, patch) {
+  const lines = String(frontmatter || '---\n---').split('\n');
+  const endIndex = lines.findIndex((line, index) => index > 0 && line.trim() === '---');
+  if (lines[0]?.trim() !== '---' || endIndex === -1) {
+    return upsertFrontmatterValues('---\n---', patch);
+  }
+  const fmLines = lines.slice(1, endIndex);
+  for (const [key, value] of Object.entries(patch)) {
+    const rendered = `${key}: ${JSON.stringify(value)}`;
+    const existingIndex = fmLines.findIndex((line) => line.match(new RegExp(`^${key}:\\s*`)));
+    if (existingIndex >= 0) fmLines[existingIndex] = rendered;
+    else fmLines.push(rendered);
+  }
+  return ['---', ...fmLines, '---'].join('\n');
 }
 
 function formatNaturalReviewEdit(text) {
