@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL } from '../lib/content.js';
+---
+<Base title="Contact" description="Contact Factory Signal for questions, corrections, privacy requests, advertising, and business inquiries." pathname="/contact/">
+  <main><article class="article-body">
+    <h1>Contact Factory Signal</h1>
+    <p>For questions, corrections, source suggestions, privacy requests, advertising, sponsorships, or other business inquiries, email Factory Signal at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+
+    <h2>Helpful context to include</h2>
+    <ul>
+      <li>The page URL or article title you are asking about.</li>
+      <li>A short description of the correction, question, or opportunity.</li>
+      <li>Your preferred reply email address if different from the sender address.</li>
+    </ul>
+
+    <h2>Editorial and advertising notes</h2>
+    <p>Factory Signal links to third-party manufacturing sources and may display advertising. Corrections, disclosure questions, ad inquiries, and privacy questions can all use the same contact address.</p>
+  </article></main>
+</Base>

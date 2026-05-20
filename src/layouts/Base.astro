@@ -15,7 +15,22 @@ const url = canonical(pathname);
 const logoPath = '/assets/factory-signal-logo.jpg';
 const showNavSearch = pathname === '/' || pathname === '/testpage/';
 const isPrivatePath = pathname === '/review' || pathname.startsWith('/review/') || pathname === '/admin' || pathname.startsWith('/admin/');
-const showAdsenseVerification = ADSENSE_ENABLED && !noindex && !isPrivatePath;
+const normalizedPathname = pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+const noAdsPathnames = new Set([
+  '/404',
+  '/about',
+  '/contact',
+  '/cookie-policy',
+  '/cookies',
+  '/disclosure',
+  '/display',
+  '/privacy',
+  '/search',
+  '/terms',
+  '/testpage',
+]);
+const isNoAdsPath = noAdsPathnames.has(normalizedPathname) || normalizedPathname.startsWith('/search/');
+const showAdsenseVerification = ADSENSE_ENABLED && !noindex && !isPrivatePath && !isNoAdsPath;
 ---
 <!doctype html>
 <html lang="en">
@@ -131,7 +146,8 @@ const showAdsenseVerification = ADSENSE_ENABLED && !noindex && !isPrivatePath;
       <slot />
       <footer class="site-footer">
         <p>{SITE_NAME} publishes automated manufacturing briefings and original editorial notes.</p>
-        <p><a href="/about/">About</a> · <a href="/privacy/">Privacy</a> · <a href="/disclosure/">Disclosure</a> · <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a></p>
+        <p><a href="/about/">About</a> · <a href="/contact/">Contact</a> · <a href="/privacy/">Privacy</a> · <a href="/cookie-policy/">Cookies</a> · <a href="/terms/">Terms</a> · <a href="/disclosure/">Disclosure</a></p>
+        <p>Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
         <p>© 2026 {SITE_NAME}</p>
       </footer>
     </div>

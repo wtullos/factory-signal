@@ -2,13 +2,31 @@
 import Base from '../layouts/Base.astro';
 import { CONTACT_EMAIL } from '../lib/content.js';
 ---
-<Base title="Privacy policy" description="Factory Signal privacy policy." pathname="/privacy/">
+<Base title="Privacy policy" description="How Factory Signal handles privacy, analytics, advertising, cookies, and third-party links." pathname="/privacy/">
   <main><article class="article-body">
     <h1>Privacy policy</h1>
-    <p>Factory Signal does not currently provide accounts, comments, or forms. Hosting providers may collect standard request logs such as IP address, browser, referring page, and requested URL for security and operations.</p>
-    <p>If advertising or analytics are enabled later, third-party services may use cookies or similar technologies subject to their own policies. Advertising code is disabled unless the relevant environment variables are configured.</p>
-    <p>Outbound links go to third-party websites, social platforms, videos, and publishers. Their policies apply after you leave Factory Signal.</p>
-    <p>Privacy questions can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
-    <p>Last updated: May 10, 2026.</p>
+    <p>Factory Signal is an informational manufacturing publication. This page explains the practical data practices we use for the site, including advertising and lightweight analytics. It is not legal advice.</p>
+
+    <h2>Information we collect directly</h2>
+    <p>Factory Signal does not currently provide user accounts, comments, purchases, or public forms. If you email us, we receive your email address and any information you choose to include so we can respond.</p>
+
+    <h2>Site analytics</h2>
+    <p>We use privacy-friendly, first-party analytics to understand which pages are useful. The site analytics payload is limited to page path, page title, click label or destination, timestamp, day, and hour. Factory Signal's analytics are not designed to store raw IP addresses, user agents, visitor IDs, or cross-site profiles.</p>
+    <p>Hosting, security, and infrastructure providers may still process standard technical logs such as IP address, browser/device information, referring page, and requested URL to operate and protect the site.</p>
+
+    <h2>Google AdSense and advertising</h2>
+    <p>Factory Signal displays ads through Google AdSense. Google and its partners may use cookies, web beacons, IP addresses, device identifiers, browser information, location signals, and similar technologies to deliver, limit, measure, and improve ads.</p>
+    <p>Ads may be personalized based on your activity and settings, or non-personalized based on contextual information such as the page you are viewing and your general location. Google explains how it uses data from sites and apps that use its services at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
+    <p>You can review or change Google ad personalization settings at <a href="https://adssettings.google.com/">adssettings.google.com</a>. Your browser, device, and applicable regional tools may also provide ways to limit cookies, reset advertising identifiers, or opt out of certain interest-based advertising.</p>
+
+    <h2>Cookies and similar technologies</h2>
+    <p>Google AdSense and other third-party services may place cookies or use similar technologies when ads load. Factory Signal's first-party analytics do not require an account login and are intentionally limited, but browser storage or technical identifiers may still be used by infrastructure or third-party services. See the <a href="/cookie-policy/">Cookie policy</a> for more detail.</p>
+
+    <h2>Third-party links and embedded services</h2>
+    <p>Factory Signal links to manufacturers, publishers, social platforms, videos, documents, and other third-party websites. Their privacy policies and terms apply after you leave Factory Signal.</p>
+
+    <h2>Contact</h2>
+    <p>Privacy questions or requests can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p>Last updated: May 20, 2026.</p>
   </article></main>
 </Base>

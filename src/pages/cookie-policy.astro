@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL } from '../lib/content.js';
+---
+<Base title="Cookie policy" description="How Factory Signal uses cookies and similar technologies for ads, analytics, site operation, and user choices." pathname="/cookie-policy/">
+  <main><article class="article-body">
+    <h1>Cookie policy</h1>
+    <p>This Cookie policy explains how Factory Signal and third-party services may use cookies and similar technologies. It is practical information, not legal advice.</p>
+
+    <h2>What cookies and similar technologies do</h2>
+    <p>Cookies are small files stored by your browser. Similar technologies can include pixels, web beacons, local storage, device identifiers, and network identifiers such as IP addresses. They can help operate websites, remember choices, measure usage, and deliver or measure ads.</p>
+
+    <h2>Google AdSense advertising</h2>
+    <p>Factory Signal displays ads through Google AdSense. Google and its partners may use cookies, web beacons, IP addresses, device identifiers, browser information, and similar technologies to deliver ads, prevent fraud, limit ad frequency, measure performance, and personalize or contextualize advertising.</p>
+    <p>Google explains how it uses information from sites that use its services at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>. You can review Google ad personalization settings at <a href="https://adssettings.google.com/">adssettings.google.com</a>.</p>
+
+    <h2>First-party analytics</h2>
+    <p>Factory Signal uses first-party analytics to understand page views and clicks. The analytics are intentionally limited to page path, page title, click label or destination, timestamp, day, and hour. They are not designed to store raw IP addresses, user agents, visitor IDs, or cross-site profiles.</p>
+
+    <h2>Site operation and security</h2>
+    <p>Hosting, security, and infrastructure providers may use technical logs or similar technologies to deliver pages, protect the site, diagnose errors, and prevent abuse.</p>
+
+    <h2>Your choices</h2>
+    <ul>
+      <li>You can block or delete cookies using your browser settings. Some site features or ads may not work normally if cookies are blocked.</li>
+      <li>You can adjust Google ad settings at <a href="https://adssettings.google.com/">adssettings.google.com</a>.</li>
+      <li>Your device or browser may provide options to limit tracking, reset advertising identifiers, or send Do Not Track signals.</li>
+      <li>Where required and once available for this site, a consent-management platform or consent choices banner may provide additional choices for advertising and analytics cookies.</li>
+    </ul>
+
+    <h2>Related pages</h2>
+    <p>For more detail, see the <a href="/privacy/">Privacy policy</a> and <a href="/disclosure/">Disclosure</a>.</p>
+
+    <h2>Contact</h2>
+    <p>Cookie or privacy questions can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p>Last updated: May 20, 2026.</p>
+  </article></main>
+</Base>

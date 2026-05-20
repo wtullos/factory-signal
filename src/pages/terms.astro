@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL, SITE_NAME } from '../lib/content.js';
+---
+<Base title="Terms of use" description="Factory Signal terms of use for informational manufacturing content, links, advertising, and site access." pathname="/terms/">
+  <main><article class="article-body">
+    <h1>Terms of use</h1>
+    <p>These terms describe practical expectations for using {SITE_NAME}. They are not legal advice. By using the site, you agree to use it responsibly and in accordance with applicable laws.</p>
+
+    <h2>Informational publication</h2>
+    <p>{SITE_NAME} publishes manufacturing news links, automated briefings, analysis, explainers, and related editorial content. Content is provided for general informational and educational purposes only.</p>
+    <p>Factory Signal does not provide engineering, safety, legal, financial, procurement, or other professional advice. Do not rely on the site as the only basis for buying equipment, designing processes, operating machinery, making safety decisions, or taking business action.</p>
+
+    <h2>No warranty</h2>
+    <p>We work to keep content useful, but manufacturing information can change quickly and automated summaries may contain mistakes or omissions. The site and its content are provided as-is, without warranties of accuracy, completeness, availability, fitness for a particular purpose, or non-infringement.</p>
+
+    <h2>Third-party links</h2>
+    <p>{SITE_NAME} links to third-party websites, videos, social posts, documents, products, vendors, and publishers. We do not control those sites and are not responsible for their content, policies, pricing, claims, downloads, or availability.</p>
+
+    <h2>Advertising, affiliates, and sponsorships</h2>
+    <p>The site may display ads, including Google AdSense, and may include affiliate links, sponsorships, paid placements, or other commercial relationships. See the <a href="/disclosure/">Disclosure</a> page for more detail.</p>
+
+    <h2>Intellectual property</h2>
+    <p>Factory Signal's original text, layout, branding, and other original site materials are owned by Factory Signal or its licensors unless otherwise noted. You may link to public pages and quote short excerpts with attribution. Do not copy, scrape, republish, or commercially reuse substantial portions of the site without permission.</p>
+    <p>Third-party names, logos, screenshots, articles, videos, and linked materials remain the property of their respective owners.</p>
+
+    <h2>Acceptable use</h2>
+    <p>Do not interfere with site operation, attempt unauthorized access, send malicious traffic, bypass security controls, or use automated requests in a way that burdens the site or violates third-party rights.</p>
+
+    <h2>Changes and contact</h2>
+    <p>We may update these terms as the site changes. Questions can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p>Last updated: May 20, 2026.</p>
+  </article></main>
+</Base>

@@ -1,11 +1,24 @@
 ---
 import Base from '../layouts/Base.astro';
+import { CONTACT_EMAIL } from '../lib/content.js';
 ---
-<Base title="Disclosure" description="Factory Signal affiliate, advertising, and editorial disclosure." pathname="/disclosure/">
+<Base title="Disclosure" description="Factory Signal advertising, affiliate, sponsorship, and editorial disclosure." pathname="/disclosure/">
   <main><article class="article-body">
     <h1>Disclosure</h1>
-    <p>Factory Signal may eventually earn money from advertising, affiliate links, sponsorships, subscriptions, or other commercial relationships.</p>
-    <p>Advertising placeholders are disabled by default and only render when advertising environment variables are configured. Affiliate links and sponsored placements should be clearly labeled when added.</p>
-    <p>Automated briefings summarize and link to public third-party content. Original articles should be produced as Factory Signal editorial content and should distinguish reporting, analysis, opinion, affiliate recommendations, and sponsorships.</p>
+    <p>Factory Signal is an informational publication about advanced manufacturing, CNC, robotics, additive manufacturing, AI vision, automation, and related software. This disclosure is intended to be practical and readable; it is not legal advice.</p>
+
+    <h2>Advertising</h2>
+    <p>Factory Signal displays advertising, including Google AdSense ads, on eligible pages. Ads may be selected or measured by Google and its partners using cookies and similar technologies. Advertising does not determine our editorial priorities, but it helps support the publication.</p>
+
+    <h2>Affiliate links and sponsorships</h2>
+    <p>Factory Signal may earn money from affiliate links, sponsorships, subscriptions, direct ad placements, or other commercial relationships. Affiliate links, sponsored posts, paid placements, or materially supported recommendations should be labeled when they appear.</p>
+
+    <h2>Editorial approach</h2>
+    <p>Automated briefings summarize and link to public third-party content. Original articles are intended to distinguish reporting, analysis, opinion, affiliate recommendations, and sponsorships when those categories apply.</p>
+    <p>Product mentions, links, or ads should not be treated as an endorsement unless the article clearly says so. Readers should verify specifications, pricing, safety requirements, and suitability with the relevant manufacturer, vendor, or qualified professional.</p>
+
+    <h2>Questions</h2>
+    <p>Questions about advertising, sponsorships, corrections, or business relationships can be sent to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+    <p>Last updated: May 20, 2026.</p>
   </article></main>
 </Base>
