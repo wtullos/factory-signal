@@ -79,12 +79,15 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
               </div>
               <div><dt>File</dt><dd><code>{draft.path}</code></dd></div>
               <div>
-                <dt>Image URL</dt>
+                <dt>Hero image</dt>
                 <dd>
-                  <label class="inline-draft-field inline-image-field">
-                    <span class="visually-hidden">Hero image URL</span>
-                    <input type="url" value={draft.imageUrl || ''} maxlength="1000" placeholder="https://…" data-draft-edit="imageUrl" aria-label={`Hero image URL for ${draft.slug || draft.filename}`} />
+                  <label class="inline-draft-field inline-image-field image-upload-control">
+                    <span>Choose an image file</span>
+                    <input type="file" accept="image/*" data-draft-image-file aria-label={`Hero image file for ${draft.slug || draft.filename}`} />
+                    <span class="image-upload-filename" data-draft-image-filename>No file selected</span>
+                    <small>Choosing a file copies it into the hidden image URL field as a data URL. Save to keep it.</small>
                   </label>
+                  <input type="hidden" value={draft.imageUrl || ''} data-draft-edit="imageUrl" aria-label={`Hero image URL for ${draft.slug || draft.filename}`} />
                 </dd>
               </div>
               <div>
@@ -233,6 +236,18 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       return reviewEdits;
     };
 
+    const readFileAsDataUrl = async (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+      reader.onerror = () => reject(reader.error || new Error('Unable to read selected image file.'));
+      reader.readAsDataURL(file);
+    });
+
+    const setImageFilename = (draftCard, filename = 'No file selected') => {
+      const filenameNode = draftCard?.querySelector('[data-draft-image-filename]');
+      if (filenameNode) filenameNode.textContent = filename;
+    };
+
     const collectDraftEdits = (draftCard) => {
       const draftEdits = { title: '', author: '', imageUrl: '', imageAlt: '', body: '' };
       draftCard?.querySelectorAll('[data-draft-edit]').forEach((field) => {
@@ -279,6 +294,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       const draft = section.dataset.draftId || '';
       const draftCard = section.closest('.draft-card');
       const saveButton = section.querySelector('[data-save-review-draft]');
+      const imageFileInput = section.querySelector('[data-draft-image-file]');
 
       const loadReviewDraft = async () => {
         try {
@@ -320,6 +336,25 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
       };
 
       if (saveButton instanceof HTMLButtonElement) saveButton.addEventListener('click', saveReviewDraft);
+      if (imageFileInput instanceof HTMLInputElement) {
+        imageFileInput.addEventListener('change', async () => {
+          const file = imageFileInput.files?.[0];
+          const imageUrlField = draftCard?.querySelector('[data-draft-edit="imageUrl"]');
+          if (!(imageUrlField instanceof HTMLInputElement)) return;
+          if (!file) {
+            setImageFilename(draftCard, 'No file selected');
+            imageUrlField.value = '';
+            return;
+          }
+          try {
+            imageUrlField.value = await readFileAsDataUrl(file);
+            setImageFilename(draftCard, file.name);
+            setSaveStatus(section, `Loaded ${file.name} into the hidden image URL field as a data URL. Save to keep it.`, 'success');
+          } catch (error) {
+            setSaveStatus(section, error instanceof Error ? error.message : 'Could not read selected image file.', 'error');
+          }
+        });
+      }
       loadReviewDraft();
     });
 
