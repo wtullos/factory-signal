@@ -82,10 +82,10 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                 <dt>Hero image</dt>
                 <dd>
                   <label class="inline-draft-field inline-image-field image-upload-control">
-                    <span>Choose an image file</span>
+                    <span>Upload hero image</span>
                     <input type="file" accept="image/*" data-draft-image-file aria-label={`Hero image file for ${draft.slug || draft.filename}`} />
                     <span class="image-upload-filename" data-draft-image-filename>{draft.imageUrl ? 'Image selected' : 'No file selected'}</span>
-                    <small>Choosing a file copies it into the hidden image URL field as a data URL. Save to keep it.</small>
+                    <small>Choose an image file, then save edits to keep it with this draft.</small>
                   </label>
                   <input type="hidden" value={draft.imageUrl || ''} data-draft-edit="imageUrl" />
                 </dd>
@@ -358,7 +358,7 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           try {
             imageUrlField.value = await readFileAsDataUrl(file);
             setImageFilename(draftCard, file.name);
-            setSaveStatus(section, `Loaded ${file.name} into the hidden image URL field as a data URL. Save to keep it.`, 'success');
+            setSaveStatus(section, `Loaded ${file.name}. Save edits to keep it with this draft.`, 'success');
           } catch (error) {
             setSaveStatus(section, error instanceof Error ? error.message : 'Could not read selected image file.', 'error');
           }
