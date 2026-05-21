@@ -5,6 +5,8 @@ pubDate: "2026-05-20T15:10:00.000Z"
 author: "Factory Signal Editorial"
 tags: ["CNC", "machining", "small shops", "process improvement"]
 status: "published"
+imageUrl: "/generated-images/article-cnc-setup-discipline.svg"
+imageAlt: "CNC setup packet with vise, tooling, and first-article measurement checklist"
 sourceUrls: ["https://www.nist.gov/services-resources/software/mtconnect", "https://www.mtconnect.org/", "https://www.nist.gov/mep"]
 ---
 

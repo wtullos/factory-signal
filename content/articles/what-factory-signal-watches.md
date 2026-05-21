@@ -5,6 +5,8 @@ pubDate: "2026-05-10"
 author: "Factory Signal Editorial"
 tags: ["advanced manufacturing", "automation", "industrial AI"]
 status: "published"
+imageUrl: "/generated-images/article-factory-signal-watches.svg"
+imageAlt: "Connected factory signals across CNC, robotics, additive manufacturing, inspection, and industrial AI"
 sourceUrls: ["https://www.nist.gov/programs-projects/smart-manufacturing-systems-sms", "https://www.nist.gov/additive-manufacturing", "https://www.nist.gov/services-resources/software/mtconnect", "https://ifr.org/industrial-robots"]
 ---
 

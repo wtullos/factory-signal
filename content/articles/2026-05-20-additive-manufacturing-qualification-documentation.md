@@ -5,6 +5,8 @@ pubDate: "2026-05-20T15:30:00.000Z"
 author: "Factory Signal Editorial"
 tags: ["additive manufacturing", "quality", "qualification", "3D printing"]
 status: "published"
+imageUrl: "/generated-images/article-additive-qualification-documentation.svg"
+imageAlt: "3D printed part with material lot, inspection notes, and qualification checklist"
 sourceUrls: ["https://www.nist.gov/additive-manufacturing", "https://www.iso.org/standard/78974.html", "https://www.astm.org/products-services/standards-and-publications/additive-manufacturing-standards.html"]
 ---
 

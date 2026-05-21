@@ -5,6 +5,8 @@ pubDate: "2026-05-20T14:36:39.239Z"
 author: "Factory Signal Editorial"
 tags: ["factory AI", "industrial automation"]
 status: "published"
+imageUrl: "/generated-images/article-factory-ai-controls-architecture.svg"
+imageAlt: "Edge-cloud factory AI architecture connected to controls, inspection, operators, and safety boundaries"
 sourceUrls: ["https://metrology.news/edge-cloud-and-ai-integration-transform-audis-production-quality-and-inspection-systems/", "https://www.audi-mediacenter.com/en/press-releases/virtually-controlled-production-a-first-in-audi-body-shop-16589", "https://www.audi-mediacenter.com/en/press-releases/artificial-intelligence-audi-boosts-production-efficiency-16674"]
 pinnedUntil: "2026-05-21T14:36:39.239Z"
 ---

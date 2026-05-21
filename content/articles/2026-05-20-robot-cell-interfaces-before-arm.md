@@ -5,6 +5,8 @@ pubDate: "2026-05-20T15:20:00.000Z"
 author: "Factory Signal Editorial"
 tags: ["robotics", "automation", "workcells", "factory operations"]
 status: "published"
+imageUrl: "/generated-images/article-robot-cell-interfaces.svg"
+imageAlt: "Robot cell with part presentation, gripper, guarding, sensors, and operator interface"
 sourceUrls: ["https://www.osha.gov/robotics", "https://www.automate.org/robotics/industry-insights/robot-safety-standards-and-technical-reports", "https://ifr.org/industrial-robots"]
 ---
 

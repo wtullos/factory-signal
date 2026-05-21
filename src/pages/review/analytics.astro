@@ -151,7 +151,7 @@ export const prerender = true;
         if (statusPanel) {
           statusPanel.innerHTML = summary.configured
             ? '<h2>Analytics active</h2><p>Showing privacy-friendly events from the last 7 days. No visitor IDs are stored by this app.</p>'
-            : '<h2>D1 not configured</h2><p>Analytics collection is installed, but the <code>ANALYTICS_DB</code> D1 binding is missing. Public tracking will fail open and this dashboard stays usable with empty data.</p>';
+            : '<h2>D1 missing</h2><p>Analytics collection needs the <code>ANALYTICS_DB</code> D1 binding. Public tracking will fail open and this dashboard stays usable with empty data.</p>';
         }
       } catch (error) {
         if (statusPanel) statusPanel.innerHTML = `<h2>Analytics unavailable</h2><p>${escapeText(error instanceof Error ? error.message : 'Unable to load analytics.')}</p>`;

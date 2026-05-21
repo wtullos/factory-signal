@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Additive manufacturing qualification documentation</title>
+  <desc id="desc">A school-friendly vector illustration of a 3D printed part, process record, material lot, inspection, and change-control checklist.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#134e4a"/><stop offset="1" stop-color="#020617"/></linearGradient></defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <g opacity="0.14" stroke="#ccfbf1" stroke-width="3"><path d="M130 170H1470M130 320H1470M130 470H1470M130 620H1470"/><path d="M300 100V760M560 100V760M820 100V760M1080 100V760M1340 100V760"/></g>
+  <g transform="translate(230 245)">
+    <rect x="0" y="220" width="460" height="70" rx="18" fill="#0b1220" stroke="#14b8a6" stroke-width="8"/>
+    <path d="M105 220h250l-42-150H147z" fill="#1e293b" stroke="#facc15" stroke-width="8"/>
+    <path d="M155 105h150M140 150h180M125 195h210" stroke="#ccfbf1" stroke-width="12" stroke-linecap="round"/>
+    <path d="M230 70V20" stroke="#facc15" stroke-width="28" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(860 190)">
+    <rect width="455" height="545" rx="30" fill="#f8fafc" opacity="0.96"/>
+    <rect x="55" y="70" width="260" height="24" rx="12" fill="#0f172a"/>
+    <g fill="#334155"><rect x="55" y="130" width="335" height="18" rx="9"/><rect x="55" y="185" width="335" height="18" rx="9"/><rect x="55" y="240" width="335" height="18" rx="9"/><rect x="55" y="295" width="250" height="18" rx="9"/></g>
+    <g fill="none" stroke="#14b8a6" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"><path d="M65 390l34 34 78-92"/><path d="M225 390l34 34 78-92"/></g>
+  </g>
+  <circle cx="725" cy="610" r="70" fill="#facc15"/><path d="M690 610h70M725 575v70" stroke="#0f172a" stroke-width="14" stroke-linecap="round"/>
+  <text x="120" y="120" fill="#14b8a6" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="5">FACTORY SIGNAL</text>
+  <text x="120" y="805" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800">Additive qualification records</text>
+</svg>
