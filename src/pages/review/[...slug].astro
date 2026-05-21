@@ -84,10 +84,10 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
                   <label class="inline-draft-field inline-image-field image-upload-control">
                     <span>Choose an image file</span>
                     <input type="file" accept="image/*" data-draft-image-file aria-label={`Hero image file for ${draft.slug || draft.filename}`} />
-                    <span class="image-upload-filename" data-draft-image-filename>No file selected</span>
+                    <span class="image-upload-filename" data-draft-image-filename>{draft.imageUrl ? 'Image selected' : 'No file selected'}</span>
                     <small>Choosing a file copies it into the hidden image URL field as a data URL. Save to keep it.</small>
                   </label>
-                  <input type="hidden" value={draft.imageUrl || ''} data-draft-edit="imageUrl" aria-label={`Hero image URL for ${draft.slug || draft.filename}`} />
+                  <input type="hidden" value={draft.imageUrl || ''} data-draft-edit="imageUrl" />
                 </dd>
               </div>
               <div>
@@ -305,6 +305,15 @@ const hasDate = (value) => /^\d{4}-\d{2}-\d{2}/.test(String(value || ''));
           if (!response.ok || !result.ok) throw new Error(result.message || `Review draft load failed with HTTP ${response.status}.`);
           if (result.reviewEdits) applyReviewEdits(draftCard, result.reviewEdits);
           if (result.draftEdits) applyDraftEdits(draftCard, result.draftEdits);
+          if (draftCard) {
+            const currentImage = draftCard.querySelector('[data-draft-edit="imageUrl"]');
+            if (currentImage instanceof HTMLInputElement) {
+              const imageFileInput = draftCard.querySelector('[data-draft-image-file]');
+              const filename = currentImage.value ? 'Image selected' : 'No file selected';
+              setImageFilename(draftCard, filename);
+              if (imageFileInput instanceof HTMLInputElement) imageFileInput.value = '';
+            }
+          }
           setSaveStatus(section, result.savedAt ? `Loaded saved edits from ${new Date(result.savedAt).toLocaleString()}.` : 'No saved edits yet.', 'success');
         } catch (error) {
           setSaveStatus(section, error instanceof Error ? error.message : 'Review draft load failed.', 'error');
