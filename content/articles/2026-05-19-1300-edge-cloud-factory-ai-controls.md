@@ -1,6 +1,6 @@
 ---
-title: "Factory AI Needs a Controls Architecture Before It Needs More Models"
-description: "Audi’s rollout of edge-cloud production control and AI quality tools is a useful signal: the hard part of factory AI is not a better dashboard. It is creating the controls, data, and safety architecture that lets AI scale beyond isolated pilots."
+title: "Factory AI Needs a Controls Architecture"
+description: "Audi’s edge-cloud production work shows why factory AI needs clean data, controls boundaries, safety rules, and operator workflows."
 pubDate: "2026-05-20T14:36:39.239Z"
 author: "Factory Signal Editorial"
 tags: ["factory AI", "industrial automation"]
@@ -14,21 +14,29 @@ Audi’s latest production update is useful because it points at that deeper lay
 
 That is a different kind of factory AI. It is not “put a camera on the line and send alerts.” It is a move toward a common operating layer for machines, data, and software-defined production functions.
 
+## Audi's edge-cloud signal
+
 The control-side example is Audi’s Edge Cloud 4 Production, or EC4P. Audi says the platform is being used in the body shop at Neckarsulm with virtual programmable logic controllers replacing local hardware controllers on production lines. Siemens is the technology partner for the virtual control system and TÜV-certified safety functionality. Metrology and Quality News reports that industrial devices, including around 100 robots, coordinate through the EC4P with millisecond precision, and that Audi has already eliminated more than 1,000 industrial PCs in vehicle assembly by centralizing worker guidance from the cloud.
 
 For small and mid-sized manufacturers, the immediate lesson is not to copy Audi’s architecture. Very few shops need, can afford, or can staff that kind of platform. The practical signal is that AI starts to become scalable only when the plant has a disciplined controls-and-data backbone. Otherwise, every AI project becomes a one-off island: one camera, one cell, one vendor box, one fragile integration, one person who knows how it works.
 
+## Quality tools still need production context
+
 The quality-side examples show why the backbone matters. Audi’s Weld Splatter Detection system uses AI to identify weld spatter on vehicle underbodies and mark it for removal. Audi has also described a further expansion in which a robotic arm automatically removes the splatter, reducing physically demanding work. Another tool, ProcessGuardAIn, is intended to monitor manufacturing processes using machine and sensor data, detect anomalies early, and eventually guide employees through recommended actions. Metrology and Quality News says pilots are underway in the Neckarsulm paint shop for dosage optimization in pretreatment and anomaly detection in cathodic dip coating, with series introduction planned for the second quarter of 2026.
 
-None of those applications is magic by itself. Weld spatter detection needs stable imaging, defined defect criteria, traceability to the vehicle body, a safe interaction with a robot if removal is automated, and a way for operators to trust or override the system. Process monitoring needs clean machine data, known process limits, escalation rules, and context about which alarms matter. Worker guidance needs current work instructions, variant data, and a reliable connection between the specific vehicle or job and the task in front of the operator.
+None of those applications is magic by itself. Weld spatter detection needs stable imaging, defined defect criteria, traceability to the vehicle body, a safe interaction with a robot if removal is automated, and a way for operators to trust or override the system. Process monitoring needs clean machine data, known process limits, escalation rules, and context about which alarms matter. Worker guidance needs current work instructions, variant data, and a reliable connection between the specific vehicle or job and the task in front of the operator. For a narrower inspection view, see Factory Signal’s guide to [AI vision measurement plans](/articles/2026-05-20-ai-vision-inspection-measurement-plan/).
 
 That is why the architecture matters more than the model. A model can classify an image or flag an anomaly. A production system has to decide what happens next. If the data goes into a black box that nobody can see, it is not very useful. If the system flags a defect but there is no defined next step, the issue can get lost in the weeds with no clear action for clearing it up. Models that recognize problems are valuable only if the information is acted on rather than forgotten.
+
+## Translate the lesson for smaller shops
 
 For smaller shops, the mistake would be to hear “edge cloud” and assume this is an enterprise-only story. The useful translation is much simpler: build the minimum shared layer that prevents automation projects from becoming dead ends. That might mean standardizing how machine data is collected, putting inspection images and results in a searchable location, using consistent part and job identifiers, documenting which PLC tags or robot states are safe to expose, and choosing vendors that can integrate through open protocols rather than trapping data inside a black box.
 
 A small manufacturer does not need virtual PLCs to benefit from this mindset. It may need a reliable cell network, a simple edge PC, OPC UA or MTConnect where available, version-controlled recipes, camera results tied to serial numbers, and a clear rule for who owns changes to automated decisions. Before buying an AI inspection system, ask whether the shop can answer four questions: What data will the system see? What action can it trigger? Who can approve or override that action? How will we know if it drifted?
 
 The same logic applies after the first defect is found. Being able to identify issues a human operator may miss is useful, but if that finding is not implemented into production, it becomes static information instead of operational improvement. If a system sees that weld spatter is repeatedly appearing on one area of a vehicle body, the stronger opportunity is to move beyond flagging each instance for cleanup. The pattern can help teams understand the cost of cleanup over time and support a practical production change, such as adding shielding or changing the process around that area. That is the difference between reactive alerts and proactive improvement.
+
+## Watch the controls, safety, and staffing risks
 
 There are caveats. Virtualizing control is not a casual IT project. Latency, safety certification, cybersecurity, change management, and downtime risk all become central issues. Even AI applications that do not directly control motion can create production risk if they generate false rejects, hide real defects, or overwhelm operators with noisy alerts. Shops should be wary of any vendor pitch that treats factory AI as a plug-in app rather than an engineered production change.
 

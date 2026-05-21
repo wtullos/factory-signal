@@ -1,13 +1,39 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ShareButton from '../../components/ShareButton.astro';
-import { getArticles } from '../../lib/content.js';
+import { SITE_NAME, canonical, getArticles } from '../../lib/content.js';
 export const prerender = true;
 export function getStaticPaths() {
   return getArticles().map((article) => ({ params: { slug: article.slug }, props: { article } }));
 }
 const { article } = Astro.props;
 const sourceUrls = Array.isArray(article.sourceUrls) ? article.sourceUrls.filter(Boolean) : [];
+const articleUrl = canonical(`/articles/${article.slug}/`);
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': article.articleType === 'technical' ? 'TechArticle' : 'Article',
+  headline: article.title,
+  description: article.description,
+  url: articleUrl,
+  mainEntityOfPage: articleUrl,
+  datePublished: article.pubDate || undefined,
+  dateModified: article.updatedAt || article.pubDate || undefined,
+  author: { '@type': 'Organization', name: article.author || SITE_NAME },
+  publisher: { '@type': 'Organization', name: SITE_NAME },
+  image: article.imageUrl ? canonical(article.imageUrl) : undefined,
+  about: article.tags,
+  citation: sourceUrls,
+};
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: canonical('/') },
+    { '@type': 'ListItem', position: 2, name: 'Articles', item: canonical('/articles/') },
+    { '@type': 'ListItem', position: 3, name: article.title, item: articleUrl },
+  ],
+};
+const jsonLd = JSON.stringify([articleSchema, breadcrumbSchema]).replace(/</g, '\\u003c');
 function sourceLabel(sourceUrl, index) {
   try {
     const url = new URL(sourceUrl);
@@ -19,6 +45,7 @@ function sourceLabel(sourceUrl, index) {
 ---
 <Base title={article.title} description={article.description} pathname={`/articles/${article.slug}/`} type="article">
   <main>
+    <script type="application/ld+json" set:html={jsonLd}></script>
     <article class="article-body">
       <h1>{article.title}</h1>
       <ShareButton title={article.title} text={article.description} pathname={`/articles/${article.slug}/`} />

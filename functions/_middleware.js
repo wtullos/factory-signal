@@ -110,6 +110,7 @@ function robotReviewPath(pathname) {
   if (pathname === '/analytics/data' || pathname === '/analytics/data/') return '/review/analytics/data';
   if (pathname === '/sources' || pathname === '/sources/') return '/review/sources/';
   if (pathname === '/takeaways' || pathname === '/takeaways/') return '/review/takeaways/';
+  if (pathname === '/seo' || pathname === '/seo/') return '/review/seo/';
   return '/review/';
 }
 

@@ -1,0 +1,160 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getArticles } from '../../lib/content.js';
+import { buildSeoAudit } from '../../lib/seo-audit.js';
+
+export const prerender = true;
+
+const audit = buildSeoAudit(getArticles());
+const { totals } = audit;
+const severityLabel = (issue) => `${issue.severity}: ${issue.message}`;
+---
+<Base title="SEO audit" description="Private Factory Signal SEO audit dashboard." pathname="/review/seo/" noindex={true} bodyClass="review-backend seo-backend">
+  <a class="review-logout-button" href="/review/logout" data-review-logout>Logout</a>
+  <main>
+    <div class="section-heading">
+      <div>
+        <p class="meta">Private workflow · intended URL: https://robot.thefactorysignal.com/seo/</p>
+        <h1>SEO audit</h1>
+      </div>
+    </div>
+
+    <nav class="review-tabs" aria-label="Robot backend sections">
+      <a class="review-tab-drafts" href="/review/">Drafts</a>
+      <a href="/review/takeaways/">Daily takeaways</a>
+      <a href="/review/sources/">Sources</a>
+      <a href="/review/analytics/">Analytics</a>
+      <a aria-current="page" href="/review/seo/">SEO</a>
+    </nav>
+
+    <section class="panel review-warning">
+      <h2>Private search-quality tooling</h2>
+      <p>
+        This noindex dashboard is a static, read-only audit for Google-aligned search quality, discoverability, and AI/search extractability. It favors helpful content,
+        clear titles, trustworthy sources, structured data readiness, crawlable internal links, and practical manufacturing detail. It does not promise rankings and it does not write to Markdown.
+      </p>
+    </section>
+
+    <section class="seo-metrics" aria-label="SEO audit overview">
+      <article class="panel metric-card"><span>Average score</span><strong>{totals.averageScore}</strong></article>
+      <article class="panel metric-card"><span>Articles</span><strong>{totals.articleCount}</strong></article>
+      <article class="panel metric-card"><span>Warnings/errors</span><strong>{totals.errors + totals.warnings}</strong></article>
+      <article class="panel metric-card"><span>Opportunities</span><strong>{totals.opportunities}</strong></article>
+      <article class="panel metric-card"><span>Need work</span><strong>{totals.articlesNeedingWork}</strong></article>
+    </section>
+
+    <section class="panel seo-workflow">
+      <h2>Optimization workflow</h2>
+      <ol>
+        <li>Run <code>npm run seo:audit</code> or <code>npm run seo:audit -- --json</code> locally to review the current static report.</li>
+        <li>Update the article title, description, answer-first intro, useful H2 sections, sources, image alt text, and internal links in Markdown.</li>
+        <li>Keep edits people-first: clarify manufacturing entities, constraints, tradeoffs, implementation steps, and evidence. Avoid keyword stuffing, fake freshness, unsupported superlatives, or schema that does not match the page.</li>
+        <li>Run <code>npm run test:seo</code>, relevant content/review tests, and <code>npm run build</code> before publishing.</li>
+      </ol>
+    </section>
+
+    {audit.duplicates.titles.length > 0 || audit.duplicates.descriptions.length > 0 ? (
+      <section class="panel seo-duplicates">
+        <h2>Duplicate metadata</h2>
+        {audit.duplicates.titles.length > 0 && <p><strong>Duplicate titles:</strong> {audit.duplicates.titles.map((item) => `${item.value} (${item.count})`).join(', ')}</p>}
+        {audit.duplicates.descriptions.length > 0 && <p><strong>Duplicate descriptions:</strong> {audit.duplicates.descriptions.map((item) => `${item.value} (${item.count})`).join(', ')}</p>}
+      </section>
+    ) : null}
+
+    <section class="seo-list" aria-label="Article SEO audit rows">
+      {audit.articles.map((article) => (
+        <article class="panel seo-card">
+          <header class="draft-header seo-card-header">
+            <div>
+              <p class="meta">{article.score}/100 · {article.wordCount} words · {article.sourcesCount} sources · {article.internalLinks.length} internal links</p>
+              <h2>{article.title}</h2>
+              <p><a href={article.url}>{article.url}</a></p>
+            </div>
+            <span class:list={["seo-score", article.score >= 90 ? "seo-score-good" : article.score >= 75 ? "seo-score-ok" : "seo-score-low"]}>{article.score}</span>
+          </header>
+
+          <dl class="review-meta seo-meta-grid">
+            <div><dt>Canonical preview</dt><dd><code>{article.canonicalUrl}</code></dd></div>
+            <div><dt>Author/date</dt><dd>{article.author || 'Missing author'} · {article.pubDate || article.date || 'Missing date'}</dd></div>
+            <div><dt>Image alt</dt><dd>{article.image.url ? (article.image.alt || 'Missing alt text') : 'No hero image'}</dd></div>
+            <div><dt>Structured data</dt><dd>{article.structuredDataReady ? 'Ready for Article/TechArticle fields' : 'Missing required fields'}</dd></div>
+          </dl>
+
+          <div class="seo-copy-grid">
+            <section>
+              <h3>Current title</h3>
+              <p>{article.title || 'Missing'}</p>
+              <h3>Suggested title</h3>
+              <p>{article.suggestedTitle}</p>
+            </section>
+            <section>
+              <h3>Current description</h3>
+              <p>{article.description || 'Missing'}</p>
+              <h3>Suggested description</h3>
+              <p>{article.suggestedDescription}</p>
+            </section>
+          </div>
+
+          <div class="seo-detail-grid">
+            <section>
+              <h3>Top issues</h3>
+              {article.issues.length > 0 ? (
+                <ul>{article.issues.slice(0, 6).map((issue) => <li>{severityLabel(issue)}</li>)}</ul>
+              ) : <p>No major issues found.</p>}
+            </section>
+            <section>
+              <h3>Missing / useful sections</h3>
+              {article.missingSections.length > 0 ? <ul>{article.missingSections.map((section) => <li>{section}</li>)}</ul> : <p>Core section signals are present.</p>}
+            </section>
+            <section>
+              <h3>Internal link suggestions</h3>
+              {article.relatedArticles.length > 0 ? (
+                <ul>{article.relatedArticles.map((item) => <li><a href={item.url}>{item.title}</a></li>)}</ul>
+              ) : <p>No strong unused internal-link candidates found.</p>}
+            </section>
+            <section>
+              <h3>Source/citation status</h3>
+              <p>{article.sourcesCount > 0 ? `${article.sourcesCount} source URL${article.sourcesCount === 1 ? '' : 's'} available. Keep technical claims aligned with visible citations.` : 'No source URLs found. Add sources for technical claims where appropriate.'}</p>
+            </section>
+          </div>
+        </article>
+      ))}
+    </section>
+  </main>
+
+  <style>
+    .seo-metrics, .seo-copy-grid, .seo-detail-grid { display: grid; gap: 1rem; }
+    .seo-metrics { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 1rem 0; }
+    .metric-card { display: grid; gap: .35rem; }
+    .metric-card span { color: var(--muted); font-size: .78rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .metric-card strong { color: var(--ink-strong); font-size: clamp(2rem, 8vw, 3.5rem); line-height: 1; }
+    .seo-list { display: grid; gap: 1rem; margin-top: 1rem; }
+    .seo-card { display: grid; gap: 1rem; }
+    .seo-card h2 { margin-bottom: .25rem; }
+    .seo-score { display: grid; place-items: center; min-width: 4rem; min-height: 4rem; border: 1px solid var(--line); color: var(--ink-strong); font-size: 1.5rem; font-weight: 900; }
+    .seo-score-good { background: #e8f6e6; }
+    .seo-score-ok { background: #fff8db; }
+    .seo-score-low { background: #fff1f2; }
+    .seo-meta-grid code { overflow-wrap: anywhere; white-space: normal; }
+    .seo-copy-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+    .seo-copy-grid section, .seo-detail-grid section { padding: 1rem; border: 1px solid var(--line); background: rgba(255,255,255,.5); }
+    .seo-copy-grid h3, .seo-detail-grid h3 { margin-top: 0; }
+    .seo-detail-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+    .seo-detail-grid ul, .seo-workflow ol { margin-bottom: 0; padding-left: 1.25rem; }
+    .seo-detail-grid li + li, .seo-workflow li + li { margin-top: .45rem; }
+  </style>
+
+  <script>
+    const logoutButton = document.querySelector('[data-review-logout]');
+    if (logoutButton instanceof HTMLAnchorElement) {
+      logoutButton.href = window.location.hostname === 'robot.thefactorysignal.com' ? '/logout' : '/review/logout';
+    }
+
+    if (window.location.hostname === 'robot.thefactorysignal.com') {
+      document.querySelectorAll('.review-tabs a[href^="/review/"]').forEach((link) => {
+        if (!(link instanceof HTMLAnchorElement)) return;
+        link.href = link.getAttribute('href')?.replace(/^\/review\/?/, '/') || link.href;
+      });
+    }
+  </script>
+</Base>

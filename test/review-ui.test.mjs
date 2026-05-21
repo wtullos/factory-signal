@@ -5,6 +5,8 @@ import { readFile } from 'node:fs/promises';
 const reviewPagePath = new URL('../src/pages/review/[...slug].astro', import.meta.url);
 const takeawaysPagePath = new URL('../src/pages/review/takeaways.astro', import.meta.url);
 const sourcesPagePath = new URL('../src/pages/review/sources.astro', import.meta.url);
+const analyticsPagePath = new URL('../src/pages/review/analytics.astro', import.meta.url);
+const seoPagePath = new URL('../src/pages/review/seo.astro', import.meta.url);
 
 test('review page keeps draft editing inline and restores compact Wes suggestion fields', async () => {
   const source = await readFile(reviewPagePath, 'utf8');
@@ -57,6 +59,28 @@ test('review backend has a protected editable sources tab in nav', async () => {
   assert.match(sourcesSource, /data-remove-source/);
   assert.match(sourcesSource, /data-save-sources/);
   assert.match(sourcesSource, /\/review\/sources/);
+});
+
+test('review backend has a protected SEO audit tab and page', async () => {
+  const [reviewSource, takeawaysSource, sourcesSource, analyticsSource, seoSource] = await Promise.all([
+    readFile(reviewPagePath, 'utf8'),
+    readFile(takeawaysPagePath, 'utf8'),
+    readFile(sourcesPagePath, 'utf8'),
+    readFile(analyticsPagePath, 'utf8'),
+    readFile(seoPagePath, 'utf8'),
+  ]);
+
+  for (const source of [reviewSource, takeawaysSource, sourcesSource, analyticsSource]) {
+    assert.match(source, /href="\/review\/seo\/">SEO/);
+  }
+
+  assert.match(seoSource, /Base title="SEO audit"/);
+  assert.match(seoSource, /pathname="\/review\/seo\/" noindex=\{true\}/);
+  assert.match(seoSource, /aria-current="page" href="\/review\/seo\/">SEO/);
+  assert.match(seoSource, /buildSeoAudit\(getArticles\(\)\)/);
+  assert.match(seoSource, /Google-aligned search quality/);
+  assert.match(seoSource, /does not promise rankings/);
+  assert.match(seoSource, /window\.location\.hostname === 'robot\.thefactorysignal\.com'/);
 });
 
 test('daily takeaways render paragraph summaries instead of lesson bullets', async () => {
