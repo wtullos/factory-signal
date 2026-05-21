@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, isVideoStory, isWhitepaperStory, parseArticleMarkdown, parseBriefing, parseFeedDate } from '../src/lib/content.js';
 
 test('applyPublishMetadata materializes published status, pubDate, and 24-hour pinnedUntil', () => {
@@ -80,8 +81,10 @@ test('isVideoStory requires explicit video media indicators', () => {
 test('isWhitepaperStory catches paper resources while excluding Reddit/community noise', () => {
   assert.equal(isWhitepaperStory({ title: 'VoxelMatters Polymer AM Focus 2026 eBook', source: '3D Printing Media', sectionTitle: 'News' }), true);
   assert.equal(isWhitepaperStory({ title: 'VoxelMatters lists polymer AM paper on qualification', source: 'VoxelMatters', sectionTitle: 'News' }), true);
+  assert.equal(isWhitepaperStory({ title: 'Semiconductor Engineering lists latest technical papers', source: 'Semiconductor Engineering', sectionTitle: 'News' }), true);
   assert.equal(isWhitepaperStory({ title: 'Download metal AM whitepaper', url: 'https://example.com/am-whitepaper.pdf', sectionTitle: 'News' }), true);
   assert.equal(isWhitepaperStory({ title: 'A new technical paper on 3D-stacked memory', source: 'Semiconductor Engineering', sectionTitle: 'News' }), true);
+  assert.equal(isWhitepaperStory({ title: 'Proceedings paper covers robot inspection', source: 'Automation News', sectionTitle: 'News' }), true);
   assert.equal(isWhitepaperStory({ title: 'X-ray study reveals how microscopic pores drive fractures in 3D printed metals', source: '3D Printing Media', body: 'Researchers published a study in the Journal of Materials Research.', sectionTitle: 'News' }), true);
   assert.equal(isWhitepaperStory({ title: 'Packaging supplier lists paper products for factories', source: 'Automation News', sectionTitle: 'News' }), false);
   assert.equal(isWhitepaperStory({ title: '2026 RBR50 Robotics Innovation Awards', url: 'https://www.therobotreport.com/rbr50-2026-report/', source: 'Robotics Business Review', sectionTitle: 'News' }), false);
@@ -89,7 +92,17 @@ test('isWhitepaperStory catches paper resources while excluding Reddit/community
   assert.equal(isWhitepaperStory({ title: 'Case Study: How an Enterprise Tech Team Went from Dozens to 2,000+ Fine-Tuning Configurations', source: 'Edge AI and Vision Alliance', body: 'The use case explains a deployment.', sectionTitle: 'News' }), false);
   assert.equal(isWhitepaperStory({ title: 'US programmer job growth nearly halved since ChatGPT launched, Fed study finds', source: 'The Decoder', body: 'A new study provides evidence of labor-market changes.', sectionTitle: 'News' }), false);
   assert.equal(isWhitepaperStory({ title: 'Reddit thread mentions a paper', source: 'Reddit', sectionTitle: 'Reddit' }), false);
+  assert.equal(isWhitepaperStory({ title: 'Community thread links a whitepaper', source: 'r/3Dprinting', url: 'https://reddit.com/r/3Dprinting/comments/example', sectionTitle: 'News' }), false);
   assert.equal(isWhitepaperStory({ title: 'Factory robots improve throughput', source: 'Automation News', body: 'Integrator shares deployment notes.', sectionTitle: 'News' }), false);
+});
+
+test('home page paper dock links to the display whitepaper section anchor', () => {
+  const indexPage = fs.readFileSync('src/pages/index.astro', 'utf8');
+  const displayPage = fs.readFileSync('src/pages/display.astro', 'utf8');
+
+  const anchor = indexPage.match(/href="\/display\/#([^"]+)"/)?.[1];
+  assert.equal(anchor, 'whitepaper-library');
+  assert.match(displayPage, new RegExp(`id="${anchor}"`));
 });
 
 test('parseBriefing drops non-video items from YouTube section', () => {

@@ -198,13 +198,13 @@ export function getRedditStories() {
 
 const WHITEPAPER_ASSET_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf)\b/i;
 const EXPLICIT_PAPER_PUBLICATION_TERMS = /\b(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\bjournal\s+(?:article|paper|publication|study)\b|\bproceedings\s+(?:article|paper|publication)\b|\b(?:paper|article|study)\s+(?:published|appearing)\s+in\s+(?:a |an |the )?(?:journal|proceedings)\b|\bpublished\s+(?:a |an |the )?study\s+in\s+(?:a |an |the )?journal\b/i;
-const PAPER_RESOURCE_ACTION_TERMS = /\b(?:list(?:s|ed|ing)?|catalog(?:s|ed|ing)?|feature(?:s|d|ing)?|publish(?:es|ed|ing)?|release(?:s|d|ing)?|download(?:s|ed|ing|able)?|offer(?:s|ed|ing)?|introduce(?:s|d|ing)?|launch(?:es|ed|ing)?)\b(?:[\s:–—-]+\S+){0,10}[\s:–—-]+paper\b(?!\s+(?:products?|mill|machine|packaging|supplier|company|factory|plant)\b)/i;
+const PAPER_RESOURCE_ACTION_TERMS = /\b(?:list(?:s|ed|ing)?|catalog(?:s|ed|ing)?|feature(?:s|d|ing)?|publish(?:es|ed|ing)?|release(?:s|d|ing)?|download(?:s|ed|ing|able)?|offer(?:s|ed|ing)?|introduce(?:s|d|ing)?|launch(?:es|ed|ing)?)\b(?:[\s:–—-]+\S+){0,10}[\s:–—-]+papers?\b(?!\s+(?:products?|mill|machine|packaging|supplier|company|factory|plant)\b)/i;
 const WHITEPAPER_TITLE_URL_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf|research paper|technical paper|working paper|conference paper|peer[-\s]?reviewed paper|journal article|proceedings paper)\b/i;
 const WHITEPAPER_SOURCE_TERMS = /\b(white\s*paper|whitepaper|e-?book|journal|arxiv|proceedings)\b/i;
 const WHITEPAPER_BODY_TERMS = /\b(white\s*paper|whitepaper|e-?book|pdf)\b|\b(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\bjournal\s+(?:article|paper|publication|study)\b|\bproceedings\s+(?:article|paper|publication)\b|\b(?:new|published|released|download(?:ed)?)\s+(?:a |an |the )?(?:research|technical|working|conference|peer[-\s]?reviewed)\s+paper\b|\b(?:paper|article|study)\s+(?:published|appearing)\s+in\s+(?:a |an |the )?(?:journal|proceedings)\b|\bpublished\s+(?:a |an |the )?study\s+in\s+(?:a |an |the )?journal\b/i;
 
 export function isWhitepaperStory(story) {
-  if (!story || story.sectionTitle === 'Reddit') return false;
+  if (!story || isCommunityStory(story)) return false;
   const titleAndUrl = [story.title, story.url].filter(Boolean).join(' ');
   const source = story.source || '';
   const body = story.body || '';
@@ -214,6 +214,16 @@ export function isWhitepaperStory(story) {
     || PAPER_RESOURCE_ACTION_TERMS.test(titleAndUrl)
     || WHITEPAPER_SOURCE_TERMS.test(source)
     || WHITEPAPER_BODY_TERMS.test(body);
+}
+
+function isCommunityStory(story = {}) {
+  const sectionTitle = String(story.sectionTitle || '');
+  const source = String(story.source || '');
+  const url = String(story.url || '');
+  return /^reddit$/i.test(sectionTitle)
+    || /\b(?:reddit|community)\b/i.test(sectionTitle)
+    || /^r\//i.test(source)
+    || /(?:^|\/\/)(?:www\.)?reddit\.com\//i.test(url);
 }
 
 const VIDEO_URL_TERMS = /(?:^|\/\/)(?:www\.)?(?:youtube\.com\/(?:watch\?|shorts\/|embed\/|live\/)|youtu\.be\/|vimeo\.com\/|player\.vimeo\.com\/video\/|dailymotion\.com\/video\/|twitch\.tv\/videos\/|v\.redd\.it\/)/i;
