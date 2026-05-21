@@ -266,5 +266,9 @@
   "https://techcrunch.com/2026/05/20/figma-adds-an-ai-assistant-to-its-collaborative-canvas/": {
     "image": "https://techcrunch.com/wp-content/uploads/2026/05/Agent-On-Canvas-Entrypoint.png?resize=1200,675",
     "checkedAt": "2026-05-20T13:00:56.775Z"
+  },
+  "https://spectrum.ieee.org/semiconductor-fabrication": {
+    "image": "https://spectrum.ieee.org/media-library/a-white-line-diagram-against-a-blue-background-shows-the-basic-layout-of-the-project-swift-chip-fabrication-process.png?id=54890404&width=1200&height=859",
+    "checkedAt": "2026-05-21T17:01:02.703Z"
   }
 }
