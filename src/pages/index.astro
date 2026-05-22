@@ -1,9 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
-import { getArticles, getWhitepaperStories, SITE_NAME } from '../lib/content.js';
+import BriefingSummary from '../components/BriefingSummary.astro';
+import { getArticles, getBriefings, getWhitepaperStories, SITE_NAME } from '../lib/content.js';
 
 const articles = getArticles();
+const [latestBriefing] = getBriefings();
 const whitepaperStories = getWhitepaperStories(6);
 const [leadArticle, ...remainingArticles] = articles;
 const topStories = remainingArticles.slice(0, 4);
@@ -41,6 +43,12 @@ function searchTextFor(article) {
     <section class="editorial-masthead" aria-label="Factory Signal front page">
       <h1 id="home-title">Today’s industrial manufacturing news</h1>
     </section>
+
+    {latestBriefing && (
+      <section class="panel" aria-label="Latest daily briefing" data-fs-search-section>
+        <BriefingSummary briefing={latestBriefing} />
+      </section>
+    )}
 
     {leadArticle ? (
       <section class="front-page-grid" aria-label="Featured Factory Signal articles" data-fs-search-section>
