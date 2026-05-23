@@ -44,12 +44,6 @@ function searchTextFor(article) {
       <h1 id="home-title">Today’s industrial manufacturing news</h1>
     </section>
 
-    {latestBriefing && (
-      <section class="panel" aria-label="Latest daily briefing" data-fs-search-section>
-        <BriefingSummary briefing={latestBriefing} />
-      </section>
-    )}
-
     {leadArticle ? (
       <section class="front-page-grid" aria-label="Featured Factory Signal articles" data-fs-search-section>
         <article class="front-lead-card" data-fs-search-item data-search-text={searchTextFor(leadArticle)}>
@@ -93,29 +87,6 @@ function searchTextFor(article) {
       <section class="panel empty-state">
         <h2>No articles published yet</h2>
         <p>Factory Signal articles will appear here as soon as they are published.</p>
-      </section>
-    )}
-
-    <AdSlot slot="leaderboard" />
-
-    {whitepaperStories.length > 0 && (
-      <section class="display-whitepapers front-resource-dock" aria-labelledby="whitepaper-stories-heading" data-fs-search-section>
-        <div class="section-heading">
-          <div>
-            <p class="meta">Derived resources</p>
-            <h2 id="whitepaper-stories-heading">Papers & whitepapers</h2>
-          </div>
-          <a href="/display/#whitepaper-library">Resource dock</a>
-        </div>
-        <div class="whitepaper-grid">
-          {whitepaperStories.map((story) => (
-            <a class="whitepaper-card" href={story.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={[story.title, story.source, story.topic, story.dateLabel].filter(Boolean).join(' ')}>
-              <p class="meta">{story.source || story.topic || 'Resource'} · {story.dateLabel || story.date}</p>
-              <strong>{story.title}</strong>
-              {story.body && <p>{story.body}</p>}
-            </a>
-          ))}
-        </div>
       </section>
     )}
 
@@ -163,6 +134,35 @@ function searchTextFor(article) {
               </div>
             </aside>
           )}
+        </div>
+      </section>
+    )}
+
+    <AdSlot slot="leaderboard" />
+
+    {latestBriefing && (
+      <section class="panel" aria-label="Latest daily briefing" data-fs-search-section>
+        <BriefingSummary briefing={latestBriefing} />
+      </section>
+    )}
+
+    {whitepaperStories.length > 0 && (
+      <section class="display-whitepapers front-resource-dock" aria-labelledby="whitepaper-stories-heading" data-fs-search-section>
+        <div class="section-heading">
+          <div>
+            <p class="meta">Derived resources</p>
+            <h2 id="whitepaper-stories-heading">Papers & whitepapers</h2>
+          </div>
+          <a href="/display/#whitepaper-library">Resource dock</a>
+        </div>
+        <div class="whitepaper-grid">
+          {whitepaperStories.map((story) => (
+            <a class="whitepaper-card" href={story.url} target="_blank" rel="noopener noreferrer" data-fs-search-item data-search-text={[story.title, story.source, story.topic, story.dateLabel].filter(Boolean).join(' ')}>
+              <p class="meta">{story.source || story.topic || 'Resource'} · {story.dateLabel || story.date}</p>
+              <strong>{story.title}</strong>
+              {story.body && <p>{story.body}</p>}
+            </a>
+          ))}
         </div>
       </section>
     )}
