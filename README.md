@@ -73,6 +73,10 @@ tags: ["automation", "CNC"]
 Article body...
 ```
 
+Editorial readability rule: write Factory Signal articles and drafts for a 4th-grade reading level and the average U.S. reader while keeping the manufacturing content strong. Use short words, short sentences, plain verbs, and active voice. Keep hard terms like CNC, qualification, metrology, DED, and traceability when they matter, but explain them in simple words the first time. Prefer short paragraphs. Do not use a childish tone. Avoid AI-tell contrast formulas such as “not just X but Y”; use direct claims instead.
+
+Draft review aid: `npm run style:guard` now prints non-blocking readability advice for Markdown drafts and articles. It checks for very long sentences, long paragraphs, and dense long-word patterns. It does not fail the build for valid manufacturing terms; it tells editors where to simplify before publishing.
+
 ## Private draft review workflow
 
 Generated article drafts belong in `content/drafts/*.md`. That directory is gitignored, and drafts are not read by the public article routes, RSS feed, article sitemap/RSS, or generated site sitemap. The review inbox is built at `/review/`, intentionally omitted from the sitemap, marked `noindex`, and protected in production by Cloudflare Pages Functions middleware.

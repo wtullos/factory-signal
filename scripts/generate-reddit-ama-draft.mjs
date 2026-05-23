@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArticleMarkdown } from '../src/lib/content.js';
 import { schoolFriendlyViolations } from '../src/lib/school-friendly.js';
 import { aiTellContrastViolations } from '../src/lib/style-guard.js';
+import { readabilityReview } from '../src/lib/readability.js';
 
 const DEFAULT_QA_LIMIT = 8;
 const DEFAULT_PREVIEW_QUESTION_LIMIT = 10;
@@ -112,7 +113,7 @@ function buildSummaryBody(summary, sourceUrls) {
   return [
     `# ${summary.title}`,
     '',
-    `Reddit AMAs can surface the practical questions that official announcements miss. This draft summarizes the strongest Q/A threads from ${summary.subreddit || 'the source thread'} and keeps the focus on what manufacturers, classrooms, and technical teams can learn from it.`,
+    `Reddit AMAs can show the shop questions that press releases miss. This draft sums up the strongest Q/A threads from ${summary.subreddit || 'the source thread'}. Keep each answer in plain English for an average U.S. reader. Aim for a 4th-grade reading level while keeping the manufacturing facts strong.`,
     '',
     '## Source context',
     '',
@@ -133,12 +134,12 @@ function buildSummaryBody(summary, sourceUrls) {
       '',
       `**Answer from u/${summary.author || pair.answerAuthor}:** ${pair.answer}`,
       '',
-      `**Factory Signal angle:** Add Wes's context here: what this answer changes for a shop, lab, classroom, or technology roadmap.`,
+      `**Factory Signal angle:** Add Wes's context here in short, plain sentences. Say what this answer changes for a shop, lab, class, or tech plan. Explain hard terms the first time.`,
       '',
     ]),
     '## What to watch next',
     '',
-    'Track which AMA answers turn into shipped documentation, stable supply, classroom-ready examples, maintainable tooling, or clearer guidance for teams adopting the technology.',
+    'Track which AMA answers turn into shipped docs, steady supply, class-ready examples, tools that are easy to maintain, or clearer steps for teams that adopt the tech.',
     '',
     '> Editor note: Verify all summarized Q/A excerpts against the Reddit source before publishing.',
   ].filter((line) => line !== null).join('\n');
@@ -148,7 +149,7 @@ function buildPreviewBody(summary, sourceUrls) {
   return [
     `# ${summary.title}`,
     '',
-    'This Reddit AMA thread is still waiting on enough official answers. Use this preview to frame the questions manufacturers, classrooms, and technical teams should track once answers land.',
+    'This Reddit AMA thread still needs more official answers. Use this preview to frame the questions shops, classes, and tech teams should track after answers land. Write the final draft in short, plain sentences for an average U.S. reader.',
     '',
     '## Source context',
     '',
@@ -167,12 +168,12 @@ function buildPreviewBody(summary, sourceUrls) {
       '',
       `**Question from u/${question.author || 'redditor'}:** ${question.question}`,
       '',
-      `**Why it matters:** Add Wes's context here: what this question could reveal about manufacturing use, classroom adoption, reliability, cost, maintainability, or where the official answer needs practical follow-up.`,
+      `**Why it matters:** Add Wes's context here in plain English. Say what this question could show about shop use, class use, uptime, cost, maintenance, or gaps that need follow-up.`,
       '',
     ]),
     '## What Wes should add after answers land',
     '',
-    'Replace or supplement this preview with confirmed answers from the AMA participants. Watch for commitments on availability, documentation, industrial support, classroom examples, software maintenance, and any gaps between community needs and official guidance.',
+    'Replace or add to this preview with confirmed answers from the AMA guests. Watch for supply dates, docs, plant support, class examples, software upkeep, and gaps between user needs and official guidance.',
     '',
     '> Editor note: Preview draft. Verify the thread status and add official answers before publishing as a recap.',
   ].filter((line) => line !== null).join('\n');
@@ -190,6 +191,10 @@ export async function generateAmaDraft(inputUrl, options = {}) {
   const styleViolations = aiTellContrastViolations(article);
   if (styleViolations.length > 0) {
     throw new Error(`Generated AMA draft failed the Factory Signal style guard. Rules: ${[...new Set(styleViolations.map((violation) => violation.code))].join(', ')}`);
+  }
+  const readability = readabilityReview(article);
+  if (readability.warnings.length > 0) {
+    console.warn(`Generated AMA draft needs readability review before publishing. Warnings: ${readability.warnings.join(', ')}.`);
   }
   return { summary, markdown, filename: `${slugify(`${options.date || todayIsoDate()}-${summary.title}`)}.md` };
 }

@@ -22,7 +22,8 @@
     "test:content": "node --test test/content.test.mjs",
     "test:adsense": "node --test test/adsense.test.mjs",
     "test:school-friendly": "node --test test/school-friendly.test.mjs",
-    "test:style-guard": "node --test test/style-guard.test.mjs"
+    "test:style-guard": "node --test test/style-guard.test.mjs",
+    "test:readability": "node --test test/readability.test.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",

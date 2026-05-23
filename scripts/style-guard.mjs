@@ -4,6 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { parseArticleMarkdown } from '../src/lib/content.js';
 import { aiTellContrastViolations } from '../src/lib/style-guard.js';
+import { readabilityReview } from '../src/lib/readability.js';
 
 const root = process.cwd();
 const targets = process.argv.slice(2);
@@ -21,8 +22,14 @@ let failureCount = 0;
 for (const filePath of filesToCheck) {
   const raw = fs.readFileSync(filePath, 'utf8');
   const relativePath = path.relative(root, filePath);
-  if (filePath.endsWith('.md')) parseArticleMarkdown(path.basename(filePath), raw, { dir: path.dirname(relativePath) });
+  const article = filePath.endsWith('.md') ? parseArticleMarkdown(path.basename(filePath), raw, { dir: path.dirname(relativePath) }) : null;
   const violations = aiTellContrastViolations(raw);
+  const readability = article ? readabilityReview(article) : null;
+
+  if (readability?.warnings?.length) {
+    console.warn(`${relativePath}: readability review advised (${readability.warnings.join(', ')}; avg sentence ${readability.averageSentenceWords} words, max ${readability.maxSentenceWords}).`);
+    console.warn('  Target 4th-grade plain English: short sentences, short paragraphs, active verbs, and simple explanations for hard manufacturing terms.');
+  }
 
   if (violations.length === 0) continue;
 
