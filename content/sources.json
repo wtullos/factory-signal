@@ -36,13 +36,6 @@
       "enabled": true
     },
     {
-      "name": "Adafruit Blog",
-      "type": "rss",
-      "topic": "Electronics",
-      "url": "https://blog.adafruit.com/feed/",
-      "enabled": true
-    },
-    {
       "name": "Fabbaloo",
       "type": "rss",
       "topic": "3D Printing",

@@ -19,7 +19,6 @@ const defaultRssFeeds = [
   { name: 'The Decoder', topic: 'AI Vision', url: 'https://the-decoder.com/feed/' },
   { name: 'Hackaday', topic: 'Engineering', url: 'https://hackaday.com/blog/feed/' },
   { name: 'TechCrunch AI', topic: 'AI Vision', url: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
-  { name: 'Adafruit Blog', topic: 'Electronics', url: 'https://blog.adafruit.com/feed/' },
   { name: 'Fabbaloo', topic: '3D Printing', url: 'https://www.fabbaloo.com/feed/' },
   { name: 'Hacker News', topic: 'Technology', url: 'https://news.ycombinator.com/rss' },
 ];
