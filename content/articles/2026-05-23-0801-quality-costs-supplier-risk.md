@@ -5,6 +5,8 @@ pubDate: "2026-05-23T20:15:35.332Z"
 author: "Factory Signal Editorial"
 tags: ["quality", "supply-chain", "inspection", "manufacturing"]
 status: "published"
+imageUrl: "/assets/images/articles/quality-costs-supplier-risk-inspection.jpg"
+imageAlt: "Worker inspecting machined parts at a quality-control bench"
 sourceUrls: ["https://markets.businessinsider.com/news/stocks/study-reveals-62-of-manufacturers-believe-tariffs-and-trade-barriers-threaten-quality-1036175161", "https://www.manilatimes.net/2026/05/19/tmt-newswire/globenewswire/study-reveals-62-of-manufacturers-believe-tariffs-and-trade-barriers-threaten-quality/2347286"]
 pinnedUntil: "2026-05-24T20:15:35.332Z"
 ---
