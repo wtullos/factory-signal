@@ -314,5 +314,13 @@
   "https://fs.blog/knowledge-project-podcast/greg-brockman/": {
     "image": "https://fs.blog/wp-content/uploads/2026/04/Cover-White-1024x1024.png",
     "checkedAt": "2026-05-24T13:00:26.271Z"
+  },
+  "https://techcrunch.com/2026/05/24/i-tried-amazons-bee-wearable-and-am-both-intrigued-and-slightly-creeped-out/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2024/07/17.png?resize=1200,750",
+    "checkedAt": "2026-05-24T17:00:35.375Z"
+  },
+  "https://www.theguardian.com/technology/2026/may/24/ai-washing-pr-firms-scrambling-rebrand": {
+    "image": "https://i.guim.co.uk/img/media/6c4dd4b2880760003ffbd14e8d6884b367237ad3/1844_305_2349_1879/master/2349.jpg?width=1200&height=630&quality=85&auto=format&fit=crop&precrop=40:21,offset-x50,offset-y0&overlay-align=bottom%2Cleft&overlay-width=100p&overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&enable=upscale&s=8ae6c8a540881dcdf228bf87820a2733",
+    "checkedAt": "2026-05-24T17:00:35.662Z"
   }
 }
