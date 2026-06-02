@@ -366,5 +366,22 @@
   "https://members.sigmazero.cc/posts/when-ai-crosses-159174096?postId=when-ai-crosses-159174096": {
     "image": null,
     "checkedAt": "2026-06-01T13:01:13.043Z"
+  },
+  "https://techcrunch.com/2026/06/02/rocket-engine-startup-impulse-raises-500-million-to-hire-people-not-ai/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2026/06/Impulse-Mira-Spacecraft-In-Orbit-2.png?resize=1200,672",
+    "checkedAt": "2026-06-02T13:00:24.097Z"
+  },
+  "https://techcrunch.com/2026/06/02/zerodrift-raises-10-million-to-protect-ai-models-from-themselves/": {
+    "image": null,
+    "checkedAt": "2026-06-02T13:00:24.185Z"
+  },
+  "https://blog.adafruit.com/": {
+    "image": null,
+    "checkedAt": "2026-06-02T13:00:26.697Z",
+    "error": "This operation was aborted"
+  },
+  "https://www.ycombinator.com/companies/great-question/jobs/J5TNvQH-ai-engineer-intern": {
+    "image": "https://bookface-images.s3.amazonaws.com/logos/876e548b9ee8e5740c35f5d6ddf2ce32d924edc7.png?1604424519",
+    "checkedAt": "2026-06-02T13:00:27.173Z"
   }
 }
