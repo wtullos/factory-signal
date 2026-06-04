@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import astroConfig from '../astro.config.mjs';
 import { applyPublishMetadata, buildDailyTakeaway, getPinnedArticles, isVideoStory, isWhitepaperStory, parseArticleMarkdown, parseBriefing, parseFeedDate } from '../src/lib/content.js';
 
 test('applyPublishMetadata materializes published status, pubDate, and 24-hour pinnedUntil', () => {
@@ -96,13 +97,16 @@ test('isWhitepaperStory catches paper resources while excluding Reddit/community
   assert.equal(isWhitepaperStory({ title: 'Factory robots improve throughput', source: 'Automation News', body: 'Integrator shares deployment notes.', sectionTitle: 'News' }), false);
 });
 
-test('home page paper dock links to the display whitepaper section anchor', () => {
-  const indexPage = fs.readFileSync('src/pages/index.astro', 'utf8');
+test('display pages keep the whitepaper section anchor', () => {
+  const homeDisplay = fs.readFileSync('src/components/HomePageDisplay.astro', 'utf8');
   const displayPage = fs.readFileSync('src/pages/display.astro', 'utf8');
 
-  const anchor = indexPage.match(/href="\/display\/#([^"]+)"/)?.[1];
-  assert.equal(anchor, 'whitepaper-library');
-  assert.match(displayPage, new RegExp(`id="${anchor}"`));
+  assert.match(homeDisplay, /id="whitepaper-library"/);
+  assert.match(displayPage, /id="whitepaper-library"/);
+});
+
+test('astro config redirects root traffic to dashboard', () => {
+  assert.equal(astroConfig.redirects?.['/'], '/dashboard/');
 });
 
 test('parseBriefing drops non-video items from YouTube section', () => {

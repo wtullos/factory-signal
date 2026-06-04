@@ -23,17 +23,13 @@ test('AdSense verification renders only on indexed public pages and ads.txt uses
 
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 
-  const home = fs.readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
-  assert.ok(home.includes(adsenseScript));
-  assert.ok(home.includes(adsenseMeta));
-  assert.ok(home.includes('/dashboard/'));
-  assert.ok(home.includes('site-search-dropdown'));
-  assert.ok(home.includes('aria-label="Open site search"'));
-  assert.ok(!home.includes('site-search-toggle-text'));
-  assert.ok(!home.includes('>Search</span>'));
-  assert.ok(home.includes('Today’s industrial manufacturing news'));
-  assert.ok(!home.includes('Latest signals'));
-  assert.ok(!home.includes('Whitepaper library'));
+  const rootRedirect = fs.readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+  assert.ok(rootRedirect.includes('Redirecting to: /dashboard/'));
+  assert.ok(rootRedirect.includes('http-equiv="refresh" content="0;url=/dashboard/"'));
+  assert.ok(rootRedirect.includes('href="/dashboard/"'));
+  assert.match(rootRedirect, /<meta name="robots" content="noindex"/);
+  assert.ok(!rootRedirect.includes('site-search-dropdown'));
+  assert.ok(!rootRedirect.includes('Today’s industrial manufacturing news'));
 
   const dashboard = fs.readFileSync(new URL('../dist/dashboard/index.html', import.meta.url), 'utf8');
   assert.ok(dashboard.includes(adsenseScript));

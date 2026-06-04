@@ -7,6 +7,9 @@ export default defineConfig({
   site,
   output: 'static',
   trailingSlash: 'always',
+  redirects: {
+    '/': '/dashboard/',
+  },
   integrations: [
     sitemap({
       filter: (page) => {
