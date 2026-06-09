@@ -443,5 +443,17 @@
   "https://intunedhq.com/": {
     "image": "https://intunedhq.com/og-image.png",
     "checkedAt": "2026-06-08T17:01:17.368Z"
+  },
+  "https://techcrunch.com/2026/06/09/how-an-e-scooter-founder-raised-5-million-to-build-space-data-centers/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2026/06/satellite.png?resize=1200,675",
+    "checkedAt": "2026-06-09T13:01:30.132Z"
+  },
+  "https://www.codingwithjesse.com/blog/rockstar-developers/": {
+    "image": "https://www.codingwithjesse.com/images/2026-06-08-rockstar-developers.jpg",
+    "checkedAt": "2026-06-09T13:01:30.463Z"
+  },
+  "https://techcrunch.com/2026/06/08/microsofts-open-source-tools-were-hacked-to-steal-passwords-of-ai-developers/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2022/07/Microsoft-e1658216731934.jpg?resize=1200,675",
+    "checkedAt": "2026-06-09T13:01:30.519Z"
   }
 }
