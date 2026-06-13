@@ -475,5 +475,13 @@
   "https://www.fastmail.com/blog/the-future-of-email/": {
     "image": "https://www.fastmail.com/assets/images/the-future-of-email-2026-zmB4xdznzP-1200.png",
     "checkedAt": "2026-06-12T13:01:00.656Z"
+  },
+  "https://koenvangilst.nl/lab/claude-fable-shepherds-dog": {
+    "image": "https://koenvangilst.nl/og/claude-fable-shepherds-dog.png",
+    "checkedAt": "2026-06-13T13:00:40.966Z"
+  },
+  "https://github.com/Paca-AI/paca": {
+    "image": "https://opengraph.githubassets.com/f60ac2f2a852ae183aa16f8520e175df8a920999406bda8bc03f547bf352c25d/Paca-AI/paca",
+    "checkedAt": "2026-06-13T13:00:41.202Z"
   }
 }
