@@ -568,5 +568,13 @@
   "https://www.jvm-weekly.com/p/project-valhalla-explained-how-a": {
     "image": "https://substackcdn.com/image/fetch/$s_!3GhD!,w_1200,h_675,c_fill,f_jpg,q_auto:good,fl_progressive:steep,g_auto/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4d9124f8-8a73-453b-88e2-7df5c98022ec_1920x1080.png",
     "checkedAt": "2026-06-19T13:00:27.398Z"
+  },
+  "https://bootimus.com/": {
+    "image": null,
+    "checkedAt": "2026-06-20T17:00:19.611Z"
+  },
+  "https://blog.cloudflare.com/temporary-accounts/": {
+    "image": "https://cf-assets.www.cloudflare.com/zkvhlag99gkb/TaeUUpmHSgKNA48R3gp9q/71645cfc910b9f32689980930010913d/image1.png",
+    "checkedAt": "2026-06-20T17:00:19.916Z"
   }
 }
