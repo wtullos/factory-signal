@@ -576,5 +576,9 @@
   "https://blog.cloudflare.com/temporary-accounts/": {
     "image": "https://cf-assets.www.cloudflare.com/zkvhlag99gkb/TaeUUpmHSgKNA48R3gp9q/71645cfc910b9f32689980930010913d/image1.png",
     "checkedAt": "2026-06-20T17:00:19.916Z"
+  },
+  "https://alexkritchevsky.com/2024/02/28/geometric-algebra.html": {
+    "image": null,
+    "checkedAt": "2026-06-21T13:00:28.811Z"
   }
 }
