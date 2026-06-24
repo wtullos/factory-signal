@@ -616,5 +616,17 @@
   "https://kreya.app/blog/new-http-query-method-explained/": {
     "image": "https://kreya.app/thumbnails/default.png",
     "checkedAt": "2026-06-23T13:00:42.234Z"
+  },
+  "https://haystack.deepset.ai/": {
+    "image": "https://haystack.deepset.ai/images/haystack-ogimage.png",
+    "checkedAt": "2026-06-24T13:00:47.119Z"
+  },
+  "https://images.minimus.io/": {
+    "image": null,
+    "checkedAt": "2026-06-24T13:00:48.169Z"
+  },
+  "https://fortune.com/2026/06/24/reid-hoffman-spacex-musk-openai-anthropic-gen-z-mistake/": {
+    "image": "https://fortune.com/img-assets/wp-content/uploads/2026/06/GettyImages-2206159992-e1782250620624.jpg?resize=1200,600",
+    "checkedAt": "2026-06-24T13:00:48.364Z"
   }
 }
