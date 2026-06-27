@@ -640,5 +640,17 @@
   "https://utaw.tech/news/wikipedia-recognition": {
     "image": "https://utaw.tech/_next/image?url=https%3A%2F%2Futaw-tech-site-assets.s3.nl-ams.scw.cloud%2FWiki_19c1158651.jpg&w=3840&q=75",
     "checkedAt": "2026-06-25T13:00:36.763Z"
+  },
+  "https://techcrunch.com/2026/06/27/asian-ai-startups-launch-mythos-like-models-as-anthropics-export-ban-drags-on/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2026/06/GettyImages-2278736523.jpeg?resize=1200,798",
+    "checkedAt": "2026-06-27T13:00:47.885Z"
+  },
+  "https://w.pitula.me/fintech-engineering-handbook/": {
+    "image": null,
+    "checkedAt": "2026-06-27T13:00:48.051Z"
+  },
+  "https://github.com/schlae/IBM_MCGA": {
+    "image": "https://opengraph.githubassets.com/d02a38f241ac567977f66c323a40d21bab7f00b573823f030a41a4c0495776fe/schlae/IBM_MCGA",
+    "checkedAt": "2026-06-27T13:00:48.817Z"
   }
 }
