@@ -664,5 +664,9 @@
   "https://arstechnica.com/health/2026/06/doctors-suspected-man-had-brain-cancer-he-actually-had-worms/": {
     "image": "https://cdn.arstechnica.net/wp-content/uploads/2016/05/b.mole-45957.jpg",
     "checkedAt": "2026-06-27T17:00:29.822Z"
+  },
+  "https://github.com/openai/codex/issues/2847": {
+    "image": "https://opengraph.githubassets.com/eb6eaf7d4028ea024171759a9f016eafa52d89840c3d40660be2d1d74b98731a/openai/codex/issues/2847",
+    "checkedAt": "2026-06-28T13:00:35.494Z"
   }
 }
