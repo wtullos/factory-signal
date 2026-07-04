@@ -732,5 +732,23 @@
   "https://tane.dev/2026/07/the-reports-of-jim-carreys-death-are-a-failure-mode/": {
     "image": "https://www.mugshotbot.com/m?mode=light&theme=two_up&pattern=lines_in_motion&image=d3d350d5&hide_watermark=true&url=https://tane.dev/2026/07/the-reports-of-jim-carreys-death-are-a-failure-mode/",
     "checkedAt": "2026-07-04T17:00:57.900Z"
+  },
+  "https://techcrunch.com/2026/07/04/midjourney-wants-hollywood-studios-to-reveal-the-details-of-their-ai-usage/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2025/10/GettyImages-1387623215.jpg?resize=1200,900",
+    "checkedAt": "2026-07-04T20:01:08.912Z"
+  },
+  "https://seldo.com/posts/ai-has-torched-the-market-for-junior-programmers/": {
+    "image": null,
+    "checkedAt": "2026-07-04T20:01:11.412Z",
+    "error": "This operation was aborted"
+  },
+  "https://www.eso.org/public/news/eso2607/": {
+    "image": null,
+    "checkedAt": "2026-07-04T20:01:13.915Z",
+    "error": "This operation was aborted"
+  },
+  "https://art.joonas.wtf/": {
+    "image": "https://art.joonas.wtf/$%7BthumbUrl(o.image,%20240)%7D",
+    "checkedAt": "2026-07-04T20:01:14.340Z"
   }
 }
