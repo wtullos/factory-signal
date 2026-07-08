@@ -786,5 +786,10 @@
   "https://mistral.ai/news/robostral-navigate/": {
     "image": "https://mistral.ai/cms-media/api/media/file/Robostral-navigate.jpg",
     "checkedAt": "2026-07-08T17:00:38.939Z"
+  },
+  "https://techcrunch.com/2026/07/08/this-startup-thinks-robotics-is-about-to-have-its-chatgpt-moment/": {
+    "image": null,
+    "checkedAt": "2026-07-08T20:01:04.622Z",
+    "error": "This operation was aborted"
   }
 }
