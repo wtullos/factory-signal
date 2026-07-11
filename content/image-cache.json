@@ -811,5 +811,21 @@
   "https://nevo-project.epfl.ch/": {
     "image": null,
     "checkedAt": "2026-07-10T13:00:40.431Z"
+  },
+  "https://languagelog.ldc.upenn.edu/myl/Good1964.pdf": {
+    "image": null,
+    "checkedAt": "2026-07-11T17:01:02.776Z"
+  },
+  "https://techcrunch.com/2026/07/11/openai-bets-on-families-as-chatgpt-goes-deeper-into-households/": {
+    "image": "https://techcrunch.com/wp-content/uploads/2026/07/chatgpt-demographics.jpg",
+    "checkedAt": "2026-07-11T17:01:02.983Z"
+  },
+  "https://www.mixfont.com/ghost-font": {
+    "image": "https://static.mixfont.com/assets/20260711-092742-ghostfont-og-j3qj8h8p.webp",
+    "checkedAt": "2026-07-11T17:01:03.152Z"
+  },
+  "https://studyfinds.com/modern-decor-may-be-straining-peoples-brains/": {
+    "image": "https://studyfinds.com/wp-content/uploads/2026/07/Modern-office-scaled.jpeg",
+    "checkedAt": "2026-07-11T17:01:03.961Z"
   }
 }
