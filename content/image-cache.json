@@ -831,5 +831,9 @@
   "https://www.economist.com/leaders/2026/07/09/a-no-brainer-for-protecting-your-brain": {
     "image": null,
     "checkedAt": "2026-07-12T17:01:14.661Z"
+  },
+  "https://arxiv.org/abs/2607.06377": {
+    "image": "https://arxiv.org/icons/licenses/by-4.0.png",
+    "checkedAt": "2026-07-12T20:00:19.920Z"
   }
 }
