@@ -851,5 +851,13 @@
   "https://www.bbc.com/news/articles/cg53l737v1qo": {
     "image": "https://ichef.bbci.co.uk/news/1024/branded_news/8230/live/dff3e310-79da-11f1-a400-b302bc872d47.jpg",
     "checkedAt": "2026-07-14T13:00:45.030Z"
+  },
+  "https://dl.acm.org/doi/10.1145/3800645.3813051": {
+    "image": null,
+    "checkedAt": "2026-07-15T13:01:28.394Z"
+  },
+  "https://jiga.io/about-us/": {
+    "image": "https://jiga.io/wp-content/uploads/2026/07/About-us-web-preview-V2.jpg",
+    "checkedAt": "2026-07-15T13:01:28.669Z"
   }
 }
